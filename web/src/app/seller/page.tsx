@@ -17,6 +17,7 @@ import {
     useToasts,
 } from '@geist-ui/core';
 import { WalletConnection } from '@/components/WalletConnection';
+import CreateShopForm from '@/components/shops/CreateShopForm';
 import { useShop } from '@/hooks/useShop';
 import { useProducts } from '@/hooks/useProducts';
 import { useKiosk } from '@/hooks/useKiosk';
@@ -33,11 +34,7 @@ export default function SellerPage() {
     const { hasKiosk, isLoadingKiosks, createKiosk, isCreatingKiosk } = useKiosk(account?.address);
     const { setToast } = useToasts();
 
-    // Shop form state
-    const [shopFormData, setShopFormData] = useState({
-        name: '',
-        description: '',
-    });
+
 
     // Product form state
     const [productFormData, setProductFormData] = useState({
@@ -47,16 +44,7 @@ export default function SellerPage() {
         price: '',
     });
 
-    const handleCreateShop = async () => {
-        try {
-            await createShop.mutateAsync(shopFormData as any);
-            setShopFormData({ name: '', description: '' });
-            setToast({ text: 'Shop created successfully!', type: 'success' });
-        } catch (error) {
-            console.error('Shop creation error:', error);
-            setToast({ text: 'Failed to create shop', type: 'error' });
-        }
-    };
+
 
     const handleCreateProduct = async () => {
         if (!userShop) return;
@@ -140,60 +128,7 @@ export default function SellerPage() {
             <Page dotBackdrop width="100%" padding={0}>
                 <Navigation />
                 <Page.Content>
-                    <Grid.Container justify="center">
-                        <Grid xs={24} md={12}>
-                            <Card>
-                                <Text h3>Create Your Shop</Text>
-                                <Text p type="secondary">Set up your shop to start selling products on the marketplace</Text>
-                                <Spacer h={1} />
-
-                                {/* @ts-ignore */}
-                                <Input
-                                    width="100%"
-                                    placeholder="e.g., My Digital Art Gallery"
-                                    value={shopFormData.name}
-                                    onChange={(e) => setShopFormData({ ...shopFormData, name: e.target.value })}
-                                >
-                                    Shop Name
-                                </Input>
-                                <Spacer h={1} />
-
-                                {/* @ts-ignore */}
-                                <Textarea
-                                    width="100%"
-                                    placeholder="Describe what you sell..."
-                                    value={shopFormData.description}
-                                    onChange={(e) => setShopFormData({ ...shopFormData, description: e.target.value })}
-                                >
-                                    Description
-                                </Textarea>
-                                <Spacer h={1} />
-
-                                <Divider />
-                                <Spacer h={1} />
-
-                                <div style={{ background: 'rgba(255,255,255,0.05)', padding: '1rem', borderRadius: '8px' }}>
-                                    <Text h5>What happens next?</Text>
-                                    <ul style={{ paddingLeft: '1.2rem', color: '#888' }}>
-                                        <li>Your shop will be registered on-chain</li>
-                                        <li>You'll receive a ShopOwnerCap NFT</li>
-                                        <li>You can start creating and listing products</li>
-                                    </ul>
-                                </div>
-                                <Spacer h={1} />
-
-                                {/* @ts-ignore */}
-                                <Button
-                                    loading={isCreatingShop}
-                                    onClick={handleCreateShop}
-                                    type="success"
-                                    width="100%"
-                                >
-                                    Create Shop
-                                </Button>
-                            </Card>
-                        </Grid>
-                    </Grid.Container>
+                    <CreateShopForm />
                 </Page.Content>
                 <Footer />
             </Page>

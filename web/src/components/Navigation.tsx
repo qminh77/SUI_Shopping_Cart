@@ -92,6 +92,20 @@ export function Navigation() {
                     >
                         Seller Dashboard
                     </NextLink>
+                    {/* @ts-ignore */}
+                    <NextLink
+                        href="/profile"
+                        className={`block transition-colors hover:text-white ${pathname === '/profile' ? 'text-[var(--sui-blue)]' : 'text-[#888]'}`}
+                        style={{
+                            textTransform: 'uppercase',
+                            fontSize: '0.8rem',
+                            letterSpacing: '1px',
+                            fontWeight: 500,
+                            color: pathname === '/profile' ? '#4DA2FF' : '#888'
+                        }}
+                    >
+                        Profile
+                    </NextLink>
 
                     <div className="flex items-center gap-4 pl-4" style={{ borderLeft: '1px solid rgba(255,255,255,0.1)' }}>
                         <CartDrawer />
