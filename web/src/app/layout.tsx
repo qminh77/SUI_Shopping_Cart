@@ -4,6 +4,7 @@ import "./globals.css";
 import { SuiProviders } from "@/providers/SuiProviders";
 import { CartProvider } from "@/contexts/CartContext";
 import { GeistProviders } from "@/providers/GeistProviders";
+import { Toaster } from "sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -48,6 +49,7 @@ export default function RootLayout({
             </CartProvider>
           </SuiProviders>
         </GeistProviders>
+        <Toaster position="top-center" richColors />
       </body>
     </html>
   );
