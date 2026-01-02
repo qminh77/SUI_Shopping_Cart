@@ -33,6 +33,7 @@ import { AlertCircle, CheckCircle, Ban, History, Unlock, Loader2, ArrowLeft } fr
 import { useState } from 'react'
 import { toast } from 'sonner'
 import Link from 'next/link'
+import { cn } from '@/lib/utils'
 
 // Types
 type ShopDetail = {
@@ -91,33 +92,41 @@ export default function AdminShopDetailPage() {
         }
     }
 
-    if (isLoading) return <div className="flex h-screen items-center justify-center"><Loader2 className="animate-spin" /></div>
-    if (isError || !data) return <div className="text-center py-20">Shop not found</div>
+    if (isLoading) return <div className="flex h-screen items-center justify-center"><Loader2 className="animate-spin text-blue-500 h-8 w-8" /></div>
+    if (isError || !data) return <div className="text-center py-20 text-neutral-400">Shop not found or access denied</div>
 
     const { shop, logs } = data
 
     return (
-        <div className="space-y-6 max-w-5xl mx-auto">
+        <div className="space-y-8 max-w-6xl mx-auto">
             <div className="flex items-center gap-4">
-                <Button variant="outline" size="icon" asChild>
+                <Button variant="outline" size="icon" asChild className="border-white/10 bg-black/20 text-neutral-400 hover:text-white hover:bg-white/10">
                     <Link href="/admin/shops"><ArrowLeft className="h-4 w-4" /></Link>
                 </Button>
                 <div className="flex-1">
-                    <h2 className="text-2xl font-bold tracking-tight">{shop.shop_name}</h2>
-                    <div className="flex items-center gap-2 text-muted-foreground mt-1">
-                        <span className="font-mono text-xs">{shop.id}</span>
-                        <Separator orientation="vertical" className="h-4" />
-                        <Badge variant={shop.status === 'ACTIVE' ? 'default' : shop.status === 'SUSPENDED' ? 'destructive' : 'secondary'}>
+                    <h2 className="text-3xl font-bold tracking-tight text-white">{shop.shop_name}</h2>
+                    <div className="flex items-center gap-2 text-neutral-400 mt-2">
+                        <span className="font-mono text-xs bg-black/30 px-2 py-0.5 rounded border border-white/5">{shop.id}</span>
+                        <Separator orientation="vertical" className="h-4 bg-white/10" />
+                        <Badge
+                            variant="outline"
+                            className={cn(
+                                "border-none",
+                                shop.status === 'ACTIVE' ? 'bg-green-500/20 text-green-400' :
+                                    shop.status === 'SUSPENDED' ? 'bg-red-500/20 text-red-400' :
+                                        'bg-yellow-500/20 text-yellow-400'
+                            )}
+                        >
                             {shop.status}
                         </Badge>
                     </div>
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                     {shop.status === 'PENDING' && (
                         <Button
-                            className="bg-green-600 hover:bg-green-700"
+                            className="bg-green-600 hover:bg-green-500 text-white shadow-lg shadow-green-900/20 border-none"
                             onClick={() => handleAction('approve')}
                             disabled={isLoadingAction}
                         >
@@ -129,34 +138,35 @@ export default function AdminShopDetailPage() {
                     {shop.status === 'ACTIVE' && (
                         <Dialog open={isSuspendOpen} onOpenChange={setIsSuspendOpen}>
                             <DialogTrigger asChild>
-                                <Button variant="destructive">
+                                <Button className="bg-red-900/50 text-red-400 border border-red-500/20 hover:bg-red-900/80 hover:text-red-300">
                                     <Ban className="mr-2 h-4 w-4" />
                                     Suspend Shop
                                 </Button>
                             </DialogTrigger>
-                            <DialogContent>
+                            <DialogContent className="bg-neutral-900 border-white/10">
                                 <DialogHeader>
-                                    <DialogTitle>Suspend Shop</DialogTitle>
-                                    <DialogDescription>
+                                    <DialogTitle className="text-white">Suspend Shop</DialogTitle>
+                                    <DialogDescription className="text-neutral-400">
                                         This will disable selling capabilities for this shop. Reasoning is required.
                                     </DialogDescription>
                                 </DialogHeader>
-                                <div className="space-y-2 py-4">
-                                    <Label>Reason for suspension</Label>
+                                <div className="space-y-3 py-4">
+                                    <Label className="text-white">Reason for suspension</Label>
                                     <Textarea
                                         placeholder="Violation of terms..."
+                                        className="bg-black/30 border-white/10 text-white resize-none h-32"
                                         value={suspendReason}
                                         onChange={(e) => setSuspendReason(e.target.value)}
                                     />
                                 </div>
                                 <DialogFooter>
-                                    <Button variant="outline" onClick={() => setIsSuspendOpen(false)}>Cancel</Button>
+                                    <Button variant="ghost" onClick={() => setIsSuspendOpen(false)} className="text-neutral-400 hover:text-white">Cancel</Button>
                                     <Button
-                                        variant="destructive"
+                                        className="bg-red-600 hover:bg-red-500 text-white border-none"
                                         onClick={() => handleAction('suspend', { reason: suspendReason })}
                                         disabled={!suspendReason.trim() || isLoadingAction}
                                     >
-                                        Suspend Confirmed
+                                        Execute Suspension
                                     </Button>
                                 </DialogFooter>
                             </DialogContent>
@@ -165,7 +175,7 @@ export default function AdminShopDetailPage() {
 
                     {shop.status === 'SUSPENDED' && (
                         <Button
-                            variant="default" // or a specific "unsuspend" color
+                            className="bg-blue-600 hover:bg-blue-500 text-white shadow-lg border-none"
                             onClick={() => handleAction('unsuspend')}
                             disabled={isLoadingAction}
                         >
@@ -177,16 +187,18 @@ export default function AdminShopDetailPage() {
             </div>
 
             <Tabs defaultValue="info" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 lg:w-[400px]">
-                    <TabsTrigger value="info">Information</TabsTrigger>
-                    <TabsTrigger value="history">History & Audit</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-2 lg:w-[400px] bg-black/20 border border-white/5 p-1">
+                    <TabsTrigger value="info" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-neutral-400">Information</TabsTrigger>
+                    <TabsTrigger value="history" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-neutral-400">History & Audit</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="info" className="space-y-4 mt-4">
-                    <Card>
-                        <CardHeader><CardTitle>Basic Information</CardTitle></CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <TabsContent value="info" className="space-y-6 mt-6">
+                    <Card className="bg-neutral-900/50 border-white/10 backdrop-blur-md">
+                        <CardHeader className="border-b border-white/5 pb-4">
+                            <CardTitle className="text-white text-lg">Basic Information</CardTitle>
+                        </CardHeader>
+                        <CardContent className="pt-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                                 <InfoItem label="Owner Wallet" value={shop.owner_wallet} mono />
                                 <InfoItem label="Email" value={shop.contact_email} />
                                 <InfoItem label="Phone" value={shop.contact_phone} />
@@ -199,10 +211,12 @@ export default function AdminShopDetailPage() {
                         </CardContent>
                     </Card>
 
-                    <Card>
-                        <CardHeader><CardTitle>Policies & Socials</CardTitle></CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Card className="bg-neutral-900/50 border-white/10 backdrop-blur-md">
+                        <CardHeader className="border-b border-white/5 pb-4">
+                            <CardTitle className="text-white text-lg">Policies & Socials</CardTitle>
+                        </CardHeader>
+                        <CardContent className="pt-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                                 <InfoItem label="Facebook" value={shop.facebook_url} isLink />
                                 <InfoItem label="Instagram" value={shop.instagram_url} isLink />
                                 <InfoItem label="Support Policy" value={shop.support_policy} className="md:col-span-2" />
@@ -212,36 +226,36 @@ export default function AdminShopDetailPage() {
                     </Card>
                 </TabsContent>
 
-                <TabsContent value="history" className="mt-4">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Audit Logs</CardTitle>
-                            <CardDescription>Record of administrative actions and shop updates.</CardDescription>
+                <TabsContent value="history" className="mt-6">
+                    <Card className="bg-neutral-900/50 border-white/10 backdrop-blur-md">
+                        <CardHeader className="border-b border-white/5 pb-4">
+                            <CardTitle className="text-white text-lg">Audit Logs</CardTitle>
+                            <CardDescription className="text-neutral-500">Record of administrative actions and shop updates.</CardDescription>
                         </CardHeader>
-                        <CardContent>
-                            <div className="relative border-l border-muted ml-2 space-y-6 pb-4">
-                                {logs.length === 0 && <div className="pl-6 text-sm text-muted-foreground">No history recorded</div>}
+                        <CardContent className="pt-8">
+                            <div className="relative border-l border-white/10 ml-2 space-y-8 pb-4">
+                                {logs.length === 0 && <div className="pl-8 text-sm text-neutral-500">No logs found.</div>}
                                 {logs.map((log) => (
-                                    <div key={log.id} className="relative pl-6">
-                                        <div className="absolute -left-1.5 top-1.5 h-3 w-3 rounded-full border border-primary bg-background ring-4 ring-background" />
-                                        <div className="flex flex-col gap-1">
-                                            <div className="flex items-center gap-2">
-                                                <span className="font-semibold text-sm">{formatAction(log.action)}</span>
-                                                <span className="text-xs text-muted-foreground">{new Date(log.created_at).toLocaleString()}</span>
+                                    <div key={log.id} className="relative pl-8">
+                                        <div className="absolute -left-1.5 top-1.5 h-3 w-3 rounded-full border border-blue-500/50 bg-neutral-900 ring-4 ring-neutral-900" />
+                                        <div className="flex flex-col gap-2">
+                                            <div className="flex items-center gap-3">
+                                                <span className="font-semibold text-sm text-white capitalize">{formatAction(log.action)}</span>
+                                                <span className="text-xs text-neutral-500 bg-white/5 px-2 py-0.5 rounded border border-white/5">{new Date(log.created_at).toLocaleString()}</span>
                                             </div>
-                                            <p className="text-sm text-muted-foreground">
-                                                by <span className="font-mono text-xs text-primary">{log.admin_wallet === 'SELLER' ? 'Shop Owner' : 'Admin'}</span>
+                                            <p className="text-sm text-neutral-400">
+                                                By: <span className="font-mono text-xs text-blue-400 bg-blue-500/10 px-1 py-0.5 rounded">{log.admin_wallet === 'SELLER' ? 'Shop Owner' : 'Admin'}</span>
                                             </p>
                                             {log.note && (
-                                                <div className="mt-1 rounded-md bg-muted p-2 text-xs italic">
+                                                <div className="mt-1 rounded-lg bg-white/5 border border-white/5 p-3 text-sm italic text-neutral-300">
                                                     "{log.note}"
                                                 </div>
                                             )}
                                             {(log.from_status || log.to_status) && (
                                                 <div className="flex items-center gap-2 text-xs mt-1">
-                                                    <Badge variant="outline">{log.from_status || 'NONE'}</Badge>
-                                                    <span>→</span>
-                                                    <Badge variant="outline">{log.to_status}</Badge>
+                                                    <Badge variant="outline" className="border-white/10 text-neutral-400">{log.from_status || 'NONE'}</Badge>
+                                                    <span className="text-neutral-600">→</span>
+                                                    <Badge variant="outline" className="border-white/10 text-white">{log.to_status}</Badge>
                                                 </div>
                                             )}
                                         </div>
@@ -260,9 +274,9 @@ function InfoItem({ label, value, className, mono, isLink }: { label: string, va
     if (!value) return null
     return (
         <div className={className}>
-            <div className="text-sm font-medium text-muted-foreground">{label}</div>
-            <div className={`text-base ${mono ? 'font-mono text-sm break-all' : ''}`}>
-                {isLink ? <a href={value} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">{value}</a> : value}
+            <div className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-1">{label}</div>
+            <div className={`text-sm text-neutral-200 ${mono ? 'font-mono text-xs break-all' : ''}`}>
+                {isLink ? <a href={value} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 hover:underline">{value}</a> : value}
             </div>
         </div>
     )

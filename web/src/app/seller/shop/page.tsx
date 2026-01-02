@@ -2,7 +2,7 @@
 
 import { useShop } from '@/hooks/useShop'
 import { useCurrentAccount } from '@mysten/dapp-kit'
-import { ConnectButton } from '@suiet/wallet-kit'
+import { ConnectButton } from '@mysten/dapp-kit'
 import CreateShopForm from '@/components/shops/CreateShopForm'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
