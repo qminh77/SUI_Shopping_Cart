@@ -144,6 +144,36 @@ export function useShop() {
         }
     });
 
+    // REPAIR: Sync Shop to Chain (if missing)
+    const syncChainShop = useMutation({
+        mutationFn: async ({ name, description }: { name: string, description: string }) => {
+            if (!account?.address) throw new Error('Wallet not connected');
+
+            console.log('[useShop] Syncing shop on-chain...');
+            const tx = new Transaction();
+
+            tx.moveCall({
+                target: `${PACKAGE_ID}::shop::create_shop`,
+                arguments: [
+                    tx.object(MARKETPLACE_ID),
+                    tx.pure.string(name),
+                    tx.pure.string(description),
+                ],
+            });
+
+            const result = await signAndExecute({ transaction: tx });
+            console.log('[useShop] On-chain shop synced:', result.digest);
+            return result;
+        },
+        onSuccess: () => {
+            toast.success('Shop registered on-chain successfully!');
+        },
+        onError: (err: any) => {
+            console.error('[useShop] Sync error:', err);
+            toast.error('Failed to sync shop on-chain');
+        }
+    });
+
     return {
         shop,
         isLoading,
@@ -151,6 +181,7 @@ export function useShop() {
         isError: !!error,
         createShop,
         updateShop,
+        syncChainShop,
         isShopActive: shop?.status === 'ACTIVE'
     };
 }

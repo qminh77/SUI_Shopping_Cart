@@ -270,77 +270,96 @@ export async function getAllShops(client: SuiClient): Promise<Shop[]> {
 /**
  * Get all listed products across all shops (from Kiosks)
  */
-export async function getAllListedProducts(client: SuiClient): Promise<Product[]> {
+export async function getAllListedProducts(
+    client: SuiClient,
+    knownShops?: { owner: string, id: string }[]
+): Promise<Product[]> {
     try {
-        const shops = await getAllShops(client);
+        let shops: { owner: string, id: string }[] = [];
+
+        if (knownShops && knownShops.length > 0) {
+            console.log(`[getAllListedProducts] Using ${knownShops.length} known shops from DB`);
+            shops = knownShops;
+        } else {
+            console.log('[getAllListedProducts] Discovering shops from chain...');
+            shops = await getAllShops(client);
+        }
 
         if (shops.length === 0) return [];
 
-        // Initialize Kiosk Client
+        // Initialize Kiosk Client (keep this for future Kiosk support)
         const kioskClient = new KioskClient({
             client,
             network: Network.TESTNET,
         });
 
-        // Fetch Kiosks for all shop owners and extract products
+        // Loop through each shop to find products
         const productsPromises = shops.map(async (shop) => {
+            const shopProducts: Product[] = [];
+
+            // 1. Fetch products directly owned by the shop owner (Wallet)
+            try {
+                const { data } = await client.getOwnedObjects({
+                    owner: shop.owner,
+                    filter: {
+                        StructType: `${PACKAGE_ID}::product::Product`,
+                    },
+                    options: {
+                        showContent: true,
+                    },
+                });
+
+                const directProducts = data.map(parseProduct).filter((p): p is Product => p !== null && p.listed);
+                shopProducts.push(...directProducts);
+            } catch (err) {
+                console.error(`[getAllListedProducts] Error fetching owned objects for ${shop.id}:`, err);
+            }
+
+            // 2. Fetch products in Kiosks (Keep as fallback/advanced feature)
             try {
                 const { kioskIds } = await kioskClient.getOwnedKiosks({ address: shop.owner });
-
-                if (kioskIds.length === 0) return [];
-
-                // For each kiosk, get items
-                const kioskProducts = await Promise.all(kioskIds.map(async (kioskId) => {
-                    try {
-                        const kiosk = await kioskClient.getKiosk({
-                            id: kioskId,
-                            options: {
-                                withObjects: true,
-                                withListingPrices: true,
-                            }
-                        });
-
-                        // Parse items that match our Product type
-                        return kiosk.items
-                            .filter(item => {
-                                // Relaxed type check but verify package ID starts with ours
-                                return item.type.startsWith(`${PACKAGE_ID}::product::Product`);
-                            })
-                            .map(item => {
-                                const fields = (item.data?.content as any)?.fields;
-                                if (!fields) return null;
-
-                                return {
-                                    id: item.data!.objectId,
-                                    shopId: fields.shop_id,
-                                    name: fields.name,
-                                    description: fields.description,
-                                    imageUrl: fields.image_url,
-                                    price: Number(fields.price),
-                                    creator: fields.creator,
-                                    listed: true,
-                                    createdAt: Number(fields.created_at),
-                                    kioskId: kioskId
-                                } as Product;
-                            })
-                            .filter((p): p is Product => p !== null);
-
-                    } catch (kioskErr) {
-                        console.error(`Error fetching kiosk ${kioskId}:`, kioskErr);
-                        return [];
-                    }
-                }));
-
-                return kioskProducts.flat();
+                if (kioskIds.length > 0) {
+                    const kioskProducts = await Promise.all(kioskIds.map(async (kioskId) => {
+                        try {
+                            const kiosk = await kioskClient.getKiosk({
+                                id: kioskId,
+                                options: { withObjects: true, withListingPrices: true }
+                            });
+                            return kiosk.items
+                                .filter(item => item.type.startsWith(`${PACKAGE_ID}::product::Product`))
+                                .map(item => {
+                                    const fields = (item.data?.content as any)?.fields;
+                                    if (!fields) return null;
+                                    return {
+                                        id: item.data!.objectId,
+                                        shopId: fields.shop_id,
+                                        name: fields.name,
+                                        description: fields.description,
+                                        imageUrl: fields.image_url,
+                                        price: Number(fields.price),
+                                        creator: fields.creator,
+                                        listed: true,
+                                        createdAt: Number(fields.created_at),
+                                        kioskId: kioskId
+                                    } as Product;
+                                })
+                                .filter((p): p is Product => p !== null);
+                        } catch (e) { return []; }
+                    }));
+                    shopProducts.push(...kioskProducts.flat());
+                }
             } catch (err) {
-                console.error(`Error processing shop ${shop.id}:`, err);
-                return [];
+                // Ignore Kiosk errors for now if simple ownership works
+                // console.warn(`[getAllListedProducts] Kiosk check failed for ${shop.id}`);
             }
+
+            return shopProducts;
         });
 
         const allProducts = await Promise.all(productsPromises);
-        return allProducts.flat();
-
+        const flatList = allProducts.flat();
+        console.log(`[getAllListedProducts] Found ${flatList.length} products total.`);
+        return flatList;
     } catch (error) {
         console.error('Error fetching all listed products:', error);
         return [];

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createShop } from '@/services/shop.service'
+import { createShop, getShops } from '@/services/shop.service'
 import { z, ZodError } from 'zod'
 
 // Basic schema for validation
@@ -51,5 +51,21 @@ export async function POST(req: NextRequest) {
         console.error('Create shop error:', error)
         const message = error instanceof Error ? error.message : 'Failed to create shop'
         return NextResponse.json({ error: message }, { status: 500 })
+    }
+}
+
+export async function GET(req: NextRequest) {
+    try {
+        const { searchParams } = new URL(req.url)
+        const page = Number(searchParams.get('page')) || 1
+        const limit = Number(searchParams.get('limit')) || 20
+        const status = searchParams.get('status') || undefined
+        const search = searchParams.get('search') || undefined
+
+        const result = await getShops(page, limit, status, search)
+        return NextResponse.json(result)
+    } catch (error) {
+        console.error('Get shops error:', error)
+        return NextResponse.json({ error: 'Failed to fetch shops' }, { status: 500 })
     }
 }
