@@ -58,3 +58,22 @@ SESSION_SECRET=minh-so-secret-key-change-this-to-something-long-and-random
 ---
 **Lưu ý:**
 *   `SUPABASE_SERVICE_ROLE_KEY` chỉ được dùng ở phía Server (trong các file `route.ts` API). Không bao giờ dùng nó ở React Component (client side).
+
+## 6. Sửa lỗi Deploy Vercel (404 Not Found)
+Nếu bạn triển khai lên Vercel và gặp lỗi 404, hãy kiểm tra các cài đặt sau:
+
+1.  **Root Directory (Thư mục gốc):**
+    *   Vào **Settings** > **General** > **Root Directory**.
+    *   Nhấn **Edit**, chọn thư mục `web`.
+    *   Bắt buộc phải làm bước này vì code nằm trong folder `web`.
+
+2.  **Framework Preset (Cấu hình Framework):**
+    *   Vào **Settings** > **Build & Development Settings**.
+    *   Đảm bảo **Framework Preset** được chọn là `Next.js`.
+    *   Nếu đang là "Other" hoặc "Static", hãy đổi lại thành "Next.js".
+
+3.  **Redeploy:**
+    *   Sau khi lưu các thay đổi trên, bạn phải vào tab **Deployments**, tìm deployment gần nhất và chọn **Redeploy** để Vercel build lại với cấu hình mới.
+
+4.  **Kiểm tra `vercel.json`:**
+    *   Tôi đã tạo thêm file `vercel.json` trong thư mục `web/` để định hướng cho Vercel. Nếu vẫn lỗi, hãy đảm bảo Vercel đang đọc đúng file này.
