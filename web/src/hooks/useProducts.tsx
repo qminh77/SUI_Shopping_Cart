@@ -97,20 +97,36 @@ export function useProducts(shopId?: string) {
             description,
             imageUrl,
             price,
+            kioskId,
+            kioskCapId,
         }: {
             shopId: string;
             name: string;
             description: string;
             imageUrl: string;
             price: number;
+            kioskId?: string;
+            kioskCapId?: string;
         }) => {
             if (!account?.address) throw new Error('Wallet not connected');
 
-            const priceInMist = suiToMist(price);
+            const tx = new Transaction();
 
-            return new Promise((resolve, reject) => {
-                const tx = new Transaction();
-
+            if (kioskId && kioskCapId) {
+                // Auto-list mode
+                const { createProductAndListTx } = await import('@/lib/kiosk-utils');
+                createProductAndListTx(
+                    tx,
+                    shopId,
+                    name,
+                    description,
+                    imageUrl,
+                    price,
+                    kioskId,
+                    kioskCapId
+                );
+            } else {
+                const priceInMist = suiToMist(price);
                 tx.moveCall({
                     target: `${PACKAGE_ID}::product::mint_to_sender`,
                     arguments: [
@@ -121,74 +137,20 @@ export function useProducts(shopId?: string) {
                         tx.pure.u64(priceInMist),
                     ],
                 });
+            }
 
-                signAndExecute(
-                    { transaction: tx },
-                    {
-                        onSuccess: (result) => {
-                            toast.success('Product created successfully!');
-                            queryClient.invalidateQueries({ queryKey: ['userProducts'] });
-                            queryClient.invalidateQueries({ queryKey: ['allProducts'] });
-                            resolve(result);
-                        },
-                        onError: (error) => {
-                            toast.error('Failed to create product');
-                            console.error('Create product error:', error);
-                            reject(error);
-                        },
-                    }
-                );
+            const result = await signAndExecute({
+                transaction: tx,
             });
+
+            return result;
         },
     });
 
-    // Purchase product mutation
-    const purchaseProduct = useMutation({
-        mutationFn: async ({
-            productId,
-            price,
-            seller,
-        }: {
-            productId: string;
-            price: number;
-            seller: string;
-        }) => {
-            if (!account?.address) throw new Error('Wallet not connected');
 
-            return new Promise((resolve, reject) => {
-                const tx = new Transaction();
-
-                // Split coins for exact payment
-                const [coin] = tx.splitCoins(tx.gas, [tx.pure.u64(price)]);
-
-                tx.moveCall({
-                    target: `${PACKAGE_ID}::shop::purchase_product`,
-                    arguments: [
-                        tx.object(productId),
-                        coin,
-                        tx.pure.address(seller),
-                    ],
-                });
-
-                signAndExecute(
-                    { transaction: tx },
-                    {
-                        onSuccess: (result) => {
-                            toast.success('Product purchased successfully!');
-                            queryClient.invalidateQueries({ queryKey: ['allProducts'] });
-                            queryClient.invalidateQueries({ queryKey: ['userProducts'] });
-                            resolve(result);
-                        },
-                        onError: (error) => {
-                            toast.error('Failed to purchase product');
-                            console.error('Purchase error:', error);
-                            reject(error);
-                        },
-                    }
-                );
-            });
-        },
-    });
+    // Legacy purchaseProduct mutation removed
+    // Smart contract doesn't have purchase_product function
+    // All purchases must go through Kiosk SDK (use useKiosk hook's purchaseFromKiosk)
 
     // List/Unlist product mutations
     const toggleProductListing = useMutation({
@@ -232,8 +194,7 @@ export function useProducts(shopId?: string) {
         error,
         createProduct: createProduct.mutateAsync,
         isCreatingProduct: createProduct.isPending,
-        purchaseProduct: purchaseProduct.mutateAsync,
-        isPurchasing: purchaseProduct.isPending,
+        // purchaseProduct removed - use useKiosk hook's purchaseFromKiosk instead
         toggleProductListing: toggleProductListing.mutateAsync,
         isTogglingListing: toggleProductListing.isPending,
     };

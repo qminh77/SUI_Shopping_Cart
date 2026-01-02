@@ -318,6 +318,8 @@ export async function getAllListedProducts(
             // 2. Fetch products in Kiosks (Keep as fallback/advanced feature)
             try {
                 const { kioskIds } = await kioskClient.getOwnedKiosks({ address: shop.owner });
+                // console.log(`[getAllListedProducts] Shop ${shop.id} has ${kioskIds.length} kiosks`);
+
                 if (kioskIds.length > 0) {
                     const kioskProducts = await Promise.all(kioskIds.map(async (kioskId) => {
                         try {
@@ -325,8 +327,16 @@ export async function getAllListedProducts(
                                 id: kioskId,
                                 options: { withObjects: true, withListingPrices: true }
                             });
+
+                            // Log found items for debugging
+                            // console.log(`[getAllListedProducts] Kiosk ${kioskId} items:`, kiosk.items.length);
+
                             return kiosk.items
-                                .filter(item => item.type.startsWith(`${PACKAGE_ID}::product::Product`))
+                                .filter(item => {
+                                    const isProduct = item.type.includes('::product::Product');
+                                    // if (!isProduct) console.log('Skipping non-product item:', item.type);
+                                    return isProduct;
+                                })
                                 .map(item => {
                                     const fields = (item.data?.content as any)?.fields;
                                     if (!fields) return null;
@@ -336,21 +346,24 @@ export async function getAllListedProducts(
                                         name: fields.name,
                                         description: fields.description,
                                         imageUrl: fields.image_url,
-                                        price: Number(fields.price),
+                                        // Use listing price if available, otherwise field price
+                                        price: item.listing ? Number(item.listing.price) : Number(fields.price),
                                         creator: fields.creator,
-                                        listed: true,
+                                        listed: !!item.listing, // Only considered listed if in Kiosk list
                                         createdAt: Number(fields.created_at),
                                         kioskId: kioskId
                                     } as Product;
                                 })
                                 .filter((p): p is Product => p !== null);
-                        } catch (e) { return []; }
+                        } catch (e) {
+                            console.error(`[getAllListedProducts] Failed to fetch kiosk ${kioskId}:`, e);
+                            return [];
+                        }
                     }));
                     shopProducts.push(...kioskProducts.flat());
                 }
             } catch (err) {
-                // Ignore Kiosk errors for now if simple ownership works
-                // console.warn(`[getAllListedProducts] Kiosk check failed for ${shop.id}`);
+                console.error(`[getAllListedProducts] Kiosk check failed for shop ${shop.id}:`, err);
             }
 
             return shopProducts;

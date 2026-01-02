@@ -16,10 +16,11 @@ import { useCart } from '@/contexts/CartContext';
 import { useCurrentAccount } from '@mysten/dapp-kit';
 import { useProducts } from '@/hooks/useProducts';
 import { useKiosk } from '@/hooks/useKiosk';
-import { ShoppingCart, Clock, Package, Share2, ShieldCheck, ExternalLink } from 'lucide-react';
+import { ShoppingCart, Clock, Package, Share2, ExternalLink } from 'lucide-react';
 import { toast } from "sonner";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { SellerInfoPopover } from './SellerInfoPopover';
 
 interface ProductDetailDialogProps {
     product: Product | null;
@@ -31,10 +32,7 @@ interface ProductDetailDialogProps {
 export function ProductDetailDialog({ product, open, onOpenChange, kioskId }: ProductDetailDialogProps) {
     const { addToCart, items } = useCart();
     const account = useCurrentAccount();
-    const { purchaseProduct, isPurchasing: isLegacyPurchasing } = useProducts();
-    const { purchaseFromKiosk, isPurchasing: isKioskPurchasing } = useKiosk(account?.address);
-
-    const isPurchasing = isLegacyPurchasing || isKioskPurchasing;
+    const { purchaseFromKiosk, isPurchasing } = useKiosk(account?.address);
 
     if (!product) return null;
 
@@ -51,22 +49,20 @@ export function ProductDetailDialog({ product, open, onOpenChange, kioskId }: Pr
             return;
         }
 
+        // Only allow purchase if product is in a Kiosk
+        if (!kioskId) {
+            toast.error('This product must be listed in a Kiosk to purchase. Please contact the seller.');
+            return;
+        }
+
         try {
-            if (kioskId) {
-                await purchaseFromKiosk({
-                    kioskId,
-                    productId: product.id,
-                    price: product.price,
-                    productName: product.name,
-                    seller: product.creator,
-                });
-            } else {
-                await purchaseProduct({
-                    productId: product.id,
-                    price: product.price,
-                    seller: product.creator,
-                });
-            }
+            await purchaseFromKiosk({
+                kioskId,
+                productId: product.id,
+                price: product.price,
+                productName: product.name,
+                seller: product.creator,
+            });
             onOpenChange(false);
         } catch (error) {
             console.error('Purchase error:', error);
@@ -110,13 +106,7 @@ export function ProductDetailDialog({ product, open, onOpenChange, kioskId }: Pr
                                 {/* Header */}
                                 <div className="space-y-4">
                                     <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2 text-neutral-400 group cursor-pointer hover:text-white transition-colors">
-                                            <ShieldCheck className="w-4 h-4 text-blue-500" />
-                                            <span className="text-xs font-mono uppercase tracking-wider">
-                                                Seller: {formatAddress(product.creator)}
-                                            </span>
-                                            <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                        </div>
+                                        <SellerInfoPopover sellerAddress={product.creator} />
                                         <Badge variant="outline" className={cn("rounded-none uppercase tracking-wider text-[10px] border-white/10 text-neutral-400")}>
                                             ID: {product.id.slice(0, 6)}...
                                         </Badge>
@@ -186,12 +176,12 @@ export function ProductDetailDialog({ product, open, onOpenChange, kioskId }: Pr
 
                                 <Button
                                     onClick={handleAddToCart}
-                                    disabled={isInCart || !product.listed}
+                                    disabled={isInCart || !product.listed || !kioskId}
                                     variant="outline"
                                     className="w-full border-white/10 hover:bg-white/5 text-white rounded-none uppercase font-bold tracking-widest h-14 hover:text-blue-400 hover:border-blue-400/30 transition-all duration-300"
                                 >
                                     <ShoppingCart className="w-4 h-4 mr-2" />
-                                    {isInCart ? 'In Cart' : 'Add to Cart'}
+                                    {isInCart ? 'In Cart' : !kioskId ? 'Not in Kiosk' : 'Add to Cart'}
                                 </Button>
                             </div>
                         </div>

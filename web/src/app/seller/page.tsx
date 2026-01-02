@@ -86,8 +86,11 @@ export default function SellerPage() {
 
     const handleCreateProduct = async () => {
         if (!userShop) return;
+
+        // Auto-create Kiosk if missing? 
+        // For now, if no kiosk, we warn or fall back to wallet (but we prefer Kiosk)
         if (!hasKiosk) {
-            toast.warning('Please create a Kiosk first!');
+            toast.warning('Please create a Kiosk first to list items automatically.');
             return;
         }
 
@@ -98,10 +101,12 @@ export default function SellerPage() {
                 description: productFormData.description,
                 imageUrl: productFormData.imageUrl,
                 price: parseFloat(productFormData.price),
+                // Pass Kiosk info for auto-listing
+                kioskId: userKiosk?.id,
+                kioskCapId: userKiosk?.cap.objectId
             });
 
             setProductFormData({ name: '', description: '', imageUrl: '', price: '' });
-            // Warning: Toast handling is in the hook, but we can do extra cleanup here
         } catch (error) {
             // Error handled in hook
         }

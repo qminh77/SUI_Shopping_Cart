@@ -17,11 +17,12 @@ import { useState } from 'react';
 export function CartDrawer() {
     const { items, removeFromCart, clearCart, getTotalItems, getTotalPrice } = useCart();
     const account = useCurrentAccount();
-    const { purchaseProduct, isPurchasing: isLegacyPurchasing } = useProducts();
-    const { purchaseFromKiosk, isPurchasing: isKioskPurchasing } = useKiosk(account?.address);
+    const { purchaseFromKiosk, isPurchasing } = useKiosk(account?.address);
     const [open, setOpen] = useState(false);
 
-    const isPurchasing = isLegacyPurchasing || isKioskPurchasing;
+    // Check if all items are in Kiosk
+    const allItemsInKiosk = items.every(item => item.kioskId);
+    const nonKioskItems = items.filter(item => !item.kioskId);
 
     const handleCheckout = async () => {
         if (!account) {
@@ -34,32 +35,22 @@ export function CartDrawer() {
             return;
         }
 
-        try {
-            // TODO: For Kiosk-based products, we need kioskId for each item
-            // For now, use legacy purchase for all items
-            // In a full implementation, we'd:
-            // 1. Group items by kioskId
-            // 2. Create batch transactions per kiosk
-            // 3. Use Kiosk purchase for items in kiosks
+        // Check if all items are in Kiosk
+        if (!allItemsInKiosk) {
+            toast.error(`${nonKioskItems.length} item(s) not listed in Kiosk. Only Kiosk products can be purchased.`);
+            return;
+        }
 
+        try {
+            // Purchase each item from its Kiosk
             for (const item of items) {
-                // If item has a Kiosk ID, use Kiosk purchase flow (generates receipt)
-                if (item.kioskId) {
-                    await purchaseFromKiosk({
-                        kioskId: item.kioskId,
-                        productId: item.id,
-                        price: item.price,
-                        productName: item.name,
-                        seller: item.creator,
-                    });
-                } else {
-                    // Legacy purchase (works for non-Kiosk products)
-                    await purchaseProduct({
-                        productId: item.id,
-                        price: item.price,
-                        seller: item.creator,
-                    });
-                }
+                await purchaseFromKiosk({
+                    kioskId: item.kioskId!,
+                    productId: item.id,
+                    price: item.price,
+                    productName: item.name,
+                    seller: item.creator,
+                });
             }
 
             clearCart();
@@ -168,12 +159,18 @@ export function CartDrawer() {
 
                                 <Button
                                     onClick={handleCheckout}
-                                    disabled={!account || isPurchasing}
+                                    disabled={!account || isPurchasing || !allItemsInKiosk}
                                     className="w-full"
                                     size="lg"
                                 >
-                                    {isPurchasing ? 'Processing...' : !account ? 'Connect Wallet' : 'Checkout'}
+                                    {isPurchasing ? 'Processing...' : !account ? 'Connect Wallet' : !allItemsInKiosk ? 'Items Not in Kiosk' : 'Checkout'}
                                 </Button>
+
+                                {!allItemsInKiosk && (
+                                    <p className="text-xs text-center text-red-500 font-medium">
+                                        {nonKioskItems.length} item(s) are not listed in a Kiosk. Remove them to checkout.
+                                    </p>
+                                )}
 
                                 {!account && (
                                     <p className="text-xs text-center text-muted-foreground">

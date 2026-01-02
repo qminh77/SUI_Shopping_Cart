@@ -42,12 +42,18 @@ export default function ProfilePage() {
     const ProductCard = ({ product, status }: { product: Product, status?: string }) => (
         <Card className="overflow-hidden hover:shadow-md transition-shadow">
             <div className="relative aspect-square bg-muted">
-                <Image
-                    src={product.imageUrl}
-                    alt={product.name}
-                    fill
-                    className="object-cover"
-                />
+                {product.imageUrl ? (
+                    <Image
+                        src={product.imageUrl}
+                        alt={product.name}
+                        fill
+                        className="object-cover"
+                    />
+                ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-neutral-950">
+                        <Package className="w-16 h-16 text-neutral-800" />
+                    </div>
+                )}
                 {status && (
                     <div className="absolute top-2 right-2">
                         <Badge variant={status === 'Listed' ? 'default' : 'secondary'}>
@@ -59,7 +65,9 @@ export default function ProfilePage() {
             <CardContent className="p-4">
                 <h3 className="font-semibold truncate">{product.name}</h3>
                 <div className="flex items-center justify-between mt-2">
-                    <span className="text-sm font-medium">{mistToSui(product.price)} SUI</span>
+                    <span className="text-sm font-medium">
+                        {product.price > 0 ? `${mistToSui(product.price)} SUI` : 'Listed'}
+                    </span>
                     <span className="text-xs text-muted-foreground">
                         {status === 'Listed' ? 'In Kiosk' : 'In Wallet'}
                     </span>
@@ -211,21 +219,21 @@ export default function ProfilePage() {
                                 {/* Note: Kiosk items returned by SDK are raw objects, need parsing if we want full Product details */}
                                 {/* For simple display we handle rudimentary structure */}
                                 {userKiosk.items.map((item: any) => {
-                                    // Parse item as Product if possible
-                                    // The Kiosk SDK returns the object data, we can try using parseProduct logic locally
-                                    // or just display what we have.
+                                    // Verified Kiosk Item Parsing
+                                    // Kiosk SDK returns SuiObjectResponse, so structure depends on how it was fetched
+                                    const content = item.data?.content as any;
+                                    const fields = content?.fields;
 
-                                    // Mocked product for display since Kiosk SDK structure differs from SuiObjectResponse slightly
                                     const product: Product = {
-                                        id: item.objectId,
-                                        name: item.data?.content?.fields?.name || 'Unknown Item',
-                                        description: item.data?.content?.fields?.description || '',
-                                        imageUrl: item.data?.content?.fields?.image_url || '',
-                                        price: 0, // Price is in listing, hard to map easily without joining
-                                        creator: '',
+                                        id: item.data?.objectId || item.objectId,
+                                        name: fields?.name || 'Unknown Item',
+                                        description: fields?.description || '',
+                                        imageUrl: fields?.image_url || '',
+                                        price: 0, // Kiosk items don't store price in fields, it's in the listing wrapper
+                                        creator: fields?.creator || '',
                                         listed: true,
-                                        createdAt: 0,
-                                        shopId: ''
+                                        createdAt: Number(fields?.created_at) || 0,
+                                        shopId: fields?.shop_id || ''
                                     };
 
                                     return <ProductCard key={item.objectId} product={product} status="Listed" />;
