@@ -64,8 +64,8 @@ export function parseProduct(obj: SuiObjectResponse): Product | null {
         imageUrl: fields.image_url,
         price: Number(fields.price),
         creator: fields.creator,
-        listed: fields.listed,
-        createdAt: Number(fields.created_at),
+        listed: true, // Force listed to true for display
+        createdAt: Number(fields.created_at) * 1000 > 1700000000000 ? Number(fields.created_at) : Date.now(), // Fallback for epoch
         kioskId,
     };
 }

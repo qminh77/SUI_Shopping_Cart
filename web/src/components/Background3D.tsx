@@ -6,7 +6,7 @@ import { useRef, useState } from 'react';
 
 
 function Stars(props: any) {
-    const ref = useRef<any>();
+    const ref = useRef<any>(null);
     const [sphere] = useState(() => {
         const positions = new Float32Array(5000 * 3);
         for (let i = 0; i < 5000; i++) {
