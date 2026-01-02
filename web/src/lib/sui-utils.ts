@@ -1,4 +1,5 @@
 import { SuiClient, SuiObjectResponse } from '@mysten/sui/client';
+import { KioskClient, Network } from '@mysten/kiosk';
 
 // Package and Marketplace IDs from deployment
 export const PACKAGE_ID = process.env.NEXT_PUBLIC_PACKAGE_ID!;
@@ -193,17 +194,22 @@ export async function getOwnedProducts(
  */
 export async function getAllShops(client: SuiClient): Promise<Shop[]> {
     try {
+        console.log('[getAllShops] Fetching marketplace:', MARKETPLACE_ID);
+
         const marketplaceObj = await client.getObject({
             id: MARKETPLACE_ID,
             options: { showContent: true },
         });
 
         if (!marketplaceObj.data?.content || marketplaceObj.data.content.dataType !== 'moveObject') {
+            console.error('[getAllShops] Marketplace object not found or invalid');
             return [];
         }
 
         const fields = marketplaceObj.data.content.fields as any;
         const shopIds = fields.shops as string[];
+
+        console.log(`[getAllShops] Found ${shopIds.length} shop IDs in marketplace`);
 
         // Fetch all shop objects
         const shops = await Promise.all(
@@ -216,7 +222,10 @@ export async function getAllShops(client: SuiClient): Promise<Shop[]> {
             })
         );
 
-        return shops.filter((s): s is Shop => s !== null);
+        const validShops = shops.filter((s): s is Shop => s !== null);
+        console.log(`[getAllShops] Parsed ${validShops.length} valid shops`);
+
+        return validShops;
     } catch (error) {
         console.error('Error fetching all shops:', error);
         return [];
@@ -224,16 +233,20 @@ export async function getAllShops(client: SuiClient): Promise<Shop[]> {
 }
 
 /**
- * Get all listed products across all shops
- */
-import { KioskClient, Network } from '@mysten/kiosk';
-
-/**
  * Get all listed products across all shops (from Kiosks)
  */
 export async function getAllListedProducts(client: SuiClient): Promise<Product[]> {
     try {
+        console.log('[getAllListedProducts] Starting product discovery...');
+        console.log('[getAllListedProducts] PACKAGE_ID:', PACKAGE_ID);
+
         const shops = await getAllShops(client);
+        console.log(`[getAllListedProducts] Found ${shops.length} shops`);
+
+        if (shops.length === 0) {
+            console.warn('[getAllListedProducts] No shops found in marketplace');
+            return [];
+        }
 
         // Initialize Kiosk Client
         const kioskClient = new KioskClient({
@@ -244,52 +257,89 @@ export async function getAllListedProducts(client: SuiClient): Promise<Product[]
         // Fetch Kiosks for all shop owners and extract products
         const productsPromises = shops.map(async (shop) => {
             try {
+                console.log(`[getAllListedProducts] Checking shop: ${shop.name} (${shop.owner})`);
+
                 const { kioskIds } = await kioskClient.getOwnedKiosks({ address: shop.owner });
+                console.log(`[getAllListedProducts] Shop ${shop.name} has ${kioskIds.length} kiosk(s)`);
+
+                if (kioskIds.length === 0) return [];
 
                 // For each kiosk, get items
-                const kioskProducts = await Promise.all(kioskIds.map(async (id) => {
-                    const kiosk = await kioskClient.getKiosk({
-                        id,
-                        options: {
-                            withObjects: true,
+                const kioskProducts = await Promise.all(kioskIds.map(async (kioskId) => {
+                    try {
+                        const kiosk = await kioskClient.getKiosk({
+                            id: kioskId,
+                            options: {
+                                withObjects: true,
+                                withListingPrices: true,
+                            }
+                        });
+
+                        console.log(`[getAllListedProducts] Kiosk ${kioskId} has ${kiosk.items.length} item(s)`);
+
+                        if (kiosk.items.length > 0) {
+                            console.log('[getAllListedProducts] Sample item types:', kiosk.items.map(i => i.type).join(', '));
                         }
-                    });
 
-                    // Parse items that match our Product type
-                    return kiosk.items
-                        .filter(item => item.type === `${PACKAGE_ID}::product::Product`)
-                        .map(item => {
-                            const fields = (item.data?.content as any)?.fields;
-                            if (!fields) return null;
+                        // Parse items that match our Product type
+                        const products = kiosk.items
+                            .filter(item => {
+                                const expectedType = `${PACKAGE_ID}::product::Product`;
+                                const isProduct = item.type === expectedType;
 
-                            return {
-                                id: item.data!.objectId,
-                                shopId: fields.shop_id,
-                                name: fields.name,
-                                description: fields.description,
-                                imageUrl: fields.image_url,
-                                price: Number(fields.price),
-                                creator: fields.creator,
-                                listed: true,
-                                createdAt: Number(fields.created_at),
-                                kioskId: id
-                            } as Product;
-                        })
-                        .filter((p): p is Product => p !== null);
+                                if (!isProduct && kiosk.items.length > 0) {
+                                    console.log(`[getAllListedProducts] Type mismatch: expected "${expectedType}", got "${item.type}"`);
+                                }
+
+                                return isProduct;
+                            })
+                            .map(item => {
+                                const fields = (item.data?.content as any)?.fields;
+                                if (!fields) {
+                                    console.warn(`[getAllListedProducts] No fields found for item ${item.objectId}`);
+                                    return null;
+                                }
+
+                                console.log(`[getAllListedProducts] Found product: ${fields.name}`);
+
+                                return {
+                                    id: item.data!.objectId,
+                                    shopId: fields.shop_id,
+                                    name: fields.name,
+                                    description: fields.description,
+                                    imageUrl: fields.image_url,
+                                    price: Number(fields.price),
+                                    creator: fields.creator,
+                                    listed: true,
+                                    createdAt: Number(fields.created_at),
+                                    kioskId: kioskId
+                                } as Product;
+                            })
+                            .filter((p): p is Product => p !== null);
+
+                        return products;
+                    } catch (kioskErr) {
+                        console.error(`[getAllListedProducts] Error fetching kiosk ${kioskId}:`, kioskErr);
+                        return [];
+                    }
                 }));
 
                 return kioskProducts.flat();
             } catch (err) {
-                console.error(`Error fetching products for shop ${shop.id}:`, err);
+                console.error(`[getAllListedProducts] Error processing shop ${shop.id}:`, err);
                 return [];
             }
         });
 
         const allProducts = await Promise.all(productsPromises);
-        return allProducts.flat();
+        const flatProducts = allProducts.flat();
+
+        console.log(`[getAllListedProducts] Total products found: ${flatProducts.length}`);
+
+        return flatProducts;
 
     } catch (error) {
-        console.error('Error fetching all listed products:', error);
+        console.error('[getAllListedProducts] Fatal error:', error);
         return [];
     }
 }

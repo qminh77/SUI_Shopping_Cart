@@ -1,6 +1,8 @@
-import { useCurrentAccount } from '@mysten/dapp-kit';
+import { useCurrentAccount, useSuiClient, useSignAndExecuteTransaction } from '@mysten/dapp-kit';
+import { Transaction } from '@mysten/sui/transactions';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { PACKAGE_ID, MARKETPLACE_ID } from '@/lib/sui-utils';
 
 export type ShopStatus = 'PENDING' | 'ACTIVE' | 'SUSPENDED';
 
@@ -28,13 +30,16 @@ export type Shop = {
     admin_note?: string;
     created_at: string;
     updated_at: string;
+    on_chain_shop_id?: string; // NEW: Track the on-chain Shop object ID
 };
 
 /**
- * Hook for shop-related operations (Supabase Backend)
+ * Hook for shop-related operations (Supabase Backend + On-Chain)
  */
 export function useShop() {
     const account = useCurrentAccount();
+    const client = useSuiClient();
+    const { mutateAsync: signAndExecute } = useSignAndExecuteTransaction();
     const queryClient = useQueryClient();
 
     // Fetch user's shop from Supabase
@@ -63,29 +68,53 @@ export function useShop() {
         gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
     });
 
-    // Create shop mutation
+    // Create shop mutation (ON-CHAIN + Database)
     const createShop = useMutation({
         mutationFn: async (data: any) => {
+            if (!account?.address) throw new Error('Wallet not connected');
+
+            // Step 1: Create Shop on-chain and register in Marketplace
+            console.log('[useShop] Creating shop on-chain...');
+            const tx = new Transaction();
+
+            tx.moveCall({
+                target: `${PACKAGE_ID}::shop::create_shop`,
+                arguments: [
+                    tx.object(MARKETPLACE_ID),
+                    tx.pure.string(data.shop_name),
+                    tx.pure.string(data.shop_description),
+                ],
+            });
+
+            const result = await signAndExecute({ transaction: tx });
+            console.log('[useShop] On-chain shop created:', result.digest);
+
+            // Step 2: Save to Supabase database
+            console.log('[useShop] Saving shop to database...');
             const res = await fetch('/api/shops', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     ...data,
-                    owner_wallet: account?.address
+                    owner_wallet: account?.address,
+                    transaction_digest: result.digest, // Store the transaction for reference
                 })
             });
+
             if (!res.ok) {
                 const err = await res.json();
-                throw new Error(err.error || 'Failed to create shop');
+                throw new Error(err.error || 'Failed to save shop to database');
             }
+
             return res.json();
         },
         onSuccess: () => {
-            toast.success('Shop registration submitted!');
+            toast.success('Shop created successfully! Awaiting admin approval.');
             queryClient.invalidateQueries({ queryKey: ['shop', account?.address] });
         },
         onError: (err: any) => {
-            toast.error(err.message);
+            console.error('[useShop] Create shop error:', err);
+            toast.error(err.message || 'Failed to create shop');
         }
     });
 
