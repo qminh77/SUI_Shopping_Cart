@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
@@ -57,7 +57,7 @@ const getBadgeClass = (status: string) => {
     }
 }
 
-export default function AdminShopsPage() {
+function AdminShopsContent() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const page = parseInt(searchParams.get('page') || '1')
@@ -187,5 +187,13 @@ export default function AdminShopsPage() {
 
             {/* Pagination Actions would go here */}
         </div>
+    )
+}
+
+export default function AdminShopsPage() {
+    return (
+        <Suspense fallback={<div className="flex h-screen items-center justify-center"><Loader2 className="animate-spin" /></div>}>
+            <AdminShopsContent />
+        </Suspense>
     )
 }
