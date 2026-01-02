@@ -43,16 +43,22 @@ export function useShop() {
         queryFn: async () => {
             if (!account?.address) return null;
             const res = await fetch(`/api/shops/me?wallet=${account.address}`);
+
+            // Only throw on actual errors, not on 404/null responses
             if (!res.ok) {
-                // If 404/not found, our API returns null or error? 
-                // My API code returns { error } if 500/400, or null from logic.
-                // Actually my API `GET /me` returns `shop || null`.
-                // So if 200 OK and body is null, it's null.
+                const errorData = await res.json();
+                if (errorData?.error) {
+                    throw new Error(errorData.error);
+                }
                 throw new Error('Failed to fetch shop');
             }
-            return res.json();
+
+            // Return the shop or null if not found
+            const data = await res.json();
+            return data;
         },
         enabled: !!account?.address,
+        retry: false, // Don't retry on errors
     });
 
     // Create shop mutation

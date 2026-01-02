@@ -11,9 +11,15 @@ export async function GET(req: NextRequest) {
 
     try {
         const shop = await getShopByWallet(wallet)
-        return NextResponse.json(shop || null) // Return null if 404/not found logic
-    } catch (error) {
+        // Return 200 with null body if shop doesn't exist, not an error
+        return NextResponse.json(shop, { status: 200 })
+    } catch (error: any) {
+        // Only return 500 for actual errors, not "not found"
         console.error('Get my shop error:', error)
+        // Check if it's a "not found" error from Supabase
+        if (error.code === 'PGRST116') {
+            return NextResponse.json(null, { status: 200 })
+        }
         return NextResponse.json({ error: 'Failed to fetch shop' }, { status: 500 })
     }
 }

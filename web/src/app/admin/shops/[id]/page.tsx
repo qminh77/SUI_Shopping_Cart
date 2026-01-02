@@ -45,9 +45,9 @@ export default function AdminShopDetailPage() {
     const { id } = useParams()
     const router = useRouter()
     const queryClient = useQueryClient()
-    const [suspendReason, setSuspendReason] = useState('')
-    const [isSuspendOpen, setIsSuspendOpen] = useState(false)
-    const [isLoadingAction, setIsLoadingAction] = useState(false)
+    const [suspendReason, setSuspendReason] = useState<string>('')
+    const [isSuspendOpen, setIsSuspendOpen] = useState<boolean>(false)
+    const [isLoadingAction, setIsLoadingAction] = useState<boolean>(false)
 
     const { data, isLoading, isError } = useQuery<ShopDetail>({
         queryKey: ['admin-shop', id],

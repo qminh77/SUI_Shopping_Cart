@@ -27,6 +27,7 @@ const shopSchema = z.object({
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json()
+        console.log('Received shop creation request:', JSON.stringify(body, null, 2))
 
         // Validate input
         const validatedData = shopSchema.parse(body)
@@ -37,12 +38,18 @@ export async function POST(req: NextRequest) {
         }
 
         const shop = await createShop(validatedData)
-        return NextResponse.json(shop)
+        return NextResponse.json(shop, { status: 201 })
     } catch (error) {
         if (error instanceof ZodError) {
-            return NextResponse.json({ error: 'Validation Error', details: (error as any).errors }, { status: 400 })
+            console.error('Validation error:', error.issues)
+            return NextResponse.json({
+                error: 'Validation Error',
+                details: error.issues,
+                message: error.issues.map((e: any) => `${e.path.join('.')}: ${e.message}`).join(', ')
+            }, { status: 400 })
         }
         console.error('Create shop error:', error)
-        return NextResponse.json({ error: 'Failed to create shop' }, { status: 500 })
+        const message = error instanceof Error ? error.message : 'Failed to create shop'
+        return NextResponse.json({ error: message }, { status: 500 })
     }
 }
