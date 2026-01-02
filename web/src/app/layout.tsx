@@ -16,8 +16,18 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Sui E-commerce - Web3 Marketplace",
-  description: "Decentralized e-commerce platform built on Sui blockchain",
+  title: "SUI Shopping Cart - Web3 Marketplace",
+  description: "Decentralized marketplace on Sui blockchain - Buy and sell verifiable digital assets with instant settlement",
+  manifest: "/manifest.json",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'),
+  openGraph: {
+    title: "SUI Shopping Cart",
+    description: "Decentralized marketplace on Sui blockchain",
+    type: "website",
+  },
+  icons: {
+    icon: '/vercel.svg',
+  },
 };
 
 export default function RootLayout({

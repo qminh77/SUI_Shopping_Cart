@@ -1,0 +1,17 @@
+{
+    "name": "SUI Shopping Cart",
+    "short_name": "SUI Shop",
+    "description": "Decentralized marketplace on Sui blockchain - Buy and sell verifiable digital assets with instant settlement",
+    "icons": [
+        {
+            "src": "/vercel.svg",
+            "sizes": "any",
+            "type": "image/svg+xml"
+        }
+    ],
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#000000",
+    "theme_color": "#4DA2FF",
+    "orientation": "portrait-primary"
+}
