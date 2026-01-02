@@ -3,14 +3,14 @@ import { createAdminSession, getAdminWallets, verifyAdminSignature } from '@/lib
 
 export async function POST(req: NextRequest) {
     try {
-        const { wallet, signature, nonce } = await req.json()
+        const { wallet, signature, publicKey, nonce } = await req.json()
 
-        if (!wallet || !signature) {
-            return NextResponse.json({ error: 'Missing wallet or signature' }, { status: 400 })
+        if (!wallet || !signature || !publicKey) {
+            return NextResponse.json({ error: 'Missing wallet, signature, or publicKey' }, { status: 400 })
         }
 
         // 1. Verify Signature
-        const isValid = await verifyAdminSignature(wallet, signature, nonce)
+        const isValid = await verifyAdminSignature(wallet, signature, publicKey, nonce)
         if (!isValid) {
             return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
         }

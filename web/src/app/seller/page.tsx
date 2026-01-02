@@ -205,61 +205,86 @@ export default function SellerPage() {
                             <Text p small type="secondary">Mint a product NFT linked to your shop</Text>
                             <Spacer h={1} />
 
-                            {/* @ts-ignore */}
-                            <Input
-                                width="100%"
-                                placeholder="e.g., Digital Artwork #1"
-                                value={productFormData.name}
-                                onChange={(e) => setProductFormData({ ...productFormData, name: e.target.value })}
-                            >
-                                Product Name
-                            </Input>
-                            <Spacer h={1} />
+                            {/* Shop Status Check - Only allow product creation if ACTIVE */}
+                            {userShop.status !== 'ACTIVE' ? (
+                                <div style={{ padding: '1.5rem', border: '2px solid #ff6b6b', borderRadius: '8px', backgroundColor: 'rgba(255, 107, 107, 0.1)', textAlign: 'center' }}>
+                                    <Text h5 style={{ color: '#ff6b6b', margin: '0 0 0.5rem 0' }}>
+                                        Shop {userShop.status === 'PENDING' ? 'Chưa Được Duyệt' : 'Bị Khóa'}
+                                    </Text>
+                                    <Text p small>
+                                        {userShop.status === 'PENDING'
+                                            ? 'Shop của bạn đang chờ Admin duyệt. Bạn chỉ có thể bán khi shop được duyệt.'
+                                            : 'Shop của bạn đã bị khóa. Vui lòng liên hệ Admin.'
+                                        }
+                                    </Text>
+                                    {userShop.admin_note && (
+                                        <>
+                                            <Spacer h={0.5} />
+                                            <Text p small type="secondary" style={{ fontStyle: 'italic' }}>
+                                                Ghi chú: {userShop.admin_note}
+                                            </Text>
+                                        </>
+                                    )}
+                                </div>
+                            ) : (
+                                <>
+                                    {/* @ts-ignore */}
+                                    <Input
+                                        width="100%"
+                                        placeholder="e.g., Digital Artwork #1"
+                                        value={productFormData.name}
+                                        onChange={(e) => setProductFormData({ ...productFormData, name: e.target.value })}
+                                    >
+                                        Product Name
+                                    </Input>
+                                    <Spacer h={1} />
 
-                            {/* @ts-ignore */}
-                            <Input
-                                width="100%"
-                                htmlType="number"
-                                placeholder="0.000"
-                                value={productFormData.price}
-                                onChange={(e) => setProductFormData({ ...productFormData, price: e.target.value })}
-                            >
-                                Price (SUI)
-                            </Input>
-                            <Spacer h={1} />
+                                    {/* @ts-ignore */}
+                                    <Input
+                                        width="100%"
+                                        htmlType="number"
+                                        placeholder="0.000"
+                                        value={productFormData.price}
+                                        onChange={(e) => setProductFormData({ ...productFormData, price: e.target.value })}
+                                    >
+                                        Price (SUI)
+                                    </Input>
+                                    <Spacer h={1} />
 
-                            {/* @ts-ignore */}
-                            <Textarea
-                                width="100%"
-                                placeholder="Describe your product..."
-                                value={productFormData.description}
-                                onChange={(e) => setProductFormData({ ...productFormData, description: e.target.value })}
-                            >
-                                Description
-                            </Textarea>
-                            <Spacer h={1} />
+                                    {/* @ts-ignore */}
+                                    <Textarea
+                                        width="100%"
+                                        placeholder="Describe your product..."
+                                        value={productFormData.description}
+                                        onChange={(e) => setProductFormData({ ...productFormData, description: e.target.value })}
+                                    >
+                                        Description
+                                    </Textarea>
+                                    <Spacer h={1} />
 
-                            {/* @ts-ignore */}
-                            <Input
-                                width="100%"
-                                placeholder="https://example.com/image.jpg"
-                                value={productFormData.imageUrl}
-                                onChange={(e) => setProductFormData({ ...productFormData, imageUrl: e.target.value })}
-                            >
-                                Image URL
-                            </Input>
-                            <Spacer h={1} />
+                                    {/* @ts-ignore */}
+                                    <Input
+                                        width="100%"
+                                        placeholder="https://example.com/image.jpg"
+                                        value={productFormData.imageUrl}
+                                        onChange={(e) => setProductFormData({ ...productFormData, imageUrl: e.target.value })}
+                                    >
+                                        Image URL
+                                    </Input>
+                                    <Spacer h={1} />
 
-                            {/* @ts-ignore */}
-                            <Button
-                                onClick={handleCreateProduct}
-                                disabled={isCreatingProduct}
-                                loading={isCreatingProduct}
-                                width="100%"
-                                type="secondary"
-                            >
-                                Create Product NFT
-                            </Button>
+                                    {/* @ts-ignore */}
+                                    <Button
+                                        onClick={handleCreateProduct}
+                                        disabled={isCreatingProduct}
+                                        loading={isCreatingProduct}
+                                        width="100%"
+                                        type="secondary"
+                                    >
+                                        Create Product NFT
+                                    </Button>
+                                </>
+                            )}
                         </Card>
                     </Grid>
 

@@ -49,6 +49,7 @@ function LoginForm() {
                 body: JSON.stringify({
                     wallet: account.address,
                     signature: result.signature,
+                    publicKey: account.publicKey,  // Send public key for verification
                     nonce
                 })
             })
