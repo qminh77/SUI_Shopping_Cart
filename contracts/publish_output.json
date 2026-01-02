@@ -1,0 +1,347 @@
+[Note]: Dependency sources are no longer verified automatically during publication and upgrade. You can pass the `--verify-deps` option if you would like to verify them as part of publication or upgrade.
+[note] Dependencies on Bridge, MoveStdlib, Sui, and SuiSystem are automatically added, but this feature is disabled for your package because you have explicitly included dependencies on Sui. Consider removing these dependencies from Move.toml.
+UPDATING GIT DEPENDENCY https://github.com/MystenLabs/sui.git
+INCLUDING DEPENDENCY Sui
+INCLUDING DEPENDENCY MoveStdlib
+BUILDING sui_ecommerce
+[0m[1m[38;5;11mwarning[Lint W99000][0m[1m: possible owned object share[0m
+    [0m[34m┌─[0m /home/qminh77/Downloads/SUI Project/contracts/sources/product.move:31:9
+    [0m[34m│[0m
+[0m[34m 31[0m [0m[34m│[0m         [0m[33mtransfer::public_share_object(policy)[0m;
+    [0m[34m│[0m         [0m[33m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+    [0m[34m│[0m         [0m[33m│[0m                             [0m[34m│[0m
+    [0m[34m│[0m         [0m[33m│[0m                             [0m[34mCreating a fresh object and sharing it within the same function will ensure this does not abort.[0m
+    [0m[34m│[0m         [0m[33mPotential abort from a (potentially) owned object created by a different transaction.[0m
+    [0m[34m│[0m
+    [0m[34m┌─[0m /home/qminh77/.move/https___github_com_MystenLabs_sui_git_framework__testnet/crates/sui-framework/packages/sui-framework/sources/kiosk/transfer_policy.move:71:50
+    [0m[34m│[0m
+[0m[34m 71[0m [0m[34m│[0m public struct TransferPolicy<phantom T> has key, store {
+    [0m[34m│[0m                                                  [0m[34m-----[0m [0m[34mPotentially an owned object because 'store' grants access to public transfers[0m
+    [0m[34m·[0m
+[0m[34m115[0m [0m[34m│[0m public fun new<T>(pub: &Publisher, ctx: &mut TxContext): (TransferPolicy<T>, TransferPolicyCap<T>) {
+    [0m[34m│[0m                                                           [0m[34m-----------------[0m [0m[34mA potentially owned object coming from here[0m
+    [0m[34m│[0m
+    [0m[34m=[0m This warning can be suppressed with '#[allow(lint(share_owned))]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[Lint W99001][0m[1m: non-composable transfer to sender[0m
+   [0m[34m┌─[0m /home/qminh77/Downloads/SUI Project/contracts/sources/product.move:70:9
+   [0m[34m│[0m
+[0m[34m61[0m [0m[34m│[0m     public fun mint_to_sender(
+   [0m[34m│[0m                [0m[34m--------------[0m [0m[34mReturning an object from a function, allows a caller to use the object and enables composability via programmable transactions.[0m
+   [0m[34m·[0m
+[0m[34m70[0m [0m[34m│[0m         [0m[33mtransfer::public_transfer(product, ctx.sender())[0m;
+   [0m[34m│[0m         [0m[33m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+   [0m[34m│[0m         [0m[33m│[0m                                  [0m[34m│[0m
+   [0m[34m│[0m         [0m[33m│[0m                                  [0m[34mTransaction sender address coming from here[0m
+   [0m[34m│[0m         [0m[33mTransfer of an object to transaction sender address[0m
+   [0m[34m│[0m
+   [0m[34m=[0m This warning can be suppressed with '#[allow(lint(self_transfer))]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[Lint W99001][0m[1m: non-composable transfer to sender[0m
+   [0m[34m┌─[0m /home/qminh77/Downloads/SUI Project/contracts/sources/shop.move:91:9
+   [0m[34m│[0m
+[0m[34m54[0m [0m[34m│[0m     public fun create_shop(
+   [0m[34m│[0m                [0m[34m-----------[0m [0m[34mReturning an object from a function, allows a caller to use the object and enables composability via programmable transactions.[0m
+   [0m[34m·[0m
+[0m[34m60[0m [0m[34m│[0m         let sender = ctx.sender();
+   [0m[34m│[0m                      [0m[34m------------[0m [0m[34mTransaction sender address coming from here[0m
+   [0m[34m·[0m
+[0m[34m91[0m [0m[34m│[0m         [0m[33mtransfer::transfer(shop, sender)[0m;
+   [0m[34m│[0m         [0m[33m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m [0m[33mTransfer of an object to transaction sender address[0m
+   [0m[34m│[0m
+   [0m[34m=[0m This warning can be suppressed with '#[allow(lint(self_transfer))]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[Lint W99001][0m[1m: non-composable transfer to sender[0m
+   [0m[34m┌─[0m /home/qminh77/Downloads/SUI Project/contracts/sources/shop.move:94:9
+   [0m[34m│[0m
+[0m[34m54[0m [0m[34m│[0m     public fun create_shop(
+   [0m[34m│[0m                [0m[34m-----------[0m [0m[34mReturning an object from a function, allows a caller to use the object and enables composability via programmable transactions.[0m
+   [0m[34m·[0m
+[0m[34m60[0m [0m[34m│[0m         let sender = ctx.sender();
+   [0m[34m│[0m                      [0m[34m------------[0m [0m[34mTransaction sender address coming from here[0m
+   [0m[34m·[0m
+[0m[34m94[0m [0m[34m│[0m         [0m[33mtransfer::transfer(shop_cap, sender)[0m;
+   [0m[34m│[0m         [0m[33m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m [0m[33mTransfer of an object to transaction sender address[0m
+   [0m[34m│[0m
+   [0m[34m=[0m This warning can be suppressed with '#[allow(lint(self_transfer))]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+Please report feedback on the linter warnings at https://forums.sui.io
+
+Skipping dependency verification
+{
+  "digest": "5TqtYySceCzEKZQrBsy8zQfwGUWdP8fx8f3YFSTmmL6T",
+  "transaction": {
+    "data": {
+      "messageVersion": "v1",
+      "transaction": {
+        "kind": "ProgrammableTransaction",
+        "inputs": [
+          {
+            "type": "pure",
+            "valueType": "address",
+            "value": "0x6fb16405edba76f013ae0c052ec640537b375897d8da63664931ba3dc221a473"
+          }
+        ],
+        "transactions": [
+          {
+            "Publish": [
+              "0x0000000000000000000000000000000000000000000000000000000000000001",
+              "0x0000000000000000000000000000000000000000000000000000000000000002"
+            ]
+          },
+          {
+            "TransferObjects": [
+              [
+                {
+                  "Result": 0
+                }
+              ],
+              {
+                "Input": 0
+              }
+            ]
+          }
+        ]
+      },
+      "sender": "0x6fb16405edba76f013ae0c052ec640537b375897d8da63664931ba3dc221a473",
+      "gasData": {
+        "payment": [
+          {
+            "objectId": "0x6328e48d02cc942e071c639406a0bf3030549b1521cca833d0f12f114fd5803d",
+            "version": 349181127,
+            "digest": "3B7mfr8F4mJBvaXhjmVFzUoj7Vm8f5Rjjee9Cz1J8MwB"
+          }
+        ],
+        "owner": "0x6fb16405edba76f013ae0c052ec640537b375897d8da63664931ba3dc221a473",
+        "price": "1000",
+        "budget": "500000000"
+      }
+    },
+    "txSignatures": [
+      "AKZdnnfa+GN+qLHbN9lwa8DsILoPGZt4CeRrit4vbkkJhR5qansdZS9zVWw6LDWtNJ71zvBkboDtUc7AQ/MAawSFwGeHGzy+GaAzGioYI2mKCj1rl1Q/99kBPxCsSEqOXw=="
+    ]
+  },
+  "effects": {
+    "messageVersion": "v1",
+    "status": {
+      "status": "success"
+    },
+    "executedEpoch": "967",
+    "gasUsed": {
+      "computationCost": "1000000",
+      "storageCost": "27550000",
+      "storageRebate": "978120",
+      "nonRefundableStorageFee": "9880"
+    },
+    "modifiedAtVersions": [
+      {
+        "objectId": "0x6328e48d02cc942e071c639406a0bf3030549b1521cca833d0f12f114fd5803d",
+        "sequenceNumber": "349181127"
+      }
+    ],
+    "transactionDigest": "5TqtYySceCzEKZQrBsy8zQfwGUWdP8fx8f3YFSTmmL6T",
+    "created": [
+      {
+        "owner": {
+          "AddressOwner": "0x6fb16405edba76f013ae0c052ec640537b375897d8da63664931ba3dc221a473"
+        },
+        "reference": {
+          "objectId": "0x2a1aec3efb2050c80f77aea4ba2dd687357f86e4b0b886b20752cb978b643643",
+          "version": 349181128,
+          "digest": "BkGXafKtZQWMQfhnwTxoeYzzJyknrcTrJWjGrQw4CG9S"
+        }
+      },
+      {
+        "owner": {
+          "AddressOwner": "0x6fb16405edba76f013ae0c052ec640537b375897d8da63664931ba3dc221a473"
+        },
+        "reference": {
+          "objectId": "0x3c692a4152c001ce7eade6cb92ad4876f1e6d532ea74800541b64c5930f80bf5",
+          "version": 349181128,
+          "digest": "HSuhuzn2UQknDSpdfs7pW3ghmjfGoN9o7GuXs9ejU1e6"
+        }
+      },
+      {
+        "owner": {
+          "Shared": {
+            "initial_shared_version": 349181128
+          }
+        },
+        "reference": {
+          "objectId": "0x9e70c7edf40ade24e86f7d7905b5930f45597ce376b34c293a1a1e2bb064f39f",
+          "version": 349181128,
+          "digest": "6k9NSPfH5Wm5aSJnGb7R7AahVJ3aKjhcM5Mfa7JEdhbh"
+        }
+      },
+      {
+        "owner": "Immutable",
+        "reference": {
+          "objectId": "0xe33c5069bb2fa90a80c07f3e2b1aa45366b8e294232c99a9c0ca1645ea3518a1",
+          "version": 1,
+          "digest": "JAL3fS6qMxHpRxKDTHQDXs1GnmYfhxxbvwEXSvXeFMXg"
+        }
+      },
+      {
+        "owner": {
+          "Shared": {
+            "initial_shared_version": 349181128
+          }
+        },
+        "reference": {
+          "objectId": "0xeed75811f3b4a565ced972eead23aa9b9770927ef1901409e32359ec2e7a9489",
+          "version": 349181128,
+          "digest": "7xVWafv8i7vxPXAdn3Lt17aZXBkccuydh75vTDvMbQXT"
+        }
+      },
+      {
+        "owner": {
+          "AddressOwner": "0x6fb16405edba76f013ae0c052ec640537b375897d8da63664931ba3dc221a473"
+        },
+        "reference": {
+          "objectId": "0xf8c5e431650b184c1d7e376169251014d947be1d9843db85ff383cf09b56081c",
+          "version": 349181128,
+          "digest": "5DZgBP9QWAcz4Scxp1dsxsUciBouL4G7JWqhvDPyyEAY"
+        }
+      }
+    ],
+    "mutated": [
+      {
+        "owner": {
+          "AddressOwner": "0x6fb16405edba76f013ae0c052ec640537b375897d8da63664931ba3dc221a473"
+        },
+        "reference": {
+          "objectId": "0x6328e48d02cc942e071c639406a0bf3030549b1521cca833d0f12f114fd5803d",
+          "version": 349181128,
+          "digest": "CuiSuxTPRYaE61hkwvMx8RVL73inEHxnjL1XCEGP1Pm7"
+        }
+      }
+    ],
+    "gasObject": {
+      "owner": {
+        "AddressOwner": "0x6fb16405edba76f013ae0c052ec640537b375897d8da63664931ba3dc221a473"
+      },
+      "reference": {
+        "objectId": "0x6328e48d02cc942e071c639406a0bf3030549b1521cca833d0f12f114fd5803d",
+        "version": 349181128,
+        "digest": "CuiSuxTPRYaE61hkwvMx8RVL73inEHxnjL1XCEGP1Pm7"
+      }
+    },
+    "eventsDigest": "24wn1kyoFqCpMUb8Rr8yyYkmAsgRHDaEUDneachSHsCo",
+    "dependencies": [
+      "2BNuLYzJ44M4TUWDYrZd3Ve2mcAuz1hWg6toU4jsJoeX",
+      "6z9MVgUMsNnGKy7bAfMmFXBTo4hofX8PoML57T8wTyNh"
+    ]
+  },
+  "events": [
+    {
+      "id": {
+        "txDigest": "5TqtYySceCzEKZQrBsy8zQfwGUWdP8fx8f3YFSTmmL6T",
+        "eventSeq": "0"
+      },
+      "packageId": "0xe33c5069bb2fa90a80c07f3e2b1aa45366b8e294232c99a9c0ca1645ea3518a1",
+      "transactionModule": "product",
+      "sender": "0x6fb16405edba76f013ae0c052ec640537b375897d8da63664931ba3dc221a473",
+      "type": "0x2::transfer_policy::TransferPolicyCreated<0xe33c5069bb2fa90a80c07f3e2b1aa45366b8e294232c99a9c0ca1645ea3518a1::product::Product>",
+      "parsedJson": {
+        "id": "0xeed75811f3b4a565ced972eead23aa9b9770927ef1901409e32359ec2e7a9489"
+      },
+      "bcsEncoding": "base64",
+      "bcs": "7tdYEfO0pWXO2XLurSOqm5dwkn7xkBQJ4yNZ7C56lIk="
+    }
+  ],
+  "objectChanges": [
+    {
+      "type": "mutated",
+      "sender": "0x6fb16405edba76f013ae0c052ec640537b375897d8da63664931ba3dc221a473",
+      "owner": {
+        "AddressOwner": "0x6fb16405edba76f013ae0c052ec640537b375897d8da63664931ba3dc221a473"
+      },
+      "objectType": "0x2::coin::Coin<0x2::sui::SUI>",
+      "objectId": "0x6328e48d02cc942e071c639406a0bf3030549b1521cca833d0f12f114fd5803d",
+      "version": "349181128",
+      "previousVersion": "349181127",
+      "digest": "CuiSuxTPRYaE61hkwvMx8RVL73inEHxnjL1XCEGP1Pm7"
+    },
+    {
+      "type": "created",
+      "sender": "0x6fb16405edba76f013ae0c052ec640537b375897d8da63664931ba3dc221a473",
+      "owner": {
+        "AddressOwner": "0x6fb16405edba76f013ae0c052ec640537b375897d8da63664931ba3dc221a473"
+      },
+      "objectType": "0x2::package::Publisher",
+      "objectId": "0x2a1aec3efb2050c80f77aea4ba2dd687357f86e4b0b886b20752cb978b643643",
+      "version": "349181128",
+      "digest": "BkGXafKtZQWMQfhnwTxoeYzzJyknrcTrJWjGrQw4CG9S"
+    },
+    {
+      "type": "created",
+      "sender": "0x6fb16405edba76f013ae0c052ec640537b375897d8da63664931ba3dc221a473",
+      "owner": {
+        "AddressOwner": "0x6fb16405edba76f013ae0c052ec640537b375897d8da63664931ba3dc221a473"
+      },
+      "objectType": "0x2::package::UpgradeCap",
+      "objectId": "0x3c692a4152c001ce7eade6cb92ad4876f1e6d532ea74800541b64c5930f80bf5",
+      "version": "349181128",
+      "digest": "HSuhuzn2UQknDSpdfs7pW3ghmjfGoN9o7GuXs9ejU1e6"
+    },
+    {
+      "type": "created",
+      "sender": "0x6fb16405edba76f013ae0c052ec640537b375897d8da63664931ba3dc221a473",
+      "owner": {
+        "Shared": {
+          "initial_shared_version": 349181128
+        }
+      },
+      "objectType": "0xe33c5069bb2fa90a80c07f3e2b1aa45366b8e294232c99a9c0ca1645ea3518a1::shop::Marketplace",
+      "objectId": "0x9e70c7edf40ade24e86f7d7905b5930f45597ce376b34c293a1a1e2bb064f39f",
+      "version": "349181128",
+      "digest": "6k9NSPfH5Wm5aSJnGb7R7AahVJ3aKjhcM5Mfa7JEdhbh"
+    },
+    {
+      "type": "published",
+      "packageId": "0xe33c5069bb2fa90a80c07f3e2b1aa45366b8e294232c99a9c0ca1645ea3518a1",
+      "version": "1",
+      "digest": "JAL3fS6qMxHpRxKDTHQDXs1GnmYfhxxbvwEXSvXeFMXg",
+      "modules": [
+        "product",
+        "shop"
+      ]
+    },
+    {
+      "type": "created",
+      "sender": "0x6fb16405edba76f013ae0c052ec640537b375897d8da63664931ba3dc221a473",
+      "owner": {
+        "Shared": {
+          "initial_shared_version": 349181128
+        }
+      },
+      "objectType": "0x2::transfer_policy::TransferPolicy<0xe33c5069bb2fa90a80c07f3e2b1aa45366b8e294232c99a9c0ca1645ea3518a1::product::Product>",
+      "objectId": "0xeed75811f3b4a565ced972eead23aa9b9770927ef1901409e32359ec2e7a9489",
+      "version": "349181128",
+      "digest": "7xVWafv8i7vxPXAdn3Lt17aZXBkccuydh75vTDvMbQXT"
+    },
+    {
+      "type": "created",
+      "sender": "0x6fb16405edba76f013ae0c052ec640537b375897d8da63664931ba3dc221a473",
+      "owner": {
+        "AddressOwner": "0x6fb16405edba76f013ae0c052ec640537b375897d8da63664931ba3dc221a473"
+      },
+      "objectType": "0x2::transfer_policy::TransferPolicyCap<0xe33c5069bb2fa90a80c07f3e2b1aa45366b8e294232c99a9c0ca1645ea3518a1::product::Product>",
+      "objectId": "0xf8c5e431650b184c1d7e376169251014d947be1d9843db85ff383cf09b56081c",
+      "version": "349181128",
+      "digest": "5DZgBP9QWAcz4Scxp1dsxsUciBouL4G7JWqhvDPyyEAY"
+    }
+  ],
+  "balanceChanges": [
+    {
+      "owner": {
+        "AddressOwner": "0x6fb16405edba76f013ae0c052ec640537b375897d8da63664931ba3dc221a473"
+      },
+      "coinType": "0x2::sui::SUI",
+      "amount": "-27571880"
+    }
+  ],
+  "timestampMs": "1767348601765",
+  "confirmedLocalExecution": true,
+  "checkpoint": "281697435"
+}

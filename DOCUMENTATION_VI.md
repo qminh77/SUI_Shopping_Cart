@@ -91,19 +91,23 @@ SUI Project/
 #### Struct `Product`
 ```move
 public struct Product has key, store {
-    id: UID,              // ID unique của NFT
-    name: String,         // Tên sản phẩm
-    description: String,  // Mô tả
-    image_url: String,    // URL hình ảnh
-    price: u64,          // Giá (đơn vị MIST)
-    creator: address,    // Người tạo NFT
+    id: UID,
+    shop_id: address,      // Shop mà sản phẩm thuộc về
+    name: String,
+    description: String,
+    image_url: String,
+    price: u64,           // Giá (đơn vị MIST)
+    creator: address,     // Người tạo NFT
+    listed: bool,         // Trạng thái niêm yết (Deprecated - Kiosk là source of truth)
+    created_at: u64,      // Thời gian tạo
 }
 ```
 
 #### Function `mint()`
-**Mục đích:** Tạo (mint) một Product NFT mới
+**Mục đích:** Tạo (mint) một Product NFT mới và liên kết với shop
 
 **Input:**
+- `shop_id: address` - ID của shop
 - `name: String` - Tên sản phẩm
 - `description: String` - Mô tả chi tiết
 - `image_url: String` - URL hình ảnh sản phẩm
@@ -111,12 +115,12 @@ public struct Product has key, store {
 - `ctx: &mut TxContext` - Transaction context
 
 **Output:** 
-- Chuyển NFT mới tạo cho người gọi hàm
+- Trả về object `Product` mới created
 
 **Cách hoạt động:**
-1. Tạo object `Product` mới với thông tin được truyền vào
-2. Gán `creator` = địa chỉ người gọi
-3. Transfer NFT cho người tạo qua `transfer::public_transfer()`
+1. Tạo object `Product` với `shop_id` và thông tin được truyền vào
+2. `listed` mặc định là `false`
+3. Ghi nhận thời gian tạo `created_at`
 
 #### Các Function Accessor
 ```move
@@ -125,6 +129,9 @@ public fun description(product: &Product): &String
 public fun image_url(product: &Product): &String
 public fun price(product: &Product): u64
 public fun creator(product: &Product): address
+public fun shop_id(product: &Product): address
+public fun is_listed(product: &Product): bool
+public fun created_at(product: &Product): u64
 ```
 **Mục đích:** Đọc thông tin của Product NFT
 
@@ -134,39 +141,53 @@ public fun creator(product: &Product): address
 
 **Đường dẫn:** `contracts/sources/shop.move`
 
-**Chức năng:** Quản lý Shop và logic mua bán
+**Chức năng:** Quản lý Shop và Marketplace Registry
 
-#### Struct `ShopOwnerCap`
+#### Structs
 ```move
+// Shop riêng lẻ của user
+public struct Shop has key, store {
+    id: UID,
+    owner: address,
+    name: String,
+    description: String,
+    created_at: u64,
+}
+
+// Global Marketplace Registry
+public struct Marketplace has key {
+    id: UID,
+    shops: vector<address>,  // List tất cả shop IDs
+}
+
+// Capability chứng minh quyền sở hữu shop
 public struct ShopOwnerCap has key, store {
     id: UID,
-    shop_id: address,  // ID của shop
+    shop_id: address,
+    shop_name: String,
 }
 ```
-**Ý nghĩa:** Capability token chứng minh quyền sở hữu shop
+
+#### Function `init()`
+**Mục đích:** Khởi tạo Marketplace global (chạy 1 lần khi deploy)
+- Tạo object `Marketplace` rỗng và share object này.
 
 #### Function `create_shop()`
-**Mục đích:** Tạo shop mới
-
-**Output:** 
-- Tạo và chuyển `ShopOwnerCap` cho người tạo
-- Như một "chìa khóa" để quản lý shop
-
-#### Function `purchase_product()`
-**Mục đích:** Mua một Product NFT
+**Mục đích:** Tạo shop mới và đăng ký vào Marketplace
 
 **Input:**
-- `product_item: Product` - NFT product cần mua
-- `payment: Coin<SUI>` - Số SUI để thanh toán
-- `seller: address` - Địa chỉ người bán
-- `ctx: &mut TxContext` - Transaction context
+- `marketplace: &mut Marketplace` - Object Marketplace shared
+- `name: String` - Tên shop
+- `description: String` - Mô tả shop
+- `ctx: &mut TxContext`
 
-**Cách hoạt động:**
-1. Kiểm tra số tiền thanh toán >= giá sản phẩm
-2. Chuyển tiền cho seller
-3. Chuyển NFT product cho buyer
+**Output:** 
+- Tạo `Shop` object và chuyển cho owner
+- Tạo `ShopOwnerCap` và chuyển cho owner
+- Thêm shop ID vào danh sách trong `Marketplace`
+- Emit event `ShopCreated`
 
-**Lưu ý:** Đây là phiên bản đơn giản, trong production sẽ tích hợp Sui Kiosk
+**Lưu ý:** Logic mua bán (Purchase) đã được chuyển sang sử dụng mô hình Kiosk, không còn nằm trực tiếp trong `shop.move` dưới dạng function đơn giản.
 
 ---
 
@@ -369,11 +390,21 @@ if (!account) {
 - Chỉ user đã connect wallet mới vào được
 - Hiển thị thông báo nếu chưa connect
 
-#### Create Product Form
+#### Create Product & Shop Flow
+
+**Yêu Cầu:**
+1. **Connect Wallet:** User phải kết nối ví.
+2. **Has Shop:** User phải tạo Shop trước (`ShopOwnerCap`).
+3. **Has Kiosk:** User phải tạo Kiosk cá nhân (để list sản phẩm).
+
+**Workflow trên UI:**
+1. Check `userShop` -> Nếu chưa có, hiện form "Create Your Shop".
+2. Check `hasKiosk` -> Nếu chưa có, hiện nút "Create Kiosk".
+3. Khi đủ điều kiện -> Hiện form "Create New Product".
 
 **Form Fields:**
 ```tsx
-const [formData, setFormData] = useState({
+const [productFormData, setProductFormData] = useState({
   name: '',
   description: '',
   imageUrl: '',
@@ -381,66 +412,29 @@ const [formData, setFormData] = useState({
 });
 ```
 
-**Input Fields:**
-
-1. **Product Name** (`Input`)
-   - Placeholder: "e.g., Digital Artwork #1"
-   - Required: ✅
-
-2. **Description** (`Textarea`)
-   - Rows: 4
-   - Placeholder: "Describe your product in detail..."
-   - Required: ✅
-
-3. **Image URL** (`Input type="url"`)
-   - Placeholder: "https://example.com/image.jpg"
-   - Helper text: "Provide a publicly accessible URL"
-   - Required: ✅
-
-4. **Price (SUI)** (`Input type="number"`)
-   - Step: 0.001
-   - Min: 0
-   - Helper text: "1 SUI = 1,000,000,000 MIST"
-   - Required: ✅
-
-#### Submit Logic
+#### Submit Logic (`handleCreateProduct`)
 
 ```tsx
 const handleCreateProduct = async (e: React.FormEvent) => {
-  // 1. Convert SUI to MIST
-  const priceInMist = Math.floor(parseFloat(formData.price) * 1_000_000_000);
+  // Input validation...
   
-  // 2. Build transaction
-  const tx = new Transaction();
-  tx.moveCall({
-    target: `${PACKAGE_ID}::product::mint`,
-    arguments: [
-      tx.pure.string(formData.name),
-      tx.pure.string(formData.description),
-      tx.pure.string(formData.imageUrl),
-      tx.pure.u64(priceInMist),
-    ],
+  // Call hook to mint product linked to shop
+  const result = await createProduct({
+      shopId: userShop.id,
+      name: productFormData.name,
+      // ...
   });
   
-  // 3. Sign & execute
-  signAndExecute({ transaction: tx }, {
-    onSuccess: () => {
-      toast.success('Product created successfully!');
-      // Reset form
-    },
-    onError: (error) => {
-      toast.error('Failed to create product');
-    }
-  });
+  // Note: Sau khi mint xong, user cần "List" sản phẩm vào Kiosk
+  // để sản phẩm xuất hiện trên Marketplace.
 }
 ```
 
-**Transaction Flow:**
-1. User điền form và submit
-2. Frontend convert giá từ SUI → MIST
-3. Gọi `product::mint()` trên blockchain
-4. User approve transaction trong ví
-5. NFT được mint và transfer cho user
+**Transaction Flow (Minting):**
+1. User điền form và submit.
+2. Gọi `product::mint()` với `shop_id`.
+3. NFT được tạo và chuyển về ví user.
+4. User cần thực hiện thêm bước "List" (thông qua Kiosk) để bán.
 6. Hiển thị toast notification
 
 #### Setup Instructions Section
@@ -581,57 +575,47 @@ const { data: products } = useSuiClientQuery('getOwnedObjects', {
 
 ## 🔄 Luồng Hoạt Động
 
-### Flow 1: Tạo Product NFT
+### Flow 1: Seller Onboarding & Listing
 
 ```
 1. User → Vào /seller
-2. Kiểm tra → Đã connect wallet chưa?
-   ├─ Chưa → Hiển thị "Connect Wallet Required"
-   └─ Rồi → Hiển thị form
-3. User điền form:
-   - Name: "My Digital Art"
-   - Description: "Unique artwork..."
-   - Image URL: "https://..."
-   - Price: 1.5 SUI
-4. Click "Create Product NFT"
-5. Frontend:
-   - Convert 1.5 SUI → 1,500,000,000 MIST
-   - Build transaction:
-     tx.moveCall({
-       target: "${PACKAGE_ID}::product::mint",
-       arguments: [name, desc, url, price_mist]
-     })
-6. Wallet popup → User approve
-7. Blockchain:
-   - Execute product::mint()
-   - Tạo Product NFT mới
-   - id = new UID
-   - creator = tx.sender
-   - Transfer NFT cho creator
-8. Transaction success
-9. Frontend:
-   - Toast: "Product created successfully!"
-   - Reset form
-10. User có thể xem NFT trong ví
+2. Check Wallet?
+   └─ No → Yêu cầu connect
+3. Check Shop?
+   └─ No → Hiện form "Create Shop"
+      → Gọi shop::create_shop()
+      → Nhận ShopOwnerCap
+4. Check Kiosk?
+   └─ No → Hiện nút "Create Kiosk"
+      → Tạo Kiosk mới
+5. Tạo Product:
+   → Điền form (Name, Price, Image...)
+   → Gọi product::mint(shop_id, ...)
+   → NFT về ví user
+6. List Product:
+   → User click "List" trên item
+   → Place item vào Kiosk
+   → Set giá & list for sale
+   → Product status update: Listed = true
 ```
 
 ---
 
-### Flow 2: Xem Shop (Hiện Tại)
+### Flow 2: Xem Shop & Mua Hàng
 
 ```
 1. User → Vào /shop
-2. Frontend:
-   - Load mock data (3 products)
-   - setIsLoading(false)
-3. Render product grid:
-   - 3 cards với hình ảnh
-   - Tên, mô tả, giá
-   - Badge "NFT"
-4. Nút Purchase:
-   - Enabled nếu wallet connected
-   - Disabled nếu chưa connect
-5. Click Purchase → (chưa có logic)
+2. Frontend Query:
+   - Lấy danh sách Product NFT
+   - Filter `listed == true`
+3. Hiển thị Grid:
+   - Chỉ hiện các sản phẩm đang được list bán
+4. User click "Add to Cart" hoặc "View"
+5. Mua hàng (Purchase):
+   - User click "Purchase"
+   - Build transaction tương tác với Kiosk
+   - Trả tiền SUI -> Kiosk -> Seller
+   - NFT -> Buyer
 ```
 
 ---
@@ -698,8 +682,8 @@ const { data: products } = useSuiClientQuery('getOwnedObjects', {
 │  │  │   product   │  │     shop     │       │ │
 │  │  │   module    │  │    module    │       │ │
 │  │  │             │  │              │       │ │
-│  │  │ - mint()    │  │ - create()   │       │ │
-│  │  │ - accessors │  │ - purchase() │       │ │
+│  │  │ - mint()    │  │ - create_shop│       │ │
+│  │  │ - accessors │  │              │       │ │
 │  │  └─────────────┘  └──────────────┘       │ │
 │  └───────────────────────────────────────────┘ │
 │                                                 │
@@ -1065,7 +1049,7 @@ Error: Could not resolve module
 
 **Move:**
 - Modules: snake_case (`product`, `shop`)
-- Functions: snake_case (`mint`, `purchase_product`)
+- Functions: snake_case (`mint`, `create_shop`)
 - Structs: PascalCase (`Product`, `ShopOwnerCap`)
 
 ---

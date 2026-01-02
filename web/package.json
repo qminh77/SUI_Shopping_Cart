@@ -11,6 +11,7 @@
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@mysten/dapp-kit": "^0.19.11",
+    "@mysten/kiosk": "^0.14.6",
     "@mysten/sui": "^1.45.2",
     "@radix-ui/react-avatar": "^1.1.11",
     "@radix-ui/react-collapsible": "^1.1.12",

@@ -1,47 +1,118 @@
-/// Shop Module - Manages Kiosk-based marketplace
-/// Integrates with Sui Kiosk for product listing and sales
+/// Shop Module - Multi-shop marketplace with global discovery
+/// Manages individual shops and a global marketplace registry
 module sui_ecommerce::shop {
-    use sui::object::UID;
-    use sui::tx_context::TxContext;
-    use sui::transfer;
-    use sui::coin;
-    use sui::coin::Coin;
-    use sui::sui::SUI;
-    use sui_ecommerce::product;
-    use sui_ecommerce::product::Product;
+    use sui::event;
+    use std::string::String;
 
-    /// Shop owner capability
+    /// Shop represents an individual seller's storefront
+    public struct Shop has key, store {
+        id: UID,
+        owner: address,
+        name: String,
+        description: String,
+        created_at: u64,
+    }
+
+    /// Marketplace is a shared object that tracks all shops
+    public struct Marketplace has key {
+        id: UID,
+        shops: vector<address>,  // List of all shop object IDs
+    }
+
+    /// Capability proving shop ownership
     public struct ShopOwnerCap has key, store {
         id: UID,
         shop_id: address,
+        shop_name: String,
     }
 
-    /// Create a new shop (will integrate with Kiosk in production)
-    public fun create_shop(ctx: &mut TxContext) {
-        let shop_cap = ShopOwnerCap {
+    // ====== Events ======
+
+    /// Emitted when a new shop is created
+    public struct ShopCreated has copy, drop {
+        shop_id: address,
+        owner: address,
+        name: String,
+    }
+
+    // ====== Init Function ======
+
+    /// Initialize the marketplace (called once on publish)
+    fun init(ctx: &mut TxContext) {
+        let marketplace = Marketplace {
             id: object::new(ctx),
-            shop_id: tx_context::sender(ctx),
+            shops: vector::empty<address>(),
         };
         
-        transfer::public_transfer(shop_cap, tx_context::sender(ctx));
+        // Share the marketplace object so anyone can read it
+        transfer::share_object(marketplace);
     }
 
-    /// Purchase a product (simplified version)
-    /// In production, this will use Kiosk's purchase function
-    public fun purchase_product(
-        product_item: Product,
-        payment: Coin<SUI>,
-        seller: address,
+    // ====== Shop Management Functions ======
+
+    /// Create a new shop and register it in the marketplace
+    public fun create_shop(
+        marketplace: &mut Marketplace,
+        name: String,
+        description: String,
         ctx: &mut TxContext
     ) {
-        // Verify payment amount matches product price
-        let product_price = product::price(&product_item);
-        assert!(coin::value(&payment) >= product_price, 0);
+        let sender = ctx.sender();
+        let shop_uid = object::new(ctx);
+        let shop_id = object::uid_to_address(&shop_uid);
+        
+        // Create the shop object
+        let shop = Shop {
+            id: shop_uid,
+            owner: sender,
+            name,
+            description,
+            created_at: ctx.epoch(),
+        };
+        
+        // Create ownership capability
+        let shop_cap = ShopOwnerCap {
+            id: object::new(ctx),
+            shop_id,
+            shop_name: shop.name,
+        };
+        
+        // Register shop in marketplace
+        marketplace.shops.push_back(shop_id);
+        
+        // Emit event
+        event::emit(ShopCreated {
+            shop_id,
+            owner: sender,
+            name: shop.name,
+        });
+        
+        // Transfer shop to owner (so they control it)
+        transfer::transfer(shop, sender);
+        
+        // Transfer capability to owner
+        transfer::transfer(shop_cap, sender);
+    }
 
-        // Transfer payment to seller
-        transfer::public_transfer(payment, seller);
+    // ====== Accessor Functions ======
 
-        // Transfer product to buyer
-        transfer::public_transfer(product_item, tx_context::sender(ctx));
+    /// Get shop owner address
+    public fun get_shop_owner(shop: &Shop): address {
+        shop.owner
+    }
+
+    /// Get shop name
+    public fun get_shop_name(shop: &Shop): &String {
+        &shop.name
+    }
+
+    /// Get shop description
+    public fun get_shop_description(shop: &Shop): &String {
+        &shop.description
+    }
+
+    /// Get all shops in marketplace
+    public fun get_marketplace_shops(marketplace: &Marketplace): &vector<address> {
+        &marketplace.shops
     }
 }

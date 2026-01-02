@@ -1,0 +1,199 @@
+[note] Dependencies on Bridge, MoveStdlib, Sui, and SuiSystem are automatically added, but this feature is disabled for your package because you have explicitly included dependencies on Sui. Consider removing these dependencies from Move.toml.
+UPDATING GIT DEPENDENCY https://github.com/MystenLabs/sui.git
+INCLUDING DEPENDENCY Sui
+INCLUDING DEPENDENCY MoveStdlib
+BUILDING sui_ecommerce
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+  [0m[34m┌─[0m ./sources/product.move:4:23
+  [0m[34m│[0m
+[0m[34m4[0m [0m[34m│[0m     use sui::object::{[0m[33mSelf[0m, UID};
+  [0m[34m│[0m                       [0m[33m^^^^[0m [0m[33mUnnecessary alias 'object' for module 'sui::object'. This alias is provided by default[0m
+  [0m[34m│[0m
+  [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W09001][0m[1m: unused alias[0m
+  [0m[34m┌─[0m ./sources/product.move:4:23
+  [0m[34m│[0m
+[0m[34m4[0m [0m[34m│[0m     use sui::object::{[0m[33mSelf[0m, UID};
+  [0m[34m│[0m                       [0m[33m^^^^[0m [0m[33mUnused 'use' of alias 'object'. Consider removing it[0m
+  [0m[34m│[0m
+  [0m[34m=[0m This warning can be suppressed with '#[allow(unused_use)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+  [0m[34m┌─[0m ./sources/product.move:4:29
+  [0m[34m│[0m
+[0m[34m4[0m [0m[34m│[0m     use sui::object::{Self, [0m[33mUID[0m};
+  [0m[34m│[0m                             [0m[33m^^^[0m [0m[33mUnnecessary alias 'UID' for module member 'sui::object::UID'. This alias is provided by default[0m
+  [0m[34m│[0m
+  [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+  [0m[34m┌─[0m ./sources/product.move:5:27
+  [0m[34m│[0m
+[0m[34m5[0m [0m[34m│[0m     use sui::tx_context::{[0m[33mSelf[0m, TxContext};
+  [0m[34m│[0m                           [0m[33m^^^^[0m [0m[33mUnnecessary alias 'tx_context' for module 'sui::tx_context'. This alias is provided by default[0m
+  [0m[34m│[0m
+  [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+  [0m[34m┌─[0m ./sources/product.move:5:33
+  [0m[34m│[0m
+[0m[34m5[0m [0m[34m│[0m     use sui::tx_context::{Self, [0m[33mTxContext[0m};
+  [0m[34m│[0m                                 [0m[33m^^^^^^^^^[0m [0m[33mUnnecessary alias 'TxContext' for module member 'sui::tx_context::TxContext'. This alias is provided by default[0m
+  [0m[34m│[0m
+  [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+  [0m[34m┌─[0m ./sources/product.move:6:14
+  [0m[34m│[0m
+[0m[34m6[0m [0m[34m│[0m     use sui::[0m[33mtransfer[0m;
+  [0m[34m│[0m              [0m[33m^^^^^^^^[0m [0m[33mUnnecessary alias 'transfer' for module 'sui::transfer'. This alias is provided by default[0m
+  [0m[34m│[0m
+  [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W09001][0m[1m: unused alias[0m
+  [0m[34m┌─[0m ./sources/product.move:8:38
+  [0m[34m│[0m
+[0m[34m8[0m [0m[34m│[0m     use sui::transfer_policy::{Self, [0m[33mTransferPolicy[0m};
+  [0m[34m│[0m                                      [0m[33m^^^^^^^^^^^^^^[0m [0m[33mUnused 'use' of alias 'TransferPolicy'. Consider removing it[0m
+  [0m[34m│[0m
+  [0m[34m=[0m This warning can be suppressed with '#[allow(unused_use)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W09002][0m[1m: unused variable[0m
+   [0m[34m┌─[0m ./sources/product.move:41:9
+   [0m[34m│[0m
+[0m[34m41[0m [0m[34m│[0m         [0m[33mshop_id[0m: address,
+   [0m[34m│[0m         [0m[33m^^^^^^^[0m [0m[33mUnused parameter 'shop_id'. Consider removing or prefixing with an underscore: '_shop_id'[0m
+   [0m[34m│[0m
+   [0m[34m=[0m This warning can be suppressed with '#[allow(unused_variable)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W09002][0m[1m: unused variable[0m
+   [0m[34m┌─[0m ./sources/product.move:42:9
+   [0m[34m│[0m
+[0m[34m42[0m [0m[34m│[0m         [0m[33mname[0m: String,
+   [0m[34m│[0m         [0m[33m^^^^[0m [0m[33mUnused parameter 'name'. Consider removing or prefixing with an underscore: '_name'[0m
+   [0m[34m│[0m
+   [0m[34m=[0m This warning can be suppressed with '#[allow(unused_variable)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W09002][0m[1m: unused variable[0m
+   [0m[34m┌─[0m ./sources/product.move:43:9
+   [0m[34m│[0m
+[0m[34m43[0m [0m[34m│[0m         [0m[33mdescription[0m: String,
+   [0m[34m│[0m         [0m[33m^^^^^^^^^^^[0m [0m[33mUnused parameter 'description'. Consider removing or prefixing with an underscore: '_description'[0m
+   [0m[34m│[0m
+   [0m[34m=[0m This warning can be suppressed with '#[allow(unused_variable)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W09002][0m[1m: unused variable[0m
+   [0m[34m┌─[0m ./sources/product.move:44:9
+   [0m[34m│[0m
+[0m[34m44[0m [0m[34m│[0m         [0m[33mimage_url[0m: String,
+   [0m[34m│[0m         [0m[33m^^^^^^^^^[0m [0m[33mUnused parameter 'image_url'. Consider removing or prefixing with an underscore: '_image_url'[0m
+   [0m[34m│[0m
+   [0m[34m=[0m This warning can be suppressed with '#[allow(unused_variable)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W09002][0m[1m: unused variable[0m
+   [0m[34m┌─[0m ./sources/product.move:45:9
+   [0m[34m│[0m
+[0m[34m45[0m [0m[34m│[0m         [0m[33mprice[0m: u64,
+   [0m[34m│[0m         [0m[33m^^^^^[0m [0m[33mUnused parameter 'price'. Consider removing or prefixing with an underscore: '_price'[0m
+   [0m[34m│[0m
+   [0m[34m=[0m This warning can be suppressed with '#[allow(unused_variable)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W09002][0m[1m: unused variable[0m
+   [0m[34m┌─[0m ./sources/product.move:46:9
+   [0m[34m│[0m
+[0m[34m46[0m [0m[34m│[0m         [0m[33mctx[0m: &mut TxContext
+   [0m[34m│[0m         [0m[33m^^^[0m [0m[33mUnused parameter 'ctx'. Consider removing or prefixing with an underscore: '_ctx'[0m
+   [0m[34m│[0m
+   [0m[34m=[0m This warning can be suppressed with '#[allow(unused_variable)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;9merror[E01002][0m[1m: unexpected token[0m
+   [0m[34m┌─[0m ./sources/product.move:47:7
+   [0m[34m│[0m
+[0m[34m47[0m [0m[34m│[0m     ) [0m[31m->[0m Product {
+   [0m[34m│[0m       [0m[31m^^[0m
+   [0m[34m│[0m       [0m[31m│[0m
+   [0m[34m│[0m       [0m[31mUnexpected '->'[0m
+   [0m[34m│[0m       [0m[34mExpected '{'[0m
+
+[0m[1m[38;5;9merror[E04005][0m[1m: expected a single type[0m
+   [0m[34m┌─[0m ./sources/product.move:72:13
+   [0m[34m│[0m
+[0m[34m40[0m [0m[34m│[0m     public fun mint(
+   [0m[34m│[0m                [0m[34m----[0m [0m[34mExpected a single type, but found expression list type: '()'[0m
+   [0m[34m·[0m
+[0m[34m72[0m [0m[34m│[0m         let [0m[31mproduct[0m = mint(shop_id, name, description, image_url, price, ctx);
+   [0m[34m│[0m             [0m[31m^^^^^^^[0m [0m[31mInvalid type for local[0m
+
+[0m[1m[38;5;9merror[E05001][0m[1m: ability constraint not satisfied[0m
+   [0m[34m┌─[0m ./sources/product.move:73:9
+   [0m[34m│[0m
+[0m[34m40[0m [0m[34m│[0m     public fun mint(
+   [0m[34m│[0m                [0m[34m----[0m [0m[34mThe type '()' does not have the ability 'key'[0m
+   [0m[34m·[0m
+[0m[34m73[0m [0m[34m│[0m         [0m[31mtransfer::public_transfer(product, tx_context::sender(ctx))[0m;
+   [0m[34m│[0m         [0m[31m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m [0m[31m'key' constraint not satisifed[0m
+   [0m[34m│[0m
+   [0m[34m┌─[0m /home/qminh77/.move/https___github_com_MystenLabs_sui_git_framework__testnet/crates/sui-framework/packages/sui-framework/sources/transfer.move:63:31
+   [0m[34m│[0m
+[0m[34m63[0m [0m[34m│[0m public fun public_transfer<T: key + store>(obj: T, recipient: address) {
+   [0m[34m│[0m                               [0m[34m---[0m [0m[34m'key' constraint declared here[0m
+
+[0m[1m[38;5;9merror[E04004][0m[1m: expected a single non-reference type[0m
+   [0m[34m┌─[0m ./sources/product.move:73:9
+   [0m[34m│[0m
+[0m[34m40[0m [0m[34m│[0m     public fun mint(
+   [0m[34m│[0m                [0m[34m----[0m [0m[34mExpected a single non-reference type, but found: '()'[0m
+   [0m[34m·[0m
+[0m[34m73[0m [0m[34m│[0m         [0m[31mtransfer::public_transfer(product, tx_context::sender(ctx))[0m;
+   [0m[34m│[0m         [0m[31m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m [0m[31mInvalid type argument[0m
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+  [0m[34m┌─[0m ./sources/shop.move:4:23
+  [0m[34m│[0m
+[0m[34m4[0m [0m[34m│[0m     use sui::object::{[0m[33mSelf[0m, UID};
+  [0m[34m│[0m                       [0m[33m^^^^[0m [0m[33mUnnecessary alias 'object' for module 'sui::object'. This alias is provided by default[0m
+  [0m[34m│[0m
+  [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+  [0m[34m┌─[0m ./sources/shop.move:4:29
+  [0m[34m│[0m
+[0m[34m4[0m [0m[34m│[0m     use sui::object::{Self, [0m[33mUID[0m};
+  [0m[34m│[0m                             [0m[33m^^^[0m [0m[33mUnnecessary alias 'UID' for module member 'sui::object::UID'. This alias is provided by default[0m
+  [0m[34m│[0m
+  [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+  [0m[34m┌─[0m ./sources/shop.move:5:27
+  [0m[34m│[0m
+[0m[34m5[0m [0m[34m│[0m     use sui::tx_context::{[0m[33mSelf[0m, TxContext};
+  [0m[34m│[0m                           [0m[33m^^^^[0m [0m[33mUnnecessary alias 'tx_context' for module 'sui::tx_context'. This alias is provided by default[0m
+  [0m[34m│[0m
+  [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+  [0m[34m┌─[0m ./sources/shop.move:5:33
+  [0m[34m│[0m
+[0m[34m5[0m [0m[34m│[0m     use sui::tx_context::{Self, [0m[33mTxContext[0m};
+  [0m[34m│[0m                                 [0m[33m^^^^^^^^^[0m [0m[33mUnnecessary alias 'TxContext' for module member 'sui::tx_context::TxContext'. This alias is provided by default[0m
+  [0m[34m│[0m
+  [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+  [0m[34m┌─[0m ./sources/shop.move:6:14
+  [0m[34m│[0m
+[0m[34m6[0m [0m[34m│[0m     use sui::[0m[33mtransfer[0m;
+  [0m[34m│[0m              [0m[33m^^^^^^^^[0m [0m[33mUnnecessary alias 'transfer' for module 'sui::transfer'. This alias is provided by default[0m
+  [0m[34m│[0m
+  [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+  [0m[34m┌─[0m ./sources/shop.move:9:14
+  [0m[34m│[0m
+[0m[34m9[0m [0m[34m│[0m     use std::[0m[33mvector[0m;
+  [0m[34m│[0m              [0m[33m^^^^^^[0m [0m[33mUnnecessary alias 'vector' for module 'std::vector'. This alias is provided by default[0m
+  [0m[34m│[0m
+  [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+Failed to build Move modules: Compilation error.

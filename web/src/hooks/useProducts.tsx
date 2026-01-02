@@ -1,0 +1,216 @@
+import { useCurrentAccount, useSuiClient, useSignAndExecuteTransaction } from '@mysten/dapp-kit';
+import { Transaction } from '@mysten/sui/transactions';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import {
+    getAllListedProducts,
+    getShopProducts,
+    PACKAGE_ID,
+    Product,
+    suiToMist,
+} from '@/lib/sui-utils';
+
+/**
+ * Hook for product operations
+ */
+export function useProducts(shopId?: string) {
+    const account = useCurrentAccount();
+    const client = useSuiClient();
+    const queryClient = useQueryClient();
+    const { mutate: signAndExecute } = useSignAndExecuteTransaction();
+
+    // Fetch all listed products or products from a specific shop
+    const { data: products, isLoading, error } = useQuery({
+        queryKey: shopId ? ['shopProducts', shopId] : ['allProducts'],
+        queryFn: async () => {
+            if (shopId) {
+                return await getShopProducts(client, shopId);
+            }
+            return await getAllListedProducts(client);
+        },
+    });
+
+    // Fetch user's own products
+    const { data: userProducts } = useQuery({
+        queryKey: ['userProducts', account?.address],
+        queryFn: async () => {
+            if (!account?.address) return [];
+
+            const { data } = await client.getOwnedObjects({
+                owner: account.address,
+                filter: {
+                    StructType: `${PACKAGE_ID}::product::Product`,
+                },
+                options: {
+                    showContent: true,
+                },
+            });
+
+            return data.map((obj) => {
+                const fields = (obj.data?.content as any)?.fields;
+                if (!fields) return null;
+
+                return {
+                    id: obj.data!.objectId,
+                    shopId: fields.shop_id,
+                    name: fields.name,
+                    description: fields.description,
+                    imageUrl: fields.image_url,
+                    price: Number(fields.price),
+                    creator: fields.creator,
+                    listed: fields.listed,
+                    createdAt: Number(fields.created_at),
+                } as Product;
+            }).filter((p): p is Product => p !== null);
+        },
+        enabled: !!account?.address,
+    });
+
+    // Create product mutation
+    const createProduct = useMutation({
+        mutationFn: async ({
+            shopId,
+            name,
+            description,
+            imageUrl,
+            price,
+        }: {
+            shopId: string;
+            name: string;
+            description: string;
+            imageUrl: string;
+            price: number;
+        }) => {
+            if (!account?.address) throw new Error('Wallet not connected');
+
+            const priceInMist = suiToMist(price);
+
+            return new Promise((resolve, reject) => {
+                const tx = new Transaction();
+
+                tx.moveCall({
+                    target: `${PACKAGE_ID}::product::mint`,
+                    arguments: [
+                        tx.pure.address(shopId),
+                        tx.pure.string(name),
+                        tx.pure.string(description),
+                        tx.pure.string(imageUrl),
+                        tx.pure.u64(priceInMist),
+                    ],
+                });
+
+                signAndExecute(
+                    { transaction: tx },
+                    {
+                        onSuccess: (result) => {
+                            toast.success('Product created successfully!');
+                            queryClient.invalidateQueries({ queryKey: ['userProducts'] });
+                            queryClient.invalidateQueries({ queryKey: ['allProducts'] });
+                            resolve(result);
+                        },
+                        onError: (error) => {
+                            toast.error('Failed to create product');
+                            console.error('Create product error:', error);
+                            reject(error);
+                        },
+                    }
+                );
+            });
+        },
+    });
+
+    // Purchase product mutation
+    const purchaseProduct = useMutation({
+        mutationFn: async ({
+            productId,
+            price,
+            seller,
+        }: {
+            productId: string;
+            price: number;
+            seller: string;
+        }) => {
+            if (!account?.address) throw new Error('Wallet not connected');
+
+            return new Promise((resolve, reject) => {
+                const tx = new Transaction();
+
+                // Split coins for exact payment
+                const [coin] = tx.splitCoins(tx.gas, [tx.pure.u64(price)]);
+
+                tx.moveCall({
+                    target: `${PACKAGE_ID}::shop::purchase_product`,
+                    arguments: [
+                        tx.object(productId),
+                        coin,
+                        tx.pure.address(seller),
+                    ],
+                });
+
+                signAndExecute(
+                    { transaction: tx },
+                    {
+                        onSuccess: (result) => {
+                            toast.success('Product purchased successfully!');
+                            queryClient.invalidateQueries({ queryKey: ['allProducts'] });
+                            queryClient.invalidateQueries({ queryKey: ['userProducts'] });
+                            resolve(result);
+                        },
+                        onError: (error) => {
+                            toast.error('Failed to purchase product');
+                            console.error('Purchase error:', error);
+                            reject(error);
+                        },
+                    }
+                );
+            });
+        },
+    });
+
+    // List/Unlist product mutations
+    const toggleProductListing = useMutation({
+        mutationFn: async ({ productId, list }: { productId: string; list: boolean }) => {
+            if (!account?.address) throw new Error('Wallet not connected');
+
+            return new Promise((resolve, reject) => {
+                const tx = new Transaction();
+
+                const functionName = list ? 'list_product' : 'unlist_product';
+                tx.moveCall({
+                    target: `${PACKAGE_ID}::product::${functionName}`,
+                    arguments: [tx.object(productId)],
+                });
+
+                signAndExecute(
+                    { transaction: tx },
+                    {
+                        onSuccess: (result) => {
+                            toast.success(`Product ${list ? 'listed' : 'unlisted'} successfully!`);
+                            queryClient.invalidateQueries({ queryKey: ['userProducts'] });
+                            queryClient.invalidateQueries({ queryKey: ['allProducts'] });
+                            resolve(result);
+                        },
+                        onError: (error) => {
+                            toast.error(`Failed to ${list ? 'list' : 'unlist'} product`);
+                            console.error('Toggle listing error:', error);
+                            reject(error);
+                        },
+                    }
+                );
+            });
+        },
+    });
+
+    return {
+        products,
+        userProducts,
+        isLoading,
+        error,
+        createProduct: createProduct.mutateAsync,
+        isCreatingProduct: createProduct.isPending,
+        purchaseProduct: purchaseProduct.mutateAsync,
+        isPurchasing: purchaseProduct.isPending,
+        toggleProductListing: toggleProductListing.mutateAsync,
+        isTogglingListing: toggleProductListing.isPending,
+    };
+}
