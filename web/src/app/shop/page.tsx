@@ -21,7 +21,7 @@ export default function ShopPage() {
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
 
-    const listedProducts = products?.filter(p => p.listed) || [];
+    const listedProducts = products || [];
 
     const handleProductClick = (product: Product) => {
         setSelectedProduct(product);

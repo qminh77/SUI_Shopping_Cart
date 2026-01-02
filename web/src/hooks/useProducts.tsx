@@ -30,7 +30,7 @@ export function useProducts(shopId?: string) {
             // Fetch active shops from DB to ensure we check the right kiosks
             let activeShops: { owner: string, id: string }[] = [];
             try {
-                const res = await fetch('/api/shops?status=ACTIVE&limit=100');
+                const res = await fetch('/api/shops?limit=100');
                 if (res.ok) {
                     const json = await res.json();
                     if (json.data && Array.isArray(json.data)) {

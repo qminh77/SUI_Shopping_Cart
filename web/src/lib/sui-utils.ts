@@ -309,7 +309,7 @@ export async function getAllListedProducts(
                     },
                 });
 
-                const directProducts = data.map(parseProduct).filter((p): p is Product => p !== null && p.listed);
+                const directProducts = data.map(parseProduct).filter((p): p is Product => p !== null);
                 shopProducts.push(...directProducts);
             } catch (err) {
                 console.error(`[getAllListedProducts] Error fetching owned objects for ${shop.id}:`, err);
