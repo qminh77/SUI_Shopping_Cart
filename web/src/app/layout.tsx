@@ -3,7 +3,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { SuiProviders } from "@/providers/SuiProviders";
 import { CartProvider } from "@/contexts/CartContext";
-import { GeistProviders } from "@/providers/GeistProviders";
 import { Toaster } from "sonner";
 
 const geistSans = Geist({
@@ -31,6 +30,10 @@ export const metadata: Metadata = {
   },
 };
 
+import Background3D from "@/components/Background3D";
+
+// ... imports
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -42,13 +45,12 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
-        <GeistProviders>
-          <SuiProviders>
-            <CartProvider>
-              {children}
-            </CartProvider>
-          </SuiProviders>
-        </GeistProviders>
+        <Background3D />
+        <SuiProviders>
+          <CartProvider>
+            {children}
+          </CartProvider>
+        </SuiProviders>
         <Toaster position="top-center" richColors />
       </body>
     </html>

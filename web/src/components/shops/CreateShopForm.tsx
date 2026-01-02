@@ -105,7 +105,7 @@ export default function CreateShopForm() {
                 </div>
 
                 {/* Group A: Basic Info */}
-                <Card>
+                <Card className="rounded-none border-white/10 bg-white/[0.02] cut-corner">
                     <CardHeader><CardTitle>Basic Information (Required)</CardTitle></CardHeader>
                     <CardContent className="grid gap-6">
                         <FormField
@@ -218,7 +218,7 @@ export default function CreateShopForm() {
                 </Card>
 
                 {/* Group B: Legal */}
-                <Card>
+                <Card className="rounded-none border-white/10 bg-white/[0.02] cut-corner">
                     <CardHeader><CardTitle>Legal Information</CardTitle></CardHeader>
                     <CardContent>
                         <FormField
@@ -237,7 +237,7 @@ export default function CreateShopForm() {
                 </Card>
 
                 {/* Group C: Socials & Media */}
-                <Card>
+                <Card className="rounded-none border-white/10 bg-white/[0.02] cut-corner">
                     <CardHeader><CardTitle>Branding & Socials (Optional)</CardTitle></CardHeader>
                     <CardContent className="grid gap-4">
                         <FormField
@@ -279,7 +279,7 @@ export default function CreateShopForm() {
                 </Card>
 
                 {/* Group D: Policies */}
-                <Card>
+                <Card className="rounded-none border-white/10 bg-white/[0.02] cut-corner">
                     <CardHeader><CardTitle>Policies (Optional)</CardTitle></CardHeader>
                     <CardContent className="grid gap-4">
                         <FormField
@@ -296,7 +296,7 @@ export default function CreateShopForm() {
                     </CardContent>
                 </Card>
 
-                <Button type="submit" size="lg" className="w-full" disabled={createShop.isPending}>
+                <Button type="submit" size="lg" className="w-full rounded-none cut-corner-bottom-right uppercase tracking-wider font-bold" disabled={createShop.isPending}>
                     {createShop.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Submit Registration
                 </Button>

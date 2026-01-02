@@ -1,42 +1,40 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useCurrentAccount } from '@mysten/dapp-kit';
-import {
-    Button,
-    Card,
-    Input,
-    Textarea,
-    Tag,
-    Text,
-    Grid,
-    Page,
-    Spacer,
-    Loading,
-    Divider,
-    useToasts,
-} from '@geist-ui/core';
 import { WalletConnection } from '@/components/WalletConnection';
 import CreateShopForm from '@/components/shops/CreateShopForm';
 import { useShop } from '@/hooks/useShop';
 import { useProducts } from '@/hooks/useProducts';
 import { useKiosk } from '@/hooks/useKiosk';
-import { mistToSui, formatAddress } from '@/lib/sui-utils';
+import { mistToSui, Product, PACKAGE_ID } from '@/lib/sui-utils';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
-import { Package, Eye, EyeOff, ShoppingBag } from '@geist-ui/icons';
+import { Package, ShoppingBag, Eye, EyeOff, Plus, AlertCircle, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
 export default function SellerPage() {
     const account = useCurrentAccount();
-    const { shop: userShop, isLoading: isLoadingShop, createShop } = useShop();
-    const isCreatingShop = createShop.isPending;
-    const { userProducts, createProduct, isCreatingProduct, toggleProductListing, isTogglingListing } = useProducts();
-    const { hasKiosk, isLoadingKiosks, createKiosk, isCreatingKiosk } = useKiosk(account?.address);
-    const { setToast } = useToasts();
+    const { shop: userShop, isLoading: isLoadingShop } = useShop();
+    const { userProducts, createProduct, isCreatingProduct } = useProducts();
+    const {
+        hasKiosk,
+        isLoadingKiosks,
+        createKiosk,
+        isCreatingKiosk,
+        placeAndList,
+        isListingProduct,
+        takeFromKiosk,
+        isTaking: isTakingProduct,
+        userKiosk
+    } = useKiosk(account?.address);
 
-
-
-    // Product form state
     const [productFormData, setProductFormData] = useState({
         name: '',
         description: '',
@@ -44,19 +42,43 @@ export default function SellerPage() {
         price: '',
     });
 
+    // Merge Wallet Products (Unlisted) and Kiosk Items (Listed)
+    const allProducts = useMemo(() => {
+        const walletItems = userProducts?.map(p => ({ ...p, status: 'WALLET' })) || [];
 
+        const kioskItems = userKiosk?.items.map((item: any) => {
+            // Parse fields from Kiosk item content
+            // Kiosk items are wrapped, fields are in data.content.fields
+            const fields = item.data?.content?.fields;
+            if (!fields) return null;
+
+            return {
+                id: item.data.objectId,
+                shopId: fields.shop_id,
+                name: fields.name,
+                description: fields.description,
+                imageUrl: fields.image_url,
+                price: Number(fields.price),
+                creator: fields.creator,
+                listed: true, // Kiosk items are considered listed (for MVP simplicity)
+                createdAt: Number(fields.created_at),
+                status: 'KIOSK'
+            } as Product & { status: string };
+        }).filter((i: any) => i !== null) || [];
+
+        return [...walletItems, ...kioskItems];
+    }, [userProducts, userKiosk]);
 
     const handleCreateProduct = async () => {
         if (!userShop) return;
         if (!hasKiosk) {
-            setToast({ text: 'Please create a Kiosk first!', type: 'warning' });
+            toast.warning('Please create a Kiosk first!');
             return;
         }
 
         try {
-            // Create the product NFT
             await createProduct({
-                shopId: userShop.id,
+                shopId: userShop.owner_wallet, // Use owner wallet as ID
                 name: productFormData.name,
                 description: productFormData.description,
                 imageUrl: productFormData.imageUrl,
@@ -64,279 +86,292 @@ export default function SellerPage() {
             });
 
             setProductFormData({ name: '', description: '', imageUrl: '', price: '' });
-            setToast({ text: 'Product created successfully!', type: 'success' });
+            // Warning: Toast handling is in the hook, but we can do extra cleanup here
         } catch (error) {
-            console.error('Product creation error:', error);
-            setToast({ text: 'Failed to create product', type: 'error' });
+            // Error handled in hook
         }
     };
 
     const handleCreateKiosk = async () => {
         try {
             await createKiosk();
-            setToast({ text: 'Kiosk created successfully!', type: 'success' });
         } catch (error) {
-            console.error('Kiosk creation error:', error);
-            setToast({ text: 'Failed to create kiosk', type: 'error' });
+            // Error handled in hook
         }
     };
 
-    const handleToggleListing = async (productId: string, currentlyListed: boolean) => {
+    const handleToggleListing = async (product: Product & { status?: string }) => {
+        if (!hasKiosk) {
+            toast.warning('No Kiosk found.');
+            return;
+        }
+
+        const isListed = product.status === 'KIOSK' || product.listed;
+
         try {
-            await toggleProductListing({ productId, list: !currentlyListed });
-            setToast({ text: currentlyListed ? 'Product unlisted' : 'Product listed', type: 'success' });
+            if (isListed) {
+                // UNLIST: Take from Kiosk back to Wallet
+                await takeFromKiosk(product.id);
+            } else {
+                // LIST: Place from Wallet to Kiosk
+                // Note: We currently don't have a UI to update price on list, using original price
+                await placeAndList({
+                    productId: product.id,
+                    price: product.price // Logic assumed price in MIST already if reading from object? 
+                    // Wait, sui-utils define Product price as u64 (MIST).
+                    // placeAndList expects MIST.
+                });
+            }
         } catch (error) {
-            console.error('Toggle listing error:', error);
-            setToast({ text: 'Failed to update listing', type: 'error' });
+            console.error('Toggle listing error', error);
         }
     };
 
-    // Not connected
+    const isProcessing = isListingProduct || isTakingProduct;
+
     if (!account) {
         return (
-            <Page dotBackdrop width="100%" padding={0}>
+            <div className="min-h-screen flex flex-col bg-black text-white font-sans">
                 <Navigation />
-                <Grid.Container justify="center" alignItems="center" style={{ minHeight: '60vh' }}>
-                    <Grid xs={24} md={12}>
-                        <Card>
-                            <Text h3>Wallet Required</Text>
-                            <Text p>Please connect your Sui wallet to access the seller dashboard.</Text>
-                        </Card>
-                    </Grid>
-                </Grid.Container>
+                <div className="flex-1 flex items-center justify-center p-6">
+                    <div className="max-w-md w-full p-8 bg-neutral-900/50 border border-white/10 cut-corner text-center backdrop-blur-md">
+                        <ShoppingBag className="w-12 h-12 text-blue-500 mx-auto mb-4" />
+                        <h3 className="text-xl font-bold mb-2 uppercase tracking-wide">Wallet Required</h3>
+                        <p className="text-neutral-400 mb-6 font-light">Please connect your Sui wallet to access the seller dashboard.</p>
+                        <div className="flex justify-center">
+                            <WalletConnection />
+                        </div>
+                    </div>
+                </div>
                 <Footer />
-            </Page>
+            </div>
         );
     }
 
-    // Loading shop status
     if (isLoadingShop) {
         return (
-            <Page dotBackdrop width="100%" padding={0}>
+            <div className="min-h-screen flex flex-col bg-black text-white font-sans">
                 <Navigation />
-                <Grid.Container justify="center" alignItems="center" style={{ minHeight: '60vh' }}>
-                    <Loading>Loading Seller Dashboard</Loading>
-                </Grid.Container>
+                <div className="flex-1 flex items-center justify-center">
+                    <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+                </div>
                 <Footer />
-            </Page>
+            </div>
         );
     }
 
-    // No shop - show create shop form
     if (!userShop) {
         return (
-            <Page dotBackdrop width="100%" padding={0}>
+            <div className="min-h-screen flex flex-col bg-black text-white font-sans">
                 <Navigation />
-                <Page.Content>
+                <div className="flex-1 max-w-2xl mx-auto w-full p-6 pt-12">
                     <CreateShopForm />
-                </Page.Content>
+                </div>
                 <Footer />
-            </Page>
+            </div>
         );
     }
 
-    // Has shop - show dashboard
     return (
-        <Page dotBackdrop width="100%" padding={0}>
+        <div className="min-h-screen flex flex-col bg-transparent text-white font-sans selection:bg-blue-500/30">
             <Navigation />
 
-            <Page.Content>
-                <Grid.Container gap={2} justify="center">
-                    <Grid xs={24}>
-                        <div style={{ width: '100%', marginBottom: '2rem' }}>
-                            <Text h2>Seller Dashboard</Text>
-                            <Text p type="secondary">Manage your shop and products</Text>
-                        </div>
-                    </Grid>
+            <div className="flex-1 max-w-7xl mx-auto w-full px-6 py-12 space-y-8 relative z-10">
 
+                {/* Header */}
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/5 pb-8">
+                    <div>
+                        <h1 className="text-3xl font-bold tracking-tight mb-2 uppercase">Seller Dashboard</h1>
+                        <p className="text-neutral-400 font-mono text-sm">Manage your shop and products</p>
+                    </div>
+                    <div>
+                        <Badge variant="outline" className="text-green-400 bg-green-900/20 border-green-500/20 rounded-none px-3 py-1 uppercase tracking-widest font-mono"> Active Shop</Badge>
+                    </div>
+                </div>
+
+                {/* Shop & Kiosk Status Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Shop Info */}
-                    <Grid xs={24}>
-                        <Card width="100%">
-                            <Grid.Container justify="space-between" alignItems="center">
-                                <Grid>
-                                    <Text h4 my={0}>{userShop.shop_name}</Text>
-                                    <Text p small type="secondary" my={0}>{userShop.shop_description}</Text>
-                                </Grid>
-                                <Grid>
-                                    <Tag type="success">Your Shop</Tag>
-                                </Grid>
-                            </Grid.Container>
-                        </Card>
-                    </Grid>
+                    <Card className="bg-white/[0.02] border border-white/5 cut-corner rounded-none hover:bg-white/[0.04] transition-colors">
+                        <CardHeader className="flex flex-row items-center justify-between pb-2">
+                            <div className="space-y-1">
+                                <CardTitle className="text-xl font-bold uppercase tracking-tight">{userShop.shop_name}</CardTitle>
+                                <CardDescription className="text-neutral-400">{userShop.shop_description}</CardDescription>
+                            </div>
+                            <Package className="text-blue-500 w-5 h-5 opacity-80" />
+                        </CardHeader>
+                    </Card>
 
                     {/* Kiosk Status */}
-                    <Grid xs={24}>
-                        <Card width="100%">
-                            <Grid.Container justify="space-between" alignItems="center">
-                                <Grid xs={18} direction="column">
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                        <ShoppingBag />
-                                        <Text h4 my={0}>Kiosk Status</Text>
-                                    </div>
-                                    <Text p small type="secondary">
-                                        {hasKiosk ? 'Your Kiosk is ready for listing products' : 'Create a Kiosk to list and sell products'}
-                                    </Text>
-                                </Grid>
-                                <Grid>
-                                    {hasKiosk ? (
-                                        <Tag type="success">Active</Tag>
-                                    ) : (
-                                        /* @ts-ignore */
-                                        <Button
-                                            onClick={handleCreateKiosk}
-                                            disabled={isCreatingKiosk || isLoadingKiosks}
-                                            loading={isCreatingKiosk}
-                                            auto
-                                            type="secondary"
-                                            scale={0.8}
-                                        >
-                                            Create Kiosk
-                                        </Button>
-                                    )}
-                                </Grid>
-                            </Grid.Container>
-                        </Card>
-                    </Grid>
+                    <Card className="bg-white/[0.02] border border-white/5 cut-corner rounded-none hover:bg-white/[0.04] transition-colors">
+                        <CardHeader className="flex flex-row items-center justify-between pb-2">
+                            <div>
+                                <CardTitle className=" text-xl font-bold uppercase tracking-wide flex items-center gap-2">
+                                    <ShoppingBag className="text-blue-500 w-5 h-5" />
+                                    Kiosk Status
+                                </CardTitle>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="flex items-center justify-between pt-4">
+                            <p className="text-sm text-neutral-400">
+                                {hasKiosk ? 'Your Kiosk is ready for listing products' : 'Create a Kiosk to list and sell products'}
+                            </p>
+                            {hasKiosk ? (
+                                <Badge variant="secondary" className="text-green-400 bg-green-900/20 border border-green-500/20 rounded-none font-mono tracking-widest uppercase">ACTIVE</Badge>
+                            ) : (
+                                <Button
+                                    onClick={handleCreateKiosk}
+                                    disabled={isCreatingKiosk || isLoadingKiosks}
+                                    className="bg-blue-600 hover:bg-blue-500 text-white text-xs uppercase font-bold px-4 py-2 cut-corner-bottom-right transition-colors rounded-none"
+                                >
+                                    {isCreatingKiosk ? 'Creating...' : 'Create Kiosk'}
+                                </Button>
+                            )}
+                        </CardContent>
+                    </Card>
+                </div>
 
-                    <Grid xs={24} md={12}>
-                        {/* Create Product Form */}
-                        <Card width="100%">
-                            <Text h4>Create New Product</Text>
-                            <Text p small type="secondary">Mint a product NFT linked to your shop</Text>
-                            <Spacer h={1} />
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Create Product Form */}
+                    <div className="lg:col-span-1">
+                        <div className="bg-neutral-900/50 border border-white/10 p-6 cut-corner backdrop-blur-sm sticky top-24">
+                            <h3 className="text-lg font-bold mb-1 uppercase tracking-wide">Create Product</h3>
+                            <p className="text-xs text-neutral-400 mb-6 font-mono">Mint a product NFT linked to your shop</p>
 
-                            {/* Shop Status Check - Only allow product creation if ACTIVE */}
                             {userShop.status !== 'ACTIVE' ? (
-                                <div style={{ padding: '1.5rem', border: '2px solid #ff6b6b', borderRadius: '8px', backgroundColor: 'rgba(255, 107, 107, 0.1)', textAlign: 'center' }}>
-                                    <Text h5 style={{ color: '#ff6b6b', margin: '0 0 0.5rem 0' }}>
-                                        Shop {userShop.status === 'PENDING' ? 'Chưa Được Duyệt' : 'Bị Khóa'}
-                                    </Text>
-                                    <Text p small>
+                                <div className="p-4 border border-red-500/20 bg-red-900/10 text-center">
+                                    <AlertCircle className="w-6 h-6 text-red-400 mx-auto mb-2" />
+                                    <h5 className="text-red-400 font-bold mb-1">
+                                        Shop {userShop.status === 'PENDING' ? 'Pending Approval' : 'Suspended'}
+                                    </h5>
+                                    <p className="text-xs text-red-300/80">
                                         {userShop.status === 'PENDING'
-                                            ? 'Shop của bạn đang chờ Admin duyệt. Bạn chỉ có thể bán khi shop được duyệt.'
-                                            : 'Shop của bạn đã bị khóa. Vui lòng liên hệ Admin.'
+                                            ? 'Waiting for admin approval.'
+                                            : 'Your shop has been suspended.'
                                         }
-                                    </Text>
-                                    {userShop.admin_note && (
-                                        <>
-                                            <Spacer h={0.5} />
-                                            <Text p small type="secondary" style={{ fontStyle: 'italic' }}>
-                                                Ghi chú: {userShop.admin_note}
-                                            </Text>
-                                        </>
-                                    )}
+                                    </p>
                                 </div>
                             ) : (
-                                <>
-                                    {/* @ts-ignore */}
-                                    <Input
-                                        width="100%"
-                                        placeholder="e.g., Digital Artwork #1"
-                                        value={productFormData.name}
-                                        onChange={(e) => setProductFormData({ ...productFormData, name: e.target.value })}
-                                    >
-                                        Product Name
-                                    </Input>
-                                    <Spacer h={1} />
+                                <div className="space-y-4">
+                                    <div className="space-y-2">
+                                        <Label className="text-xs uppercase text-neutral-500 font-mono tracking-wider">Product Name</Label>
+                                        <Input
+                                            type="text"
+                                            className="bg-black/40 border-white/10 text-white focus:border-blue-500 rounded-none h-10"
+                                            placeholder="e.g., Digital Artwork #1"
+                                            value={productFormData.name}
+                                            onChange={(e) => setProductFormData({ ...productFormData, name: e.target.value })}
+                                        />
+                                    </div>
 
-                                    {/* @ts-ignore */}
-                                    <Input
-                                        width="100%"
-                                        htmlType="number"
-                                        placeholder="0.000"
-                                        value={productFormData.price}
-                                        onChange={(e) => setProductFormData({ ...productFormData, price: e.target.value })}
-                                    >
-                                        Price (SUI)
-                                    </Input>
-                                    <Spacer h={1} />
+                                    <div className="space-y-2">
+                                        <Label className="text-xs uppercase text-neutral-500 font-mono tracking-wider">Price (SUI)</Label>
+                                        <Input
+                                            type="number"
+                                            className="bg-black/40 border-white/10 text-white focus:border-blue-500 rounded-none h-10"
+                                            placeholder="0.000"
+                                            value={productFormData.price}
+                                            onChange={(e) => setProductFormData({ ...productFormData, price: e.target.value })}
+                                        />
+                                    </div>
 
-                                    {/* @ts-ignore */}
-                                    <Textarea
-                                        width="100%"
-                                        placeholder="Describe your product..."
-                                        value={productFormData.description}
-                                        onChange={(e) => setProductFormData({ ...productFormData, description: e.target.value })}
-                                    >
-                                        Description
-                                    </Textarea>
-                                    <Spacer h={1} />
+                                    <div className="space-y-2">
+                                        <Label className="text-xs uppercase text-neutral-500 font-mono tracking-wider">Description</Label>
+                                        <Textarea
+                                            className="bg-black/40 border-white/10 text-white focus:border-blue-500 rounded-none resize-none min-h-[100px]"
+                                            placeholder="Describe your product..."
+                                            value={productFormData.description}
+                                            onChange={(e) => setProductFormData({ ...productFormData, description: e.target.value })}
+                                        />
+                                    </div>
 
-                                    {/* @ts-ignore */}
-                                    <Input
-                                        width="100%"
-                                        placeholder="https://example.com/image.jpg"
-                                        value={productFormData.imageUrl}
-                                        onChange={(e) => setProductFormData({ ...productFormData, imageUrl: e.target.value })}
-                                    >
-                                        Image URL
-                                    </Input>
-                                    <Spacer h={1} />
+                                    <div className="space-y-2">
+                                        <Label className="text-xs uppercase text-neutral-500 font-mono tracking-wider">Image URL</Label>
+                                        <Input
+                                            type="text"
+                                            className="bg-black/40 border-white/10 text-white focus:border-blue-500 rounded-none h-10"
+                                            placeholder="https://..."
+                                            value={productFormData.imageUrl}
+                                            onChange={(e) => setProductFormData({ ...productFormData, imageUrl: e.target.value })}
+                                        />
+                                    </div>
 
-                                    {/* @ts-ignore */}
                                     <Button
                                         onClick={handleCreateProduct}
                                         disabled={isCreatingProduct}
-                                        loading={isCreatingProduct}
-                                        width="100%"
-                                        type="secondary"
+                                        className="w-full bg-white text-black hover:bg-neutral-200 font-bold uppercase tracking-wider text-xs h-10 cut-corner-bottom-right rounded-none"
                                     >
-                                        Create Product NFT
+                                        {isCreatingProduct ? (
+                                            <span className="flex items-center justify-center gap-2">
+                                                <Loader2 className="w-3 h-3 animate-spin" /> Minting...
+                                            </span>
+                                        ) : 'Create Product NFT'}
                                     </Button>
-                                </>
-                            )}
-                        </Card>
-                    </Grid>
-
-                    <Grid xs={24} md={12}>
-                        {/* My Products List */}
-                        <Card width="100%">
-                            <Text h4>My Products ({userProducts?.length || 0})</Text>
-                            <Spacer h={1} />
-
-                            {!userProducts || userProducts.length === 0 ? (
-                                <div style={{ textAlign: 'center', padding: '2rem 0', color: '#666' }}>
-                                    <Package size={48} />
-                                    <Text p>No products yet. Create your first product!</Text>
                                 </div>
-                            ) : (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                    {userProducts.map((product) => (
-                                        <Card key={product.id} width="100%" style={{ padding: '0.8rem' }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <div style={{ flex: 1, minWidth: 0 }}>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                        <Text h5 my={0} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{product.name}</Text>
-                                                        <Tag type={product.listed ? 'default' : 'secondary'} scale={0.5}>
-                                                            {product.listed ? 'Listed' : 'Unlisted'}
-                                                        </Tag>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Product List */}
+                    <div className="lg:col-span-2 space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-lg font-bold uppercase tracking-wide">My Products ({allProducts.length})</h3>
+                        </div>
+
+                        {allProducts.length === 0 ? (
+                            <div className="border border-white/5 bg-white/[0.02] p-12 text-center cut-corner">
+                                <Package className="w-12 h-12 text-neutral-700 mx-auto mb-4" />
+                                <p className="text-neutral-500 font-mono">No products yet. Create your first product!</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                {allProducts.map((product) => {
+                                    const isListed = product.status === 'KIOSK' || product.listed;
+                                    return (
+                                        <div key={product.id} className="bg-white/[0.02] border border-white/5 p-4 flex items-center justify-between hover:bg-white/[0.04] transition-colors group cut-corner">
+                                            <div className="flex items-center gap-4 flex-1 min-w-0">
+                                                {product.imageUrl ? (
+                                                    <div className="w-12 h-12 bg-neutral-900 border border-white/10 overflow-hidden shrink-0">
+                                                        <img src={product.imageUrl} alt="" className="w-full h-full object-cover" />
                                                     </div>
-                                                    <Text p small type="secondary" my={0} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                                        {mistToSui(product.price)} SUI
-                                                    </Text>
-                                                </div>
+                                                ) : (
+                                                    <div className="w-12 h-12 bg-neutral-900 border border-white/10 flex items-center justify-center shrink-0">
+                                                        <Package className="w-6 h-6 text-neutral-700" />
+                                                    </div>
+                                                )}
 
-                                                {/* @ts-ignore */}
-                                                <Button
-                                                    onClick={() => handleToggleListing(product.id, product.listed)}
-                                                    disabled={isTogglingListing}
-                                                    auto
-                                                    scale={0.7}
-                                                    icon={product.listed ? <EyeOff /> : <Eye />}
-                                                >
-                                                    {product.listed ? 'Unlist' : 'List'}
-                                                </Button>
+                                                <div className="min-w-0">
+                                                    <h4 className="font-bold text-white truncate font-mono uppercase tracking-tight">{product.name}</h4>
+                                                    <div className="flex items-center gap-3 text-xs mt-1">
+                                                        <span className="text-neutral-400 font-mono">{mistToSui(product.price)} SUI</span>
+                                                        <Badge variant="outline" className={`px-1.5 py-0 rounded-none text-[10px] uppercase font-mono ${isListed ? 'text-green-400 border-green-500/30 bg-green-900/10' : 'text-neutral-500 border-white/10'}`}>
+                                                            {isListed ? 'Listed' : 'Unlisted'}
+                                                        </Badge>
+                                                        {product.status && <span className="text-[9px] text-neutral-600 uppercase">LOCATION: {product.status}</span>}
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </Card>
-                                    ))}
-                                </div>
-                            )}
-                        </Card>
-                    </Grid>
-                </Grid.Container>
-            </Page.Content>
+
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => handleToggleListing(product)}
+                                                disabled={isProcessing}
+                                                className="ml-4 text-neutral-500 hover:text-white hover:bg-white/10 rounded-none border border-transparent hover:border-white/10"
+                                                title={isListed ? 'Unlist (Take from Kiosk)' : 'List (Place in Kiosk)'}
+                                            >
+                                                {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : (isListed ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />)}
+                                            </Button>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
 
             <Footer />
-        </Page>
+        </div>
     );
 }

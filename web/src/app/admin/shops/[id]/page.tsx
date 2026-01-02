@@ -106,7 +106,7 @@ export default function AdminShopDetailPage() {
                 <div className="flex-1">
                     <h2 className="text-3xl font-bold tracking-tight text-white">{shop.shop_name}</h2>
                     <div className="flex items-center gap-2 text-neutral-400 mt-2">
-                        <span className="font-mono text-xs bg-black/30 px-2 py-0.5 rounded border border-white/5">{shop.id}</span>
+                        <span className="font-mono text-xs bg-black/30 px-2 py-0.5 border border-white/5">{shop.id}</span>
                         <Separator orientation="vertical" className="h-4 bg-white/10" />
                         <Badge
                             variant="outline"
@@ -126,21 +126,21 @@ export default function AdminShopDetailPage() {
                 <div className="flex items-center gap-3">
                     {shop.status === 'PENDING' && (
                         <Button
-                            className="bg-green-600 hover:bg-green-500 text-white shadow-lg shadow-green-900/20 border-none"
+                            className="bg-green-600 hover:bg-green-500 text-white shadow-lg shadow-green-900/20 border-none rounded-none tracking-wider font-mono text-xs h-10 px-6 cut-corner-bottom-right"
                             onClick={() => handleAction('approve')}
                             disabled={isLoadingAction}
                         >
                             <CheckCircle className="mr-2 h-4 w-4" />
-                            Approve Shop
+                            APPROVE SHOP
                         </Button>
                     )}
 
                     {shop.status === 'ACTIVE' && (
                         <Dialog open={isSuspendOpen} onOpenChange={setIsSuspendOpen}>
                             <DialogTrigger asChild>
-                                <Button className="bg-red-900/50 text-red-400 border border-red-500/20 hover:bg-red-900/80 hover:text-red-300">
+                                <Button className="bg-red-900/50 text-red-400 border border-red-500/20 hover:bg-red-900/80 hover:text-red-300 rounded-none tracking-wider font-mono text-xs h-10 px-6 cut-corner-bottom-right">
                                     <Ban className="mr-2 h-4 w-4" />
-                                    Suspend Shop
+                                    SUSPEND SHOP
                                 </Button>
                             </DialogTrigger>
                             <DialogContent className="bg-neutral-900 border-white/10">
@@ -237,17 +237,17 @@ export default function AdminShopDetailPage() {
                                 {logs.length === 0 && <div className="pl-8 text-sm text-neutral-500">No logs found.</div>}
                                 {logs.map((log) => (
                                     <div key={log.id} className="relative pl-8">
-                                        <div className="absolute -left-1.5 top-1.5 h-3 w-3 rounded-full border border-blue-500/50 bg-neutral-900 ring-4 ring-neutral-900" />
+                                        <div className="absolute -left-1.5 top-1.5 h-3 w-3 rotate-45 border border-blue-500/50 bg-neutral-900 ring-4 ring-neutral-900" />
                                         <div className="flex flex-col gap-2">
                                             <div className="flex items-center gap-3">
                                                 <span className="font-semibold text-sm text-white capitalize">{formatAction(log.action)}</span>
-                                                <span className="text-xs text-neutral-500 bg-white/5 px-2 py-0.5 rounded border border-white/5">{new Date(log.created_at).toLocaleString()}</span>
+                                                <span className="text-xs text-neutral-500 bg-white/5 px-2 py-0.5 border border-white/5">{new Date(log.created_at).toLocaleString()}</span>
                                             </div>
                                             <p className="text-sm text-neutral-400">
-                                                By: <span className="font-mono text-xs text-blue-400 bg-blue-500/10 px-1 py-0.5 rounded">{log.admin_wallet === 'SELLER' ? 'Shop Owner' : 'Admin'}</span>
+                                                By: <span className="font-mono text-xs text-blue-400 bg-blue-500/10 px-1 py-0.5">{log.admin_wallet === 'SELLER' ? 'Shop Owner' : 'Admin'}</span>
                                             </p>
                                             {log.note && (
-                                                <div className="mt-1 rounded-lg bg-white/5 border border-white/5 p-3 text-sm italic text-neutral-300">
+                                                <div className="mt-1 bg-white/5 border border-white/5 p-3 text-sm italic text-neutral-300 cut-corner-bottom-right">
                                                     "{log.note}"
                                                 </div>
                                             )}

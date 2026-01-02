@@ -1,23 +1,75 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-/* Global Sharp Aesthetic */
+@custom-variant dark (&:is(.dark *));
+
+@layer base {
+  :root {
+    --background: hsl(0 0% 0%);
+    --foreground: hsl(0 0% 100%);
+    --card: hsl(0 0% 3%);
+    --card-foreground: hsl(0 0% 100%);
+    --popover: hsl(0 0% 3%);
+    --popover-foreground: hsl(0 0% 100%);
+    --primary: hsl(210 100% 50%);
+    --primary-foreground: hsl(0 0% 100%);
+    --secondary: hsl(0 0% 10%);
+    --secondary-foreground: hsl(0 0% 100%);
+    --muted: hsl(0 0% 10%);
+    --muted-foreground: hsl(0 0% 60%);
+    --accent: hsl(210 100% 50%);
+    --accent-foreground: hsl(0 0% 100%);
+    --destructive: hsl(0 62.8% 30.6%);
+    --destructive-foreground: hsl(0 0% 100%);
+    --border: hsl(0 0% 15%);
+    --input: hsl(0 0% 15%);
+    --ring: hsl(210 100% 50%);
+    --radius: 0rem;
+    --chart-1: hsl(220 70% 50%);
+    --chart-2: hsl(160 60% 45%);
+    --chart-3: hsl(30 80% 55%);
+    --chart-4: hsl(280 65% 60%);
+    --chart-5: hsl(340 75% 55%);
+
+    --sui-blue: #4DA2FF;
+    --sui-ocean: #3D5E99;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* GLOBAL RESET FOR SHARPNESS */
 * {
   border-radius: 0 !important;
 }
 
-/* Tech Animations */
+/* Ensure data-radix components also adhere */
+[data-radix-popper-content-wrapper],
+[role="dialog"],
+[role="menu"],
+[role="listbox"],
+[role="tooltip"] {
+  border-radius: 0 !important;
+}
+
+/* Animations */
 @keyframes float {
-  0% {
+
+  0%,
+  100% {
     transform: translateY(0px);
   }
 
   50% {
     transform: translateY(-20px);
-  }
-
-  100% {
-    transform: translateY(0px);
   }
 }
 
@@ -33,20 +85,6 @@
   }
 }
 
-@keyframes border-flow {
-  0% {
-    background-position: 0% 50%;
-  }
-
-  50% {
-    background-position: 100% 50%;
-  }
-
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
 .tech-border-glow {
   position: relative;
 }
@@ -55,7 +93,6 @@
   content: "";
   position: absolute;
   inset: -1px;
-  /* border-radius: inherit; - REMOVED for sharp look */
   padding: 1px;
   background: linear-gradient(45deg, transparent, rgba(77, 162, 255, 0.6), transparent);
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
@@ -71,63 +108,90 @@
   background: linear-gradient(45deg, rgba(77, 162, 255, 0.2), #4DA2FF, rgba(77, 162, 255, 0.2));
 }
 
-/* Cut Corner Effect via Clip Path */
 .cut-corner {
-  clip-path: polygon(10px 0, 100% 0,
-      100% calc(100% - 10px), calc(100% - 10px) 100%,
-      0 100%,
-      0 10px);
+  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
 }
 
 .cut-corner-bottom-right {
-  clip-path: polygon(0 0, 100% 0,
-      100% calc(100% - 12px), calc(100% - 12px) 100%,
-      0 100%);
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #000;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #333;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #4DA2FF;
 }
 
 :root {
-  --sui-blue: #4DA2FF;
-  --sui-ocean: #3D5E99;
-  --sui-light: #E1F0FF;
-  --bg-dots: radial-gradient(#333 1px, transparent 1px);
+  --sidebar: hsl(0 0% 98%);
+  --sidebar-foreground: hsl(240 5.3% 26.1%);
+  --sidebar-primary: hsl(240 5.9% 10%);
+  --sidebar-primary-foreground: hsl(0 0% 98%);
+  --sidebar-accent: hsl(240 4.8% 95.9%);
+  --sidebar-accent-foreground: hsl(240 5.9% 10%);
+  --sidebar-border: hsl(220 13% 91%);
+  --sidebar-ring: hsl(217.2 91.2% 59.8%);
 }
 
-body {
-  background-color: #000;
-  color: #fff;
-  /* Subtle mesh background */
-  background-image:
-    radial-gradient(at 0% 0%, rgba(77, 162, 255, 0.15) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(61, 94, 153, 0.15) 0px, transparent 50%),
-    var(--bg-dots);
-  background-size: 100% 100%, 100% 100%, 20px 20px;
-  background-attachment: fixed;
-  min-height: 100vh;
+.dark {
+  --sidebar: hsl(240 5.9% 10%);
+  --sidebar-foreground: hsl(240 4.8% 95.9%);
+  --sidebar-primary: hsl(224.3 76.3% 48%);
+  --sidebar-primary-foreground: hsl(0 0% 100%);
+  --sidebar-accent: hsl(240 3.7% 15.9%);
+  --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
+  --sidebar-border: hsl(240 3.7% 15.9%);
+  --sidebar-ring: hsl(217.2 91.2% 59.8%);
 }
 
-::selection {
-  background: var(--sui-blue);
-  color: #fff;
-}
-/* Wallet Button Styling Override */
-.wallet-adapter-button-trigger button {
-  background: rgba(77, 162, 255, 0.1) !important;
-  border: 1px solid rgba(77, 162, 255, 0.3) !important;
-  color: #4DA2FF !important;
-  border-radius: 0 !important;
-  font-family: var(--font-geist-mono) !important;
-  text-transform: uppercase !important;
-  letter-spacing: 1px !important;
-  font-size: 0.8rem !important;
-  height: 40px !important;
-  padding: 0 20px !important;
-  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
-  transition: all 0.2s ease !important;
-}
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
 
-.wallet-adapter-button-trigger button:hover {
-  background: rgba(77, 162, 255, 0.2) !important;
-  border-color: #4DA2FF !important;
-  box-shadow: 0 0 15px rgba(77, 162, 255, 0.3) !important;
-  transform: translateY(-1px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
 }

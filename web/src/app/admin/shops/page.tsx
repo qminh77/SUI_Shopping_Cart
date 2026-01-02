@@ -104,7 +104,7 @@ const AdminShopsContent = () => {
 
             <div className="bg-black/40 border border-white/10 backdrop-blur-md cut-corner p-6 relative">
                 <div className="absolute top-0 right-0 p-2 opacity-20 pointer-events-none">
-                    <div className="w-16 h-16 border-t-2 border-r-2 border-blue-500 rounded-tr-[20px]"></div>
+                    <div className="w-16 h-16 border-t-2 border-r-2 border-blue-500 cut-corner-bottom-right"></div>
                 </div>
 
                 <div className="flex flex-col gap-4 md:flex-row md:items-center mb-8">
@@ -174,7 +174,7 @@ const AdminShopsContent = () => {
                                             </TableCell>
                                             <TableCell className="text-neutral-400 text-xs font-mono">{new Date(shop.created_at).toLocaleDateString()}</TableCell>
                                             <TableCell className="text-right">
-                                                <Button variant="ghost" size="sm" asChild className="text-neutral-400 hover:text-white hover:bg-blue-500/10 hover:border-blue-500/50 border border-transparent cut-corner-bottom-right transition-all rounded-none h-8 text-xs font-mono">
+                                                <Button variant="ghost" size="sm" asChild className="text-neutral-400 hover:text-white hover:bg-blue-500/10 hover:border-blue-500/50 border border-transparent cut-corner-bottom-right transition-all rounded-none h-8 text-xs font-mono tracking-wider">
                                                     <Link href={`/admin/shops/${shop.id}`}>
                                                         <Eye className="h-3 w-3 mr-2" />
                                                         VIEW

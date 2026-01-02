@@ -79,17 +79,31 @@ export async function verifyAdminSession() {
     const cookieStore = await cookies()
     const session = cookieStore.get(SESSION_COOKIE_NAME)
 
-    if (!session?.value) return null
+    console.log('[Auth] Verifying session, cookie exists:', !!session?.value)
+
+    if (!session?.value) {
+        console.log('[Auth] No session cookie found')
+        return null
+    }
 
     try {
         const data = JSON.parse(session.value)
+        console.log('[Auth] Parsed session data:', { wallet: data.wallet, role: data.role })
+
         // Check if wallet is still an admin
         const admins = await getAdminWallets()
+        console.log('[Auth] Admin wallets:', admins)
+        console.log('[Auth] Checking if', data.wallet.toLowerCase(), 'is in admin list')
+
         if (!admins.includes(data.wallet.toLowerCase())) {
+            console.log('[Auth] Wallet not in admin list')
             return null
         }
+
+        console.log('[Auth] Session verified successfully')
         return data
-    } catch {
+    } catch (error) {
+        console.error('[Auth] Error parsing session:', error)
         return null
     }
 }

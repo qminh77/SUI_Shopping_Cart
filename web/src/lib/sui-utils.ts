@@ -226,20 +226,68 @@ export async function getAllShops(client: SuiClient): Promise<Shop[]> {
 /**
  * Get all listed products across all shops
  */
+import { KioskClient, Network } from '@mysten/kiosk';
+
+/**
+ * Get all listed products across all shops (from Kiosks)
+ */
 export async function getAllListedProducts(client: SuiClient): Promise<Product[]> {
     try {
-        // Unfortunately, Sui doesn't have a "get all objects of type" query
-        // We need to use GraphQL or custom indexer for production
-        // For now, we'll fetch from known shops
-
         const shops = await getAllShops(client);
-        const allProducts = await Promise.all(
-            shops.map(shop => getShopProducts(client, shop.owner))
-        );
 
-        return allProducts
-            .flat()
-            .filter(product => product.listed);
+        // Initialize Kiosk Client
+        const kioskClient = new KioskClient({
+            client,
+            network: Network.TESTNET,
+        });
+
+        // Fetch Kiosks for all shop owners and extract products
+        const productsPromises = shops.map(async (shop) => {
+            try {
+                const { kioskIds } = await kioskClient.getOwnedKiosks({ address: shop.owner });
+
+                // For each kiosk, get items
+                const kioskProducts = await Promise.all(kioskIds.map(async (id) => {
+                    const kiosk = await kioskClient.getKiosk({
+                        id,
+                        options: {
+                            withObjects: true,
+                        }
+                    });
+
+                    // Parse items that match our Product type
+                    return kiosk.items
+                        .filter(item => item.type === `${PACKAGE_ID}::product::Product`)
+                        .map(item => {
+                            const fields = (item.data?.content as any)?.fields;
+                            if (!fields) return null;
+
+                            return {
+                                id: item.data!.objectId,
+                                shopId: fields.shop_id,
+                                name: fields.name,
+                                description: fields.description,
+                                imageUrl: fields.image_url,
+                                price: Number(fields.price),
+                                creator: fields.creator,
+                                listed: true,
+                                createdAt: Number(fields.created_at),
+                                kioskId: id
+                            } as Product;
+                        })
+                        .filter((p): p is Product => p !== null);
+                }));
+
+                return kioskProducts.flat();
+            } catch (err) {
+                console.error(`Error fetching products for shop ${shop.id}:`, err);
+                return [];
+            }
+        });
+
+        const allProducts = await Promise.all(productsPromises);
+        return allProducts.flat();
+
     } catch (error) {
         console.error('Error fetching all listed products:', error);
         return [];

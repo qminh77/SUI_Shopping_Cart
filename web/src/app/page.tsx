@@ -2,190 +2,102 @@
 
 import { useCurrentAccount } from '@mysten/dapp-kit';
 import Link from 'next/link';
-import {
-  Button,
-  Card,
-  Text,
-  Grid,
-  Spacer,
-  Tag,
-  Page
-} from '@geist-ui/core';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
-import { ShoppingCart, Shield, Zap, ArrowRight } from '@geist-ui/icons';
+import { ShoppingCart, Shield, Zap, ArrowRight, Box } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 
 export default function Home() {
   const account = useCurrentAccount();
 
   return (
-    <Page dotBackdrop width="100%" padding={0}>
+    <div className="min-h-screen flex flex-col relative overflow-hidden bg-transparent text-white font-sans selection:bg-blue-500/30 selection:text-blue-200">
+
+      {/* Background is provided by layout (Background3D) */}
+
       <Navigation />
 
-      {/* Hero Section */}
-      <div style={{
-        minHeight: '80vh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        textAlign: 'center',
-        position: 'relative',
-        overflow: 'hidden',
-        padding: '2rem 1rem'
-      }}>
+      <main className="flex-1 relative z-10">
 
-        {/* Background Glow */}
-        <div style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: '600px',
-          height: '600px',
-          background: 'radial-gradient(circle, rgba(77, 162, 255, 0.15) 0%, transparent 70%)',
-          filter: 'blur(60px)',
-          zIndex: -1,
-          maxWidth: '100%'
-        }} />
+        {/* Hero Section */}
+        <section className="relative min-h-[90vh] flex flex-col items-center justify-center px-4 text-center py-20">
 
-        <Grid.Container gap={2} justify="center">
-          <Grid xs={24} direction="column" alignItems="center">
-            <div style={{
-              padding: '1px',
-              background: 'linear-gradient(90deg, rgba(77, 162, 255, 0), rgba(77, 162, 255, 0.5), rgba(77, 162, 255, 0))',
-              marginBottom: '1.5rem',
-              display: 'inline-flex',
-              animation: 'float 6s ease-in-out infinite'
-            }} className="cut-corner">
-              <div style={{
-                background: 'rgba(0,0,0,0.6)',
-                backdropFilter: 'blur(10px)',
-                padding: '8px 24px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                border: '1px solid rgba(255,255,255,0.05)'
-              }} className="cut-corner">
-                <div style={{
-                  width: '6px',
-                  height: '6px',
-                  background: '#4DA2FF',
-                  boxShadow: '0 0 10px #4DA2FF',
-                  animation: 'pulse-glow 2s infinite'
-                }} />
-                <span style={{
-                  fontWeight: 600,
-                  letterSpacing: '2px',
-                  color: 'rgba(255,255,255,0.9)',
-                  fontSize: '11px',
-                  textTransform: 'uppercase',
-                  fontFamily: 'var(--font-geist-mono)'
-                }}>
-                  Powered by <span style={{ color: '#4DA2FF' }}>Sui</span>
-                </span>
-              </div>
-            </div>
+          {/* Tech Badge */}
+          <div className="mb-8 animate-in fade-in zoom-in duration-1000">
+            <Badge variant="outline" className="px-6 py-2 bg-black/50 backdrop-blur border-blue-500/30 text-blue-400 font-mono tracking-[0.2em] uppercase rounded-none text-xs gap-2 hover:bg-blue-500/10 transition-colors">
+              <span className="w-1.5 h-1.5 bg-blue-500 animate-pulse shadow-[0_0_8px_#3b82f6]" />
+              Powered by Sui Network
+            </Badge>
+          </div>
 
-            <Text h1 style={{
-              fontSize: 'clamp(2.5rem, 8vw, 4.5rem)',
-              letterSpacing: '-0.05em',
-              marginBottom: '1rem',
-              lineHeight: 1.1,
-              background: 'linear-gradient(135deg, #fff 30%, #4DA2FF 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              textShadow: '0 20px 40px rgba(0,0,0,0.5)'
-            }}>
-              The Future of <br />
-              Decentralized Commerce
-            </Text>
+          {/* Main Title */}
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tighter mb-6 text-white drop-shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-200">
+            THE FUTURE OF <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-white">DECENTRALIZED COMMERCE</span>
+          </h1>
 
-            <Text p font="1.25rem" style={{ maxWidth: '600px', margin: '0 auto 2.5rem', color: '#888', lineHeight: 1.6, padding: '0 1rem' }}>
-              Experience the speed of Sui. Buy and sell verifiable digital assets with instant settlement.
-            </Text>
+          {/* Subtitle */}
+          <p className="max-w-2xl mx-auto text-lg md:text-xl text-neutral-400 mb-10 leading-relaxed font-light animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-300">
+            Experience the speed of Sui. Buy and sell verifiable digital assets with instant settlement, zero-knowledge security, and sub-second finality.
+          </p>
 
-            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-              <Link href="/shop" passHref>
-                {/* @ts-ignore */}
-                <Button
-                  shadow
-                  type="secondary"
-                  style={{
-                    height: '50px',
-                    padding: '0 32px',
-                    fontSize: '1rem',
-                    background: '#fff',
-                    color: '#000',
-                    border: 'none',
-                    borderRadius: 0
-                  }}
-                  className="cut-corner-bottom-right"
-                  iconRight={<ArrowRight />}
-                >
-                  Explore Market
+          {/* CTA Buttons */}
+          <div className="flex flex-wrap items-center justify-center gap-6 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-500">
+            <Link href="/shop">
+              <Button size="lg" className="h-14 px-8 text-sm font-bold bg-white text-black hover:bg-blue-500 hover:text-white transition-all duration-300 cut-corner-bottom-right uppercase tracking-widest border-none shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_30px_rgba(77,162,255,0.4)]">
+                Explore Market
+                <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </Link>
+
+            {account && (
+              <Link href="/seller">
+                <Button variant="outline" size="lg" className="h-14 px-8 text-sm font-bold text-white border-white/20 hover:bg-white/10 hover:border-white/40 transition-all duration-300 cut-corner-bottom-right uppercase tracking-widest backdrop-blur-sm">
+                  Seller Dashboard
                 </Button>
               </Link>
-              {account ? (
-                <Link href="/seller" passHref>
-                  {/* @ts-ignore */}
-                  <Button
-                    style={{
-                      height: '50px',
-                      padding: '0 32px',
-                      fontSize: '1rem',
-                      background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      color: '#fff',
-                      borderRadius: 0
-                    }}
-                    className="cut-corner-bottom-right"
-                  >
-                    Seller Dashboard
-                  </Button>
-                </Link>
-              ) : null}
-            </div>
-          </Grid>
-        </Grid.Container>
+            )}
+          </div>
+        </section>
+
+        {/* Features Grid */}
+        <section className="max-w-7xl mx-auto px-6 pb-32">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <FeatureCard
+              icon={<Shield className="w-6 h-6 text-blue-400" />}
+              title="VERIFIABLE OWNERSHIP"
+              desc="Every product is an NFT with cryptographically proven ownership on the Sui blockchain."
+            />
+            <FeatureCard
+              icon={<Zap className="w-6 h-6 text-blue-400" />}
+              title="INSTANT SETTLEMENT"
+              desc="Sub-second transaction finality implies you never have to wait. Speed is the new standard."
+            />
+            <FeatureCard
+              icon={<Box className="w-6 h-6 text-blue-400" />}
+              title="NFT RECEIPTS"
+              desc="Immutable proof of purchase stored permanently as NFTs for every single transaction."
+            />
+          </div>
+        </section>
+
+      </main>
+      <Footer />
+    </div>
+  );
+}
+
+function FeatureCard({ icon, title, desc }: { icon: React.ReactNode, title: string, desc: string }) {
+  return (
+    <div className="group relative p-8 bg-black/40 border border-white/5 hover:border-blue-500/30 transition-all duration-500 cut-corner backdrop-blur-sm">
+      {/* Icon */}
+      <div className="mb-6 w-12 h-12 flex items-center justify-center bg-blue-500/5 border border-blue-500/20 group-hover:bg-blue-500/10 group-hover:scale-110 transition-all duration-500">
+        {icon}
       </div>
 
-      {/* Features Grid */}
-      <Page.Content>
-        <Grid.Container gap={2} justify="center">
-          {[
-            { icon: <Shield color="#4DA2FF" />, title: 'Verifiable Ownership', desc: 'Every product is an NFT with cryptographically proven ownership on Sui.' },
-            { icon: <Zap color="#4DA2FF" />, title: 'Instant Settlement', desc: 'Sub-second transaction finality with minimal gas fees on Sui network.' },
-            { icon: <ShoppingCart color="#4DA2FF" />, title: 'NFT Receipts', desc: 'Immutable proof of purchase stored as NFTs for every transaction.' }
-          ].map((feature, i) => (
-            <Grid xs={24} md={8} key={i}>
-              <div style={{
-                width: '100%',
-                padding: '2rem',
-                background: 'rgba(255,255,255,0.02)',
-                border: '1px solid rgba(255,255,255,0.05)',
-                backdropFilter: 'blur(10px)',
-                transition: 'all 0.3s ease',
-                cursor: 'default',
-                position: 'relative',
-                overflow: 'hidden'
-              }}
-                className="group hover:bg-white/5 hover:scale-105 hover:shadow-[0_0_30px_rgba(77,162,255,0.1)] cut-corner"
-              >
-                <div style={{ marginBottom: '1rem' }}>
-                  {feature.icon}
-                </div>
-                <Text h4 my={0} style={{ marginBottom: '0.5rem' }}>{feature.title}</Text>
-                <Text p small style={{ color: '#888', lineHeight: 1.6 }}>
-                  {feature.desc}
-                </Text>
-              </div>
-            </Grid>
-          ))}
-        </Grid.Container>
-      </Page.Content>
-
-      <Footer />
-    </Page>
+      <h3 className="text-lg font-bold text-white mb-3 tracking-widest font-mono">{title}</h3>
+      <p className="text-neutral-500 leading-relaxed text-sm group-hover:text-neutral-400 transition-colors duration-300">{desc}</p>
+    </div>
   );
 }

@@ -78,9 +78,13 @@ export function useKiosk(ownerAddress?: string) {
       queryClient.invalidateQueries({ queryKey: ['kiosks'] });
       toast.success('Kiosk created successfully!');
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Create kiosk error:', error);
-      toast.error('Failed to create kiosk');
+      if (error.message?.includes('No valid gas coins') || error.message?.includes('GasBalanceTooLow')) {
+        toast.error('Insufficient SUI for gas. Please claim Testnet SUI.');
+      } else {
+        toast.error('Failed to create kiosk: ' + (error.message || 'Unknown error'));
+      }
     },
   });
 
@@ -228,6 +232,42 @@ export function useKiosk(ownerAddress?: string) {
     },
   });
 
+  // Take (Withdraw) from kiosk
+  const takeFromKiosk = useMutation({
+    mutationFn: async (productId: string) => {
+      if (!userKiosk) throw new Error('No kiosk found');
+
+      const tx = new Transaction();
+      const productType = `${PACKAGE_ID}::product::Product`;
+
+      // Take from kiosk
+      const [item] = tx.moveCall({
+        target: '0x2::kiosk::take',
+        arguments: [
+          tx.object(userKiosk.id),
+          tx.object(userKiosk.cap.objectId),
+          tx.pure.id(productId),
+        ],
+        typeArguments: [productType],
+      });
+
+      // Transfer back to owner
+      tx.transferObjects([item], tx.pure.address(account!.address));
+
+      const result = await signAndExecute({ transaction: tx });
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['kiosks'] });
+      queryClient.invalidateQueries({ queryKey: ['userProducts'] }); // Refresh wallet items
+      toast.success('Product removed from Kiosk (Unlisted)');
+    },
+    onError: (error) => {
+      console.error('Take error:', error);
+      toast.error('Failed to unlist/take product');
+    },
+  });
+
   return {
     // Data
     kiosks,
@@ -244,5 +284,7 @@ export function useKiosk(ownerAddress?: string) {
     createKiosk: createKiosk.mutateAsync,
     placeAndList: placeAndList.mutateAsync,
     purchaseFromKiosk: purchaseFromKiosk.mutateAsync,
+    takeFromKiosk: takeFromKiosk.mutateAsync,
+    isTaking: takeFromKiosk.isPending,
   };
 }

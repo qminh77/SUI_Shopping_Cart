@@ -93,7 +93,7 @@ export function useProducts(shopId?: string) {
                 const tx = new Transaction();
 
                 tx.moveCall({
-                    target: `${PACKAGE_ID}::product::mint`,
+                    target: `${PACKAGE_ID}::product::mint_to_sender`,
                     arguments: [
                         tx.pure.address(shopId),
                         tx.pure.string(name),
