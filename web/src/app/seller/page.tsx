@@ -64,7 +64,7 @@ export default function SellerPage() {
                 createdAt: Number(fields.created_at),
                 status: 'KIOSK'
             } as Product & { status: string };
-        }).filter((i: any) => i !== null) || [];
+        }).filter((i): i is Product & { status: string } => i !== null) || [];
 
         return [...walletItems, ...kioskItems];
     }, [userProducts, userKiosk]);
