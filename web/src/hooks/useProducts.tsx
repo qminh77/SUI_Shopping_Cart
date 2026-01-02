@@ -28,10 +28,12 @@ export function useProducts(shopId?: string) {
             }
             return await getAllListedProducts(client);
         },
+        staleTime: 2 * 60 * 1000, // Cache for 2 minutes
+        gcTime: 5 * 60 * 1000,
     });
 
     // Fetch user's own products
-    const { data: userProducts } = useQuery({
+    const { data: userProducts, isLoading: isLoadingProducts } = useQuery({
         queryKey: ['userProducts', account?.address],
         queryFn: async () => {
             if (!account?.address) return [];
@@ -64,6 +66,8 @@ export function useProducts(shopId?: string) {
             }).filter((p): p is Product => p !== null);
         },
         enabled: !!account?.address,
+        staleTime: 3 * 60 * 1000, // Cache for 3 minutes
+        gcTime: 10 * 60 * 1000,
     });
 
     // Create product mutation
@@ -205,6 +209,7 @@ export function useProducts(shopId?: string) {
         products,
         userProducts,
         isLoading,
+        isLoadingProducts,
         error,
         createProduct: createProduct.mutateAsync,
         isCreatingProduct: createProduct.isPending,

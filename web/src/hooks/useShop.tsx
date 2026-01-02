@@ -58,7 +58,9 @@ export function useShop() {
             return data;
         },
         enabled: !!account?.address,
-        retry: false, // Don't retry on errors
+        retry: false,
+        staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+        gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
     });
 
     // Create shop mutation

@@ -50,6 +50,8 @@ export function useKiosk(ownerAddress?: string) {
       return kiosksWithItems;
     },
     enabled: !!ownerAddress,
+    staleTime: 5 * 60 * 1000, // Cache kiosk data for 5 minutes
+    gcTime: 10 * 60 * 1000,
   });
 
   // Get user's first kiosk (most common case)
