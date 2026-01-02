@@ -52,6 +52,12 @@ export default function AdminShopDetailPage() {
         queryKey: ['admin-shop', id],
         queryFn: async () => {
             const res = await fetch(`/api/admin/shops/${id}`)
+
+            if (res.status === 401) {
+                window.location.href = '/admin/login'
+                throw new Error('Unauthorized')
+            }
+
             if (!res.ok) throw new Error('Failed')
             return res.json()
         }

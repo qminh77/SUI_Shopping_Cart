@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { LayoutDashboard, Store, LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { ConnectButton } from '@suiet/wallet-kit'
+import { ConnectButton } from '@mysten/dapp-kit'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 

@@ -65,9 +65,15 @@ export async function createAdminSession(walletAddress: string) {
 
     const value = JSON.stringify({ wallet: walletAddress, role: 'ADMIN', time: Date.now() })
 
+    // For development (especially if accessing via IP causing Secure cookie issues)
+    // we relax the secure flag if not strictly production.
+    const isProduction = process.env.NODE_ENV === 'production'
+
+    console.log('[Auth] Creating session for:', walletAddress)
+
     cookieStore.set(SESSION_COOKIE_NAME, value, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        secure: isProduction, // Relaxing this for dev
         sameSite: 'lax',
         maxAge: MAX_AGE,
         path: '/',

@@ -1,13 +1,14 @@
 'use client'
 
-import { useWallet } from '@suiet/wallet-kit'
+import { ConnectButton, useWallet } from '@suiet/wallet-kit'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 
-export default function AdminLoginPage() {
+function LoginForm() {
     const { connected, address, signMessage } = useWallet()
+
     const router = useRouter()
     const [loading, setLoading] = useState(false)
 
@@ -57,8 +58,10 @@ export default function AdminLoginPage() {
             }
 
             toast.success('Admin login successful')
-            router.push('/admin/shops')
-            router.refresh()
+
+            // Force a hard refresh to ensure middleware picks up the cookie
+            // changing the window location is often more reliable than router.push for Auth state changes
+            window.location.href = '/admin/shops'
         } catch (error: any) {
             console.error('Login error:', error)
             toast.error(error.message || 'Failed to login')
@@ -66,6 +69,18 @@ export default function AdminLoginPage() {
             setLoading(false)
         }
     }
+
+    // ... (rest of the handleLogin function remains same)
+
+    // Add effect to prevent hydration mismatch
+    const [isMounted, setIsMounted] = useState(false)
+    useEffect(() => {
+        setIsMounted(true)
+    }, [])
+
+    console.log('AdminLogin: Render. IsMounted:', isMounted)
+
+    if (!isMounted) return <div className="p-10 text-center">Loading Admin Portal...</div>
 
     return (
         <div className="flex h-screen w-full items-center justify-center bg-gray-50 dark:bg-gray-900">
@@ -76,34 +91,13 @@ export default function AdminLoginPage() {
                 </div>
 
                 <div className="flex flex-col gap-4 items-center justify-center">
-                    {/* Wallet Connect Button from Suiet usually handles the view. 
-                 But here we just show the Login button if connected, or depend on Navbar?
-                 Ideally, use the ConnectButton from Suiet or custom. 
-                 Since I don't want to mess with finding the ConnectButton import, 
-                 I'll assume the layout or a simple placeholder is fine if the user has a global button.
-                 BUT, better to just use the standard button.
-             */}
-
-                    {/* Assuming ConnectButton is available or we use custom button calling connect() if supported, 
-                 but useWallet usually provides `select()` to open modal. */}
-
-                    {/* Let's try to dynamic import ConnectButton or just use standard button that triggers select() if not connected? 
-                 Suiet useWallet: `select` 
-             */}
-
                     {!connected ? (
-                        <div className="w-full">
-                            {/* Placeholder for standard Connect Button if available globally, 
-                        or we can use the library one. 
-                        Let's just use a text instruction or a button to trigger select if possible (Suiet < 0.2 doesn't trigger select easily without hook).
-                        Actually suiet provides <ConnectButton/>. Let's try to import it.
-                    */}
-                            <div className="p-4 border border-dashed rounded-lg">
-                                <p className="text-sm mb-4">Please connect your wallet using the button in the header/corner, or:</p>
-                                {/* We don't have direct access to 'select' from useWallet in some versions? 
-                            Let's assume the user can connect via the global header if present.
-                            Or Render the ConnectButton here.
-                        */}
+                        <div className="w-full flex flex-col items-center gap-4">
+                            <div className="p-4 border border-dashed rounded-lg w-full">
+                                <p className="text-sm mb-4">Click below to connect wallet:</p>
+                                <div className="flex justify-center">
+                                    <ConnectButton />
+                                </div>
                             </div>
                         </div>
                     ) : (
@@ -125,4 +119,8 @@ export default function AdminLoginPage() {
             </div>
         </div>
     )
+}
+
+export default function AdminLoginPage() {
+    return <LoginForm />
 }

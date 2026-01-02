@@ -82,6 +82,12 @@ function AdminShopsContent() {
             if (debouncedSearch) params.append('q', debouncedSearch)
 
             const res = await fetch(`/api/admin/shops?${params}`)
+
+            if (res.status === 401) {
+                window.location.href = '/admin/login'
+                throw new Error('Unauthorized')
+            }
+
             if (!res.ok) throw new Error('Failed')
             return res.json()
         }
