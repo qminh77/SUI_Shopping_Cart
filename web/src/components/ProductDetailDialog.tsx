@@ -1,17 +1,23 @@
 'use client';
 
-import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogHeader } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
+import {
+    Modal,
+    Button,
+    Tag,
+    Text,
+    Grid,
+    Image,
+    Divider,
+    Snippet,
+    useToasts,
+    Loading
+} from '@geist-ui/core';
 import { Product, mistToSui, formatAddress } from '@/lib/sui-utils';
 import { useCart } from '@/contexts/CartContext';
 import { useCurrentAccount } from '@mysten/dapp-kit';
 import { useProducts } from '@/hooks/useProducts';
 import { useKiosk } from '@/hooks/useKiosk';
-import Image from 'next/image';
-import { ShoppingCart, Store, Package, CheckCircle2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { ShoppingCart, Clock } from '@geist-ui/icons';
 
 interface ProductDetailDialogProps {
     product: Product | null;
@@ -25,6 +31,7 @@ export function ProductDetailDialog({ product, open, onOpenChange, kioskId }: Pr
     const account = useCurrentAccount();
     const { purchaseProduct, isPurchasing: isLegacyPurchasing } = useProducts();
     const { purchaseFromKiosk, isPurchasing: isKioskPurchasing } = useKiosk(account?.address);
+    const { setToast } = useToasts();
 
     const isPurchasing = isLegacyPurchasing || isKioskPurchasing;
 
@@ -34,21 +41,16 @@ export function ProductDetailDialog({ product, open, onOpenChange, kioskId }: Pr
 
     const handleAddToCart = () => {
         addToCart(product);
-        toast.success('Added to cart!');
+        setToast({ text: 'Added to cart!', type: 'success' });
     };
 
     const handleBuyNow = async () => {
         if (!account) {
-            toast.error('Please connect your wallet');
+            setToast({ text: 'Please connect your wallet', type: 'error' });
             return;
         }
 
         try {
-            // TODO: In a full Kiosk implementation, we need to:
-            // 1. Query which Kiosk contains this product
-            // 2. Use that Kiosk ID for purchase
-            // For now, we fall back to legacy purchase if no kioskId
-
             if (kioskId) {
                 await purchaseFromKiosk({
                     kioskId,
@@ -68,138 +70,107 @@ export function ProductDetailDialog({ product, open, onOpenChange, kioskId }: Pr
             onOpenChange(false);
         } catch (error) {
             console.error('Purchase error:', error);
+            setToast({ text: 'Purchase failed', type: 'error' });
         }
     };
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-4xl p-0 overflow-hidden bg-background">
-                <DialogHeader className="sr-only">
-                    <DialogTitle>{product.name}</DialogTitle>
-                    <DialogDescription>Product details for {product.name}</DialogDescription>
-                </DialogHeader>
-
-                {/* NOTE: Just a quick way to verify receipts page */}
-                {/* In production this should be in header */}
-
-                <div className="grid md:grid-cols-2 lg:grid-cols-5 h-full max-h-[90vh] overflow-y-auto md:overflow-hidden">
-                    {/* Product Image - Left/Top Side */}
-                    <div className="lg:col-span-3 relative aspect-video md:aspect-auto md:h-full bg-muted flex items-center justify-center overflow-hidden">
-                        <Image
-                            src={product.imageUrl}
-                            alt={product.name}
-                            fill
-                            className="object-cover"
-                            priority
-                        />
-                        <div className="absolute top-4 left-4 z-10">
-                            <Badge variant="secondary" className="backdrop-blur-md bg-background/50 border-white/20 shadow-sm">
-                                NFT Product
-                            </Badge>
+        <Modal visible={open} onClose={() => onOpenChange(false)} width="60rem">
+            <Modal.Content>
+                <Grid.Container gap={2}>
+                    {/* Product Image - Left Side */}
+                    <Grid xs={24} md={12}>
+                        <div style={{ position: 'relative', width: '100%', borderRadius: '8px', overflow: 'hidden', background: '#333' }}>
+                            <Image
+                                src={product.imageUrl}
+                                alt={product.name}
+                                width="100%"
+                                height="100%"
+                                style={{ objectFit: 'cover', aspectRatio: '1/1' }}
+                            />
+                            <div style={{ position: 'absolute', top: '10px', left: '10px' }}>
+                                <Tag type="lite">NFT Product</Tag>
+                            </div>
                         </div>
-                    </div>
+                    </Grid>
 
-                    {/* Product Details - Right/Bottom Side */}
-                    <div className="lg:col-span-2 flex flex-col p-6 md:p-8 gap-6 md:max-h-[85vh] md:overflow-y-auto">
+                    {/* Product Details - Right Side */}
+                    <Grid xs={24} md={12} direction="column">
                         {/* Header Info */}
-                        <div>
-                            <div className="flex items-center justify-between mb-2">
-                                <div className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
-                                    <Store className="h-4 w-4" />
-                                    {formatAddress(product.creator)}
-                                </div>
-                                <Badge variant={product.listed ? 'outline' : 'secondary'} className="font-normal">
-                                    {product.listed ? 'Status: Listed' : 'Status: Unlisted'}
-                                </Badge>
-                            </div>
+                        <div style={{ width: '100%' }}>
+                            {/* @ts-ignore */}
+                            <Grid.Container justify="space-between" alignItems="center">
+                                <Text small type="secondary">
+                                    Seller: {formatAddress(product.creator)}
+                                </Text>
+                                <Tag type={product.listed ? 'success' : 'warning'}>
+                                    {product.listed ? 'Listed' : 'Unlisted'}
+                                </Tag>
+                            </Grid.Container>
 
-                            <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-4">
-                                {product.name}
-                            </h2>
+                            <Text h2 style={{ marginBottom: '0.5rem' }}>{product.name}</Text>
 
-                            <div className="flex items-baseline gap-2">
-                                <span className="text-3xl font-bold text-primary">
-                                    {mistToSui(product.price)}
-                                </span>
-                                <span className="text-lg font-medium text-muted-foreground">SUI</span>
+                            <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
+                                <Text h2 type="success" my={0}>{mistToSui(product.price)}</Text>
+                                <Text span type="secondary">SUI</Text>
                             </div>
                         </div>
 
-                        <Separator />
+                        <Divider h={2} />
 
                         {/* Description */}
-                        <div className="space-y-3">
-                            <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">About this Item</h3>
-                            <p className="text-sm leading-relaxed text-foreground/90">
+                        <div>
+                            <Text h5 style={{ textTransform: 'uppercase', color: '#666', fontSize: '0.8rem', letterSpacing: '1px' }}>About</Text>
+                            <Text p style={{ lineHeight: '1.6' }}>
                                 {product.description}
-                            </p>
+                            </Text>
                         </div>
 
                         {/* Product Meta */}
-                        <div className="grid grid-cols-2 gap-4 py-4 rounded-lg bg-muted/40 p-4 border">
-                            <div className="space-y-1">
-                                <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                    <Package className="h-3 w-3" /> Product ID
-                                </span>
-                                <p className="font-mono text-xs truncate bg-background p-1 rounded border">
-                                    {formatAddress(product.id, 8)}
-                                </p>
-                            </div>
-                            <div className="space-y-1">
-                                <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                    <ClockIcon className="h-3 w-3" /> Created
-                                </span>
-                                <p className="text-xs pt-1">
-                                    {new Date(product.createdAt).toLocaleDateString()}
-                                </p>
-                            </div>
+                        <div style={{ background: 'rgba(255,255,255,0.05)', padding: '1rem', borderRadius: '8px', marginTop: '1rem' }}>
+                            <Grid.Container gap={1}>
+                                <Grid xs={24}>
+                                    <Text small type="secondary" style={{ display: 'block', marginBottom: '0.2rem' }}>Product ID</Text>
+                                    <Snippet symbol="" text={product.id} width="100%" type="dark" />
+                                </Grid>
+                                <Grid xs={24}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
+                                        <Clock size={16} />
+                                        <Text small>Created {new Date(product.createdAt).toLocaleDateString()}</Text>
+                                    </div>
+                                </Grid>
+                            </Grid.Container>
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="mt-auto pt-4 space-y-3">
+                        <div style={{ marginTop: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                            {/* @ts-ignore */}
                             <Button
+                                shadow
+                                type="success"
                                 onClick={handleBuyNow}
                                 disabled={!account || isPurchasing || !product.listed}
-                                className="w-full h-12 text-base shadow-md"
-                                size="lg"
+                                loading={isPurchasing}
+                                width="100%"
                             >
-                                {isPurchasing ? 'Processing Transaction...' : !account ? 'Connect Wallet to Purchase' : 'Buy Now'}
+                                {isPurchasing ? 'Processing...' : !account ? 'Connect to Purchase' : 'Buy Now'}
                             </Button>
 
+                            {/* @ts-ignore */}
                             <Button
                                 onClick={handleAddToCart}
                                 disabled={isInCart || !product.listed}
-                                variant="outline"
-                                className="w-full h-12 text-base hover:bg-muted/50 transition-colors"
-                                size="lg"
+                                width="100%"
+                                icon={<ShoppingCart />}
                             >
-                                <ShoppingCart className="h-4 w-4 mr-2" />
-                                {isInCart ? 'Item in Cart' : 'Add to Cart'}
+                                {isInCart ? 'In Cart' : 'Add to Cart'}
                             </Button>
                         </div>
-                    </div>
-                </div>
-            </DialogContent>
-        </Dialog>
-    );
-}
-
-function ClockIcon({ className }: { className?: string }) {
-    return (
-        <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className={className}
-        >
-            <circle cx="12" cy="12" r="10" />
-            <polyline points="12 6 12 12 16 14" />
-        </svg>
+                    </Grid>
+                </Grid.Container>
+            </Modal.Content>
+            {/* @ts-ignore */}
+            <Modal.Action passive onClick={() => onOpenChange(false)}>Close</Modal.Action>
+        </Modal>
     );
 }

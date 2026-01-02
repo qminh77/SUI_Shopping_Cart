@@ -1,142 +1,191 @@
 'use client';
 
-import { WalletConnection } from '@/components/WalletConnection';
 import { useCurrentAccount } from '@mysten/dapp-kit';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import {
+  Button,
+  Card,
+  Text,
+  Grid,
+  Spacer,
+  Tag,
+  Page
+} from '@geist-ui/core';
+import { Navigation } from '@/components/Navigation';
+import { Footer } from '@/components/Footer';
+import { ShoppingCart, Shield, Zap, ArrowRight } from '@geist-ui/icons';
 
 export default function Home() {
   const account = useCurrentAccount();
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded bg-primary" />
-              <span className="text-xl font-semibold">Sui Commerce</span>
-            </div>
-            <WalletConnection />
-          </div>
-        </div>
-      </header>
+    <Page dotBackdrop width="100%" padding={0}>
+      <Navigation />
 
       {/* Hero Section */}
-      <main className="container mx-auto px-6">
-        <div className="py-24 text-center max-w-4xl mx-auto space-y-8">
-          <div className="space-y-4">
-            <Badge variant="outline" className="mb-4">
-              Powered by Sui Blockchain
-            </Badge>
-            <h1 className="text-5xl font-bold tracking-tight sm:text-6xl">
-              Web3 E-commerce
-              <br />
-              <span className="text-muted-foreground">Redefined</span>
-            </h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              A decentralized marketplace where products are NFTs, ownership is transparent,
-              and transactions are secured on-chain.
-            </p>
-          </div>
+      <div style={{
+        minHeight: '80vh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        textAlign: 'center',
+        position: 'relative',
+        overflow: 'hidden',
+        padding: '2rem 1rem'
+      }}>
 
-          {/* Connection Status */}
-          {account ? (
-            <div className="max-w-md mx-auto space-y-6">
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-center gap-2 text-sm">
-                    <div className="h-2 w-2 rounded-full bg-green-500" />
-                    <span className="font-medium">Connected</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1 font-mono">
-                    {account.address}
-                  </p>
-                </CardContent>
-              </Card>
+        {/* Background Glow */}
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: '600px',
+          height: '600px',
+          background: 'radial-gradient(circle, rgba(77, 162, 255, 0.15) 0%, transparent 70%)',
+          filter: 'blur(60px)',
+          zIndex: -1,
+          maxWidth: '100%'
+        }} />
 
-              <div className="grid grid-cols-2 gap-4">
-                <Link href="/shop">
-                  <Button className="w-full" size="lg">
-                    Browse Marketplace
-                  </Button>
-                </Link>
-
-                <Link href="/seller">
-                  <Button variant="outline" className="w-full" size="lg">
-                    Sell Products
-                  </Button>
-                </Link>
+        <Grid.Container gap={2} justify="center">
+          <Grid xs={24} direction="column" alignItems="center">
+            <div style={{
+              padding: '1px',
+              background: 'linear-gradient(90deg, rgba(77, 162, 255, 0), rgba(77, 162, 255, 0.5), rgba(77, 162, 255, 0))',
+              marginBottom: '1.5rem',
+              display: 'inline-flex',
+              animation: 'float 6s ease-in-out infinite'
+            }} className="cut-corner">
+              <div style={{
+                background: 'rgba(0,0,0,0.6)',
+                backdropFilter: 'blur(10px)',
+                padding: '8px 24px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                border: '1px solid rgba(255,255,255,0.05)'
+              }} className="cut-corner">
+                <div style={{
+                  width: '6px',
+                  height: '6px',
+                  background: '#4DA2FF',
+                  boxShadow: '0 0 10px #4DA2FF',
+                  animation: 'pulse-glow 2s infinite'
+                }} />
+                <span style={{
+                  fontWeight: 600,
+                  letterSpacing: '2px',
+                  color: 'rgba(255,255,255,0.9)',
+                  fontSize: '11px',
+                  textTransform: 'uppercase',
+                  fontFamily: 'var(--font-geist-mono)'
+                }}>
+                  Powered by <span style={{ color: '#4DA2FF' }}>Sui</span>
+                </span>
               </div>
             </div>
-          ) : (
-            <Card className="max-w-md mx-auto">
-              <CardContent className="pt-6">
-                <p className="text-sm text-muted-foreground text-center">
-                  Connect your Sui wallet to access the marketplace
-                </p>
-              </CardContent>
-            </Card>
-          )}
 
-          {/* Features Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-16">
-            <Card>
-              <CardHeader>
-                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
+            <Text h1 style={{
+              fontSize: 'clamp(2.5rem, 8vw, 4.5rem)',
+              letterSpacing: '-0.05em',
+              marginBottom: '1rem',
+              lineHeight: 1.1,
+              background: 'linear-gradient(135deg, #fff 30%, #4DA2FF 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              textShadow: '0 20px 40px rgba(0,0,0,0.5)'
+            }}>
+              The Future of <br />
+              Decentralized Commerce
+            </Text>
+
+            <Text p font="1.25rem" style={{ maxWidth: '600px', margin: '0 auto 2.5rem', color: '#888', lineHeight: 1.6, padding: '0 1rem' }}>
+              Experience the speed of Sui. Buy and sell verifiable digital assets with instant settlement.
+            </Text>
+
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <Link href="/shop" passHref>
+                {/* @ts-ignore */}
+                <Button
+                  shadow
+                  type="secondary"
+                  style={{
+                    height: '50px',
+                    padding: '0 32px',
+                    fontSize: '1rem',
+                    background: '#fff',
+                    color: '#000',
+                    border: 'none',
+                    borderRadius: 0
+                  }}
+                  className="cut-corner-bottom-right"
+                  iconRight={<ArrowRight />}
+                >
+                  Explore Market
+                </Button>
+              </Link>
+              {account ? (
+                <Link href="/seller" passHref>
+                  {/* @ts-ignore */}
+                  <Button
+                    style={{
+                      height: '50px',
+                      padding: '0 32px',
+                      fontSize: '1rem',
+                      background: 'rgba(255,255,255,0.05)',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      color: '#fff',
+                      borderRadius: 0
+                    }}
+                    className="cut-corner-bottom-right"
+                  >
+                    Seller Dashboard
+                  </Button>
+                </Link>
+              ) : null}
+            </div>
+          </Grid>
+        </Grid.Container>
+      </div>
+
+      {/* Features Grid */}
+      <Page.Content>
+        <Grid.Container gap={2} justify="center">
+          {[
+            { icon: <Shield color="#4DA2FF" />, title: 'Verifiable Ownership', desc: 'Every product is an NFT with cryptographically proven ownership on Sui.' },
+            { icon: <Zap color="#4DA2FF" />, title: 'Instant Settlement', desc: 'Sub-second transaction finality with minimal gas fees on Sui network.' },
+            { icon: <ShoppingCart color="#4DA2FF" />, title: 'NFT Receipts', desc: 'Immutable proof of purchase stored as NFTs for every transaction.' }
+          ].map((feature, i) => (
+            <Grid xs={24} md={8} key={i}>
+              <div style={{
+                width: '100%',
+                padding: '2rem',
+                background: 'rgba(255,255,255,0.02)',
+                border: '1px solid rgba(255,255,255,0.05)',
+                backdropFilter: 'blur(10px)',
+                transition: 'all 0.3s ease',
+                cursor: 'default',
+                position: 'relative',
+                overflow: 'hidden'
+              }}
+                className="group hover:bg-white/5 hover:scale-105 hover:shadow-[0_0_30px_rgba(77,162,255,0.1)] cut-corner"
+              >
+                <div style={{ marginBottom: '1rem' }}>
+                  {feature.icon}
                 </div>
-                <CardTitle className="text-lg">Verifiable Ownership</CardTitle>
-                <CardDescription>
-                  Every product is an NFT with cryptographically proven ownership on Sui blockchain
-                </CardDescription>
-              </CardHeader>
-            </Card>
+                <Text h4 my={0} style={{ marginBottom: '0.5rem' }}>{feature.title}</Text>
+                <Text p small style={{ color: '#888', lineHeight: 1.6 }}>
+                  {feature.desc}
+                </Text>
+              </div>
+            </Grid>
+          ))}
+        </Grid.Container>
+      </Page.Content>
 
-            <Card>
-              <CardHeader>
-                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                </div>
-                <CardTitle className="text-lg">Instant Settlement</CardTitle>
-                <CardDescription>
-                  Sub-second transaction finality with minimal gas fees on Sui network
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                </div>
-                <CardTitle className="text-lg">NFT Receipts</CardTitle>
-                <CardDescription>
-                  Immutable proof of purchase stored as NFTs for every transaction
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </div>
-        </div>
-      </main>
-
-      {/* Footer */}
-      <footer className="border-t mt-24">
-        <div className="container mx-auto px-6 py-8">
-          <p className="text-center text-sm text-muted-foreground">
-            Built with Sui Move • Next.js • Shadcn UI
-          </p>
-        </div>
-      </footer>
-    </div>
+      <Footer />
+    </Page>
   );
 }

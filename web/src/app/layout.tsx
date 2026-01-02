@@ -1,9 +1,9 @@
-import { Toaster } from '@/components/ui/sonner';
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { SuiProviders } from "@/providers/SuiProviders";
 import { CartProvider } from "@/contexts/CartContext";
+import { GeistProviders } from "@/providers/GeistProviders";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,12 +31,13 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
-        <SuiProviders>
-          <CartProvider>
-            {children}
-            <Toaster />
-          </CartProvider>
-        </SuiProviders>
+        <GeistProviders>
+          <SuiProviders>
+            <CartProvider>
+              {children}
+            </CartProvider>
+          </SuiProviders>
+        </GeistProviders>
       </body>
     </html>
   );

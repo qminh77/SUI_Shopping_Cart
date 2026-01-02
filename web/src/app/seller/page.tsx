@@ -2,26 +2,36 @@
 
 import { useState } from 'react';
 import { useCurrentAccount } from '@mysten/dapp-kit';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
+import {
+    Button,
+    Card,
+    Input,
+    Textarea,
+    Tag,
+    Text,
+    Grid,
+    Page,
+    Spacer,
+    Loading,
+    Divider,
+    useToasts,
+} from '@geist-ui/core';
 import { WalletConnection } from '@/components/WalletConnection';
 import { useShop } from '@/hooks/useShop';
 import { useProducts } from '@/hooks/useProducts';
 import { useKiosk } from '@/hooks/useKiosk';
 import { mistToSui, formatAddress } from '@/lib/sui-utils';
-import Link from 'next/link';
-import { Store, Package, Eye, EyeOff, ShoppingBag } from 'lucide-react';
+import { Navigation } from '@/components/Navigation';
+import { Footer } from '@/components/Footer';
+import { Package, Eye, EyeOff, ShoppingBag } from '@geist-ui/icons';
 
 export default function SellerPage() {
     const account = useCurrentAccount();
-    const { userShop, isLoading: isLoadingShop, createShop, isCreatingShop } = useShop();
+    const { shop: userShop, isLoading: isLoadingShop, createShop } = useShop();
+    const isCreatingShop = createShop.isPending;
     const { userProducts, createProduct, isCreatingProduct, toggleProductListing, isTogglingListing } = useProducts();
-    const { hasKiosk, userKiosk, isLoadingKiosks, createKiosk, isCreatingKiosk, placeAndList, isListingProduct } = useKiosk(account?.address);
+    const { hasKiosk, isLoadingKiosks, createKiosk, isCreatingKiosk } = useKiosk(account?.address);
+    const { setToast } = useToasts();
 
     // Shop form state
     const [shopFormData, setShopFormData] = useState({
@@ -37,27 +47,27 @@ export default function SellerPage() {
         price: '',
     });
 
-    const handleCreateShop = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleCreateShop = async () => {
         try {
-            await createShop(shopFormData);
+            await createShop.mutateAsync(shopFormData as any);
             setShopFormData({ name: '', description: '' });
+            setToast({ text: 'Shop created successfully!', type: 'success' });
         } catch (error) {
             console.error('Shop creation error:', error);
+            setToast({ text: 'Failed to create shop', type: 'error' });
         }
     };
 
-    const handleCreateProduct = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleCreateProduct = async () => {
         if (!userShop) return;
         if (!hasKiosk) {
-            alert('Please create a Kiosk first!');
+            setToast({ text: 'Please create a Kiosk first!', type: 'warning' });
             return;
         }
 
         try {
             // Create the product NFT
-            const result = await createProduct({
+            await createProduct({
                 shopId: userShop.id,
                 name: productFormData.name,
                 description: productFormData.description,
@@ -65,403 +75,308 @@ export default function SellerPage() {
                 price: parseFloat(productFormData.price),
             });
 
-            // TODO: After minting, we would need the product ID to list it
-            // For now, products need to be manually listed after creation
-            // In a future iteration, we could extract the product ID from the transaction result
-
             setProductFormData({ name: '', description: '', imageUrl: '', price: '' });
+            setToast({ text: 'Product created successfully!', type: 'success' });
         } catch (error) {
             console.error('Product creation error:', error);
+            setToast({ text: 'Failed to create product', type: 'error' });
         }
     };
 
     const handleCreateKiosk = async () => {
         try {
             await createKiosk();
+            setToast({ text: 'Kiosk created successfully!', type: 'success' });
         } catch (error) {
             console.error('Kiosk creation error:', error);
+            setToast({ text: 'Failed to create kiosk', type: 'error' });
         }
     };
 
     const handleToggleListing = async (productId: string, currentlyListed: boolean) => {
         try {
             await toggleProductListing({ productId, list: !currentlyListed });
+            setToast({ text: currentlyListed ? 'Product unlisted' : 'Product listed', type: 'success' });
         } catch (error) {
             console.error('Toggle listing error:', error);
+            setToast({ text: 'Failed to update listing', type: 'error' });
         }
     };
 
     // Not connected
     if (!account) {
         return (
-            <div className="min-h-screen bg-background">
-                <header className="border-b">
-                    <div className="container mx-auto px-6 py-4">
-                        <div className="flex items-center justify-between">
-                            <Link href="/" className="flex items-center gap-2">
-                                <div className="h-8 w-8 rounded bg-primary" />
-                                <span className="text-xl font-semibold">Sui Commerce</span>
-                            </Link>
-                            <WalletConnection />
-                        </div>
-                    </div>
-                </header>
-
-                <div className="flex items-center justify-center min-h-[80vh]">
-                    <Card className="w-full max-w-md">
-                        <CardHeader>
-                            <CardTitle>Wallet Required</CardTitle>
-                            <CardDescription>
-                                Please connect your Sui wallet to access the seller dashboard
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-sm text-muted-foreground">
-                                You'll need a connected wallet to create shops and manage products.
-                            </p>
-                        </CardContent>
-                    </Card>
-                </div>
-            </div>
+            <Page dotBackdrop width="100%" padding={0}>
+                <Navigation />
+                <Grid.Container justify="center" alignItems="center" style={{ minHeight: '60vh' }}>
+                    <Grid xs={24} md={12}>
+                        <Card>
+                            <Text h3>Wallet Required</Text>
+                            <Text p>Please connect your Sui wallet to access the seller dashboard.</Text>
+                        </Card>
+                    </Grid>
+                </Grid.Container>
+                <Footer />
+            </Page>
         );
     }
 
     // Loading shop status
     if (isLoadingShop) {
         return (
-            <div className="min-h-screen bg-background">
-                <header className="border-b">
-                    <div className="container mx-auto px-6 py-4">
-                        <div className="flex items-center justify-between">
-                            <Link href="/" className="flex items-center gap-2">
-                                <div className="h-8 w-8 rounded bg-primary" />
-                                <span className="text-xl font-semibold">Sui Commerce</span>
-                            </Link>
-                            <WalletConnection />
-                        </div>
-                    </div>
-                </header>
-                <div className="flex items-center justify-center min-h-[80vh]">
-                    <p className="text-muted-foreground">Loading...</p>
-                </div>
-            </div>
+            <Page dotBackdrop width="100%" padding={0}>
+                <Navigation />
+                <Grid.Container justify="center" alignItems="center" style={{ minHeight: '60vh' }}>
+                    <Loading>Loading Seller Dashboard</Loading>
+                </Grid.Container>
+                <Footer />
+            </Page>
         );
     }
 
     // No shop - show create shop form
     if (!userShop) {
         return (
-            <div className="min-h-screen bg-background">
-                <header className="border-b">
-                    <div className="container mx-auto px-6 py-4">
-                        <div className="flex items-center justify-between">
-                            <Link href="/" className="flex items-center gap-2">
-                                <div className="h-8 w-8 rounded bg-primary" />
-                                <span className="text-xl font-semibold">Sui Commerce</span>
-                            </Link>
-                            <WalletConnection />
-                        </div>
-                    </div>
-                </header>
+            <Page dotBackdrop width="100%" padding={0}>
+                <Navigation />
+                <Page.Content>
+                    <Grid.Container justify="center">
+                        <Grid xs={24} md={12}>
+                            <Card>
+                                <Text h3>Create Your Shop</Text>
+                                <Text p type="secondary">Set up your shop to start selling products on the marketplace</Text>
+                                <Spacer h={1} />
 
-                <main className="container mx-auto px-6 py-12 max-w-2xl">
-                    <Card>
-                        <CardHeader>
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-primary/10 rounded-lg">
-                                    <Store className="h-6 w-6 text-primary" />
-                                </div>
-                                <div>
-                                    <CardTitle>Create Your Shop</CardTitle>
-                                    <CardDescription>
-                                        Set up your shop to start selling products on the marketplace
-                                    </CardDescription>
-                                </div>
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            <form onSubmit={handleCreateShop} className="space-y-6">
-                                <div className="space-y-2">
-                                    <Label htmlFor="shopName">Shop Name *</Label>
-                                    <Input
-                                        id="shopName"
-                                        placeholder="e.g., My Digital Art Gallery"
-                                        value={shopFormData.name}
-                                        onChange={(e) => setShopFormData({ ...shopFormData, name: e.target.value })}
-                                        required
-                                    />
-                                </div>
+                                {/* @ts-ignore */}
+                                <Input
+                                    width="100%"
+                                    placeholder="e.g., My Digital Art Gallery"
+                                    value={shopFormData.name}
+                                    onChange={(e) => setShopFormData({ ...shopFormData, name: e.target.value })}
+                                >
+                                    Shop Name
+                                </Input>
+                                <Spacer h={1} />
 
-                                <div className="space-y-2">
-                                    <Label htmlFor="shopDescription">Shop Description *</Label>
-                                    <Textarea
-                                        id="shopDescription"
-                                        placeholder="Describe what you sell..."
-                                        value={shopFormData.description}
-                                        onChange={(e) => setShopFormData({ ...shopFormData, description: e.target.value })}
-                                        required
-                                        rows={4}
-                                    />
-                                </div>
+                                {/* @ts-ignore */}
+                                <Textarea
+                                    width="100%"
+                                    placeholder="Describe what you sell..."
+                                    value={shopFormData.description}
+                                    onChange={(e) => setShopFormData({ ...shopFormData, description: e.target.value })}
+                                >
+                                    Description
+                                </Textarea>
+                                <Spacer h={1} />
 
-                                <Separator />
+                                <Divider />
+                                <Spacer h={1} />
 
-                                <div className="rounded-lg bg-muted p-4 space-y-2">
-                                    <h4 className="font-semibold text-sm">What happens next?</h4>
-                                    <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                                <div style={{ background: 'rgba(255,255,255,0.05)', padding: '1rem', borderRadius: '8px' }}>
+                                    <Text h5>What happens next?</Text>
+                                    <ul style={{ paddingLeft: '1.2rem', color: '#888' }}>
                                         <li>Your shop will be registered on-chain</li>
-                                        <li>You'll receive a ShopOwnerCap NFT (proof of ownership)</li>
+                                        <li>You'll receive a ShopOwnerCap NFT</li>
                                         <li>You can start creating and listing products</li>
-                                        <li>Your shop will be discoverable on the marketplace</li>
                                     </ul>
                                 </div>
+                                <Spacer h={1} />
 
+                                {/* @ts-ignore */}
                                 <Button
-                                    type="submit"
-                                    disabled={isCreatingShop}
-                                    className="w-full"
-                                    size="lg"
+                                    loading={isCreatingShop}
+                                    onClick={handleCreateShop}
+                                    type="success"
+                                    width="100%"
                                 >
-                                    {isCreatingShop ? 'Creating Shop...' : 'Create Shop'}
+                                    Create Shop
                                 </Button>
-                            </form>
-                        </CardContent>
-                    </Card>
-                </main>
-            </div>
+                            </Card>
+                        </Grid>
+                    </Grid.Container>
+                </Page.Content>
+                <Footer />
+            </Page>
         );
     }
 
     // Has shop - show dashboard
     return (
-        <div className="min-h-screen bg-background">
-            <header className="border-b">
-                <div className="container mx-auto px-6 py-4">
-                    <div className="flex items-center justify-between">
-                        <Link href="/" className="flex items-center gap-2">
-                            <div className="h-8 w-8 rounded bg-primary" />
-                            <span className="text-xl font-semibold">Sui Commerce</span>
-                        </Link>
-                        <div className="flex items-center gap-4">
-                            <Link href="/profile">
-                                <Button variant="ghost">My Profile</Button>
-                            </Link>
-                            <WalletConnection />
+        <Page dotBackdrop width="100%" padding={0}>
+            <Navigation />
+
+            <Page.Content>
+                <Grid.Container gap={2} justify="center">
+                    <Grid xs={24}>
+                        <div style={{ width: '100%', marginBottom: '2rem' }}>
+                            <Text h2>Seller Dashboard</Text>
+                            <Text p type="secondary">Manage your shop and products</Text>
                         </div>
-                    </div>
-                </div>
-            </header>
+                    </Grid>
 
-            <main className="container mx-auto px-6 py-12 max-w-6xl">
-                <div className="mb-8">
-                    <h1 className="text-4xl font-bold tracking-tight mb-2">Seller Dashboard</h1>
-                    <p className="text-muted-foreground">
-                        Manage your shop and products
-                    </p>
-                </div>
-
-                <div className="grid gap-6 lg:grid-cols-3 mb-8">
                     {/* Shop Info */}
-                    <Card className="lg:col-span-3">
-                        <CardHeader>
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-primary/10 rounded-lg">
-                                        <Store className="h-5 w-5 text-primary" />
-                                    </div>
-                                    <div>
-                                        <CardTitle>{userShop.name}</CardTitle>
-                                        <CardDescription>{userShop.description}</CardDescription>
-                                    </div>
-                                </div>
-                                <Badge variant="outline">Your Shop</Badge>
-                            </div>
-                        </CardHeader>
-                    </Card>
+                    <Grid xs={24}>
+                        <Card width="100%">
+                            <Grid.Container justify="space-between" alignItems="center">
+                                <Grid>
+                                    <Text h4 my={0}>{userShop.shop_name}</Text>
+                                    <Text p small type="secondary" my={0}>{userShop.shop_description}</Text>
+                                </Grid>
+                                <Grid>
+                                    <Tag type="success">Your Shop</Tag>
+                                </Grid>
+                            </Grid.Container>
+                        </Card>
+                    </Grid>
 
                     {/* Kiosk Status */}
-                    <Card className="lg:col-span-3">
-                        <CardHeader>
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-primary/10 rounded-lg">
-                                        <ShoppingBag className="h-5 w-5 text-primary" />
+                    <Grid xs={24}>
+                        <Card width="100%">
+                            <Grid.Container justify="space-between" alignItems="center">
+                                <Grid xs={18} direction="column">
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <ShoppingBag />
+                                        <Text h4 my={0}>Kiosk Status</Text>
                                     </div>
-                                    <div>
-                                        <CardTitle>Kiosk Status</CardTitle>
-                                        <CardDescription>
-                                            {hasKiosk ? 'Your Kiosk is ready for listing products' : 'Create a Kiosk to list and sell products'}
-                                        </CardDescription>
-                                    </div>
-                                </div>
-                                {hasKiosk ? (
-                                    <Badge variant="outline" className="bg-green-500/10 text-green-700 border-green-500/20">
-                                        Active
-                                    </Badge>
-                                ) : (
-                                    <Button
-                                        onClick={handleCreateKiosk}
-                                        disabled={isCreatingKiosk || isLoadingKiosks}
-                                        size="sm"
-                                    >
-                                        {isCreatingKiosk ? 'Creating...' : 'Create Kiosk'}
-                                    </Button>
-                                )}
-                            </div>
-                        </CardHeader>
-                        {!hasKiosk && (
-                            <CardContent>
-                                <div className="rounded-lg bg-muted p-4">
-                                    <p className="text-sm text-muted-foreground">
-                                        ℹ️ A Kiosk is required to list products for sale. It's a secure container on the Sui blockchain that enables decentralized commerce with built-in royalty support.
-                                    </p>
-                                </div>
-                            </CardContent>
-                        )}
-                    </Card>
-                </div>
+                                    <Text p small type="secondary">
+                                        {hasKiosk ? 'Your Kiosk is ready for listing products' : 'Create a Kiosk to list and sell products'}
+                                    </Text>
+                                </Grid>
+                                <Grid>
+                                    {hasKiosk ? (
+                                        <Tag type="success">Active</Tag>
+                                    ) : (
+                                        /* @ts-ignore */
+                                        <Button
+                                            onClick={handleCreateKiosk}
+                                            disabled={isCreatingKiosk || isLoadingKiosks}
+                                            loading={isCreatingKiosk}
+                                            auto
+                                            type="secondary"
+                                            scale={0.8}
+                                        >
+                                            Create Kiosk
+                                        </Button>
+                                    )}
+                                </Grid>
+                            </Grid.Container>
+                        </Card>
+                    </Grid>
 
-                <div className="grid gap-6 lg:grid-cols-2">
-                    {/* Create Product Form */}
-                    <Card className="lg:col-span-2">
-                        <CardHeader>
-                            <div className="flex items-center gap-3">
-                                <Package className="h-5 w-5" />
-                                <div>
-                                    <CardTitle>Create New Product</CardTitle>
-                                    <CardDescription>
-                                        Mint a product NFT linked to your shop
-                                    </CardDescription>
-                                </div>
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            <form onSubmit={handleCreateProduct} className="space-y-6">
-                                <div className="grid gap-6 md:grid-cols-2">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="name">Product Name *</Label>
-                                        <Input
-                                            id="name"
-                                            placeholder="e.g., Digital Artwork #1"
-                                            value={productFormData.name}
-                                            onChange={(e) => setProductFormData({ ...productFormData, name: e.target.value })}
-                                            required
-                                        />
-                                    </div>
+                    <Grid xs={24} md={12}>
+                        {/* Create Product Form */}
+                        <Card width="100%">
+                            <Text h4>Create New Product</Text>
+                            <Text p small type="secondary">Mint a product NFT linked to your shop</Text>
+                            <Spacer h={1} />
 
-                                    <div className="space-y-2">
-                                        <Label htmlFor="price">Price (SUI) *</Label>
-                                        <Input
-                                            id="price"
-                                            type="number"
-                                            step="0.001"
-                                            min="0"
-                                            placeholder="0.000"
-                                            value={productFormData.price}
-                                            onChange={(e) => setProductFormData({ ...productFormData, price: e.target.value })}
-                                            required
-                                        />
-                                    </div>
-                                </div>
+                            {/* @ts-ignore */}
+                            <Input
+                                width="100%"
+                                placeholder="e.g., Digital Artwork #1"
+                                value={productFormData.name}
+                                onChange={(e) => setProductFormData({ ...productFormData, name: e.target.value })}
+                            >
+                                Product Name
+                            </Input>
+                            <Spacer h={1} />
 
-                                <div className="space-y-2">
-                                    <Label htmlFor="description">Description *</Label>
-                                    <Textarea
-                                        id="description"
-                                        placeholder="Describe your product..."
-                                        value={productFormData.description}
-                                        onChange={(e) => setProductFormData({ ...productFormData, description: e.target.value })}
-                                        required
-                                        rows={3}
-                                    />
-                                </div>
+                            {/* @ts-ignore */}
+                            <Input
+                                width="100%"
+                                htmlType="number"
+                                placeholder="0.000"
+                                value={productFormData.price}
+                                onChange={(e) => setProductFormData({ ...productFormData, price: e.target.value })}
+                            >
+                                Price (SUI)
+                            </Input>
+                            <Spacer h={1} />
 
-                                <div className="space-y-2">
-                                    <Label htmlFor="imageUrl">Image URL *</Label>
-                                    <Input
-                                        id="imageUrl"
-                                        type="url"
-                                        placeholder="https://example.com/image.jpg"
-                                        value={productFormData.imageUrl}
-                                        onChange={(e) => setProductFormData({ ...productFormData, imageUrl: e.target.value })}
-                                        required
-                                    />
-                                </div>
+                            {/* @ts-ignore */}
+                            <Textarea
+                                width="100%"
+                                placeholder="Describe your product..."
+                                value={productFormData.description}
+                                onChange={(e) => setProductFormData({ ...productFormData, description: e.target.value })}
+                            >
+                                Description
+                            </Textarea>
+                            <Spacer h={1} />
 
-                                <Button
-                                    type="submit"
-                                    disabled={isCreatingProduct}
-                                    className="w-full"
-                                >
-                                    {isCreatingProduct ? 'Creating...' : 'Create Product NFT'}
-                                </Button>
-                            </form>
-                        </CardContent>
-                    </Card>
+                            {/* @ts-ignore */}
+                            <Input
+                                width="100%"
+                                placeholder="https://example.com/image.jpg"
+                                value={productFormData.imageUrl}
+                                onChange={(e) => setProductFormData({ ...productFormData, imageUrl: e.target.value })}
+                            >
+                                Image URL
+                            </Input>
+                            <Spacer h={1} />
 
-                    {/* My Products List */}
-                    <Card className="lg:col-span-2">
-                        <CardHeader>
-                            <CardTitle>My Products ({userProducts?.length || 0})</CardTitle>
-                            <CardDescription>
-                                Manage your product listings
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
+                            {/* @ts-ignore */}
+                            <Button
+                                onClick={handleCreateProduct}
+                                disabled={isCreatingProduct}
+                                loading={isCreatingProduct}
+                                width="100%"
+                                type="secondary"
+                            >
+                                Create Product NFT
+                            </Button>
+                        </Card>
+                    </Grid>
+
+                    <Grid xs={24} md={12}>
+                        {/* My Products List */}
+                        <Card width="100%">
+                            <Text h4>My Products ({userProducts?.length || 0})</Text>
+                            <Spacer h={1} />
+
                             {!userProducts || userProducts.length === 0 ? (
-                                <div className="text-center py-8 text-muted-foreground">
-                                    <Package className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                                    <p>No products yet. Create your first product above!</p>
+                                <div style={{ textAlign: 'center', padding: '2rem 0', color: '#666' }}>
+                                    <Package size={48} />
+                                    <Text p>No products yet. Create your first product!</Text>
                                 </div>
                             ) : (
-                                <div className="space-y-3">
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                                     {userProducts.map((product) => (
-                                        <div
-                                            key={product.id}
-                                            className="flex items-center justify-between p-4 border rounded-lg"
-                                        >
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <h4 className="font-semibold truncate">{product.name}</h4>
-                                                    <Badge variant={product.listed ? 'default' : 'secondary'} className="shrink-0">
-                                                        {product.listed ? 'Listed' : 'Unlisted'}
-                                                    </Badge>
+                                        <Card key={product.id} width="100%" style={{ padding: '0.8rem' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <div style={{ flex: 1, minWidth: 0 }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                        <Text h5 my={0} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{product.name}</Text>
+                                                        <Tag type={product.listed ? 'default' : 'secondary'} scale={0.5}>
+                                                            {product.listed ? 'Listed' : 'Unlisted'}
+                                                        </Tag>
+                                                    </div>
+                                                    <Text p small type="secondary" my={0} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                        {mistToSui(product.price)} SUI
+                                                    </Text>
                                                 </div>
-                                                <p className="text-sm text-muted-foreground mb-2 line-clamp-1">
-                                                    {product.description}
-                                                </p>
-                                                <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                                                    <span className="font-mono">{mistToSui(product.price)} SUI</span>
-                                                    <span>ID: {formatAddress(product.id, 6)}</span>
-                                                </div>
+
+                                                {/* @ts-ignore */}
+                                                <Button
+                                                    onClick={() => handleToggleListing(product.id, product.listed)}
+                                                    disabled={isTogglingListing}
+                                                    auto
+                                                    scale={0.7}
+                                                    icon={product.listed ? <EyeOff /> : <Eye />}
+                                                >
+                                                    {product.listed ? 'Unlist' : 'List'}
+                                                </Button>
                                             </div>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => handleToggleListing(product.id, product.listed)}
-                                                disabled={isTogglingListing}
-                                                className="ml-4"
-                                            >
-                                                {product.listed ? (
-                                                    <>
-                                                        <EyeOff className="h-4 w-4 mr-2" />
-                                                        Unlist
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <Eye className="h-4 w-4 mr-2" />
-                                                        List
-                                                    </>
-                                                )}
-                                            </Button>
-                                        </div>
+                                        </Card>
                                     ))}
                                 </div>
                             )}
-                        </CardContent>
-                    </Card>
-                </div>
-            </main>
-        </div>
+                        </Card>
+                    </Grid>
+                </Grid.Container>
+            </Page.Content>
+
+            <Footer />
+        </Page>
     );
 }
