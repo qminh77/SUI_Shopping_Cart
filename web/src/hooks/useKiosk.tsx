@@ -135,7 +135,8 @@ export function useKiosk(ownerAddress?: string) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['kiosks'] });
-      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['allProducts'] });
+      queryClient.invalidateQueries({ queryKey: ['userProducts'] });
       toast.success('Product listed in kiosk!');
     },
     onError: (error) => {
@@ -221,7 +222,8 @@ export function useKiosk(ownerAddress?: string) {
       return purchaseResult;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['allProducts'] });
+      queryClient.invalidateQueries({ queryKey: ['userProducts'] });
       queryClient.invalidateQueries({ queryKey: ['kiosks'] });
       queryClient.invalidateQueries({ queryKey: ['receipts'] });
       toast.success('Purchase successful!');
@@ -259,7 +261,8 @@ export function useKiosk(ownerAddress?: string) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['kiosks'] });
-      queryClient.invalidateQueries({ queryKey: ['userProducts'] }); // Refresh wallet items
+      queryClient.invalidateQueries({ queryKey: ['userProducts'] });
+      queryClient.invalidateQueries({ queryKey: ['allProducts'] });
       toast.success('Product removed from Kiosk (Unlisted)');
     },
     onError: (error) => {

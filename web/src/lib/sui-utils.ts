@@ -194,26 +194,61 @@ export async function getOwnedProducts(
  */
 export async function getAllShops(client: SuiClient): Promise<Shop[]> {
     try {
-        console.log('[getAllShops] Fetching marketplace:', MARKETPLACE_ID);
+        const shopIds = new Set<string>();
 
-        const marketplaceObj = await client.getObject({
-            id: MARKETPLACE_ID,
-            options: { showContent: true },
-        });
+        // Method 1: Query ShopCreated events (Most robust way to find all shops)
+        try {
+            console.log('[getAllShops] Querying ShopCreated events...');
+            const events = await client.queryEvents({
+                query: {
+                    MoveModule: {
+                        package: PACKAGE_ID,
+                        module: 'shop'
+                    }
+                },
+                limit: 50,
+                order: 'descending'
+            });
 
-        if (!marketplaceObj.data?.content || marketplaceObj.data.content.dataType !== 'moveObject') {
-            console.error('[getAllShops] Marketplace object not found or invalid');
+            events.data.forEach(event => {
+                if (event.type.includes('::ShopCreated')) {
+                    const parsed = event.parsedJson as any;
+                    const id = parsed.shop_id || parsed.id;
+                    if (id) shopIds.add(id);
+                }
+            });
+            console.log(`[getAllShops] Found ${shopIds.size} shops via events`);
+        } catch (eventError) {
+            console.error('[getAllShops] Event query failed:', eventError);
+        }
+
+        // Method 2: Marketplace Registry (Fallback)
+        if (shopIds.size === 0) {
+            console.log('[getAllShops] Fetching marketplace:', MARKETPLACE_ID);
+            const marketplaceObj = await client.getObject({
+                id: MARKETPLACE_ID,
+                options: { showContent: true },
+            });
+
+            if (marketplaceObj.data?.content && marketplaceObj.data.content.dataType === 'moveObject') {
+                const fields = marketplaceObj.data.content.fields as any;
+
+                if (Array.isArray(fields.shops)) {
+                    fields.shops.forEach((id: string) => shopIds.add(id));
+                }
+            }
+        }
+
+        if (shopIds.size === 0) {
+            console.warn('[getAllShops] No shops found via Events or Registry');
             return [];
         }
 
-        const fields = marketplaceObj.data.content.fields as any;
-        const shopIds = fields.shops as string[];
-
-        console.log(`[getAllShops] Found ${shopIds.length} shop IDs in marketplace`);
+        const uniqueIds = Array.from(shopIds);
 
         // Fetch all shop objects
         const shops = await Promise.all(
-            shopIds.map(async (id) => {
+            uniqueIds.map(async (id) => {
                 const shopObj = await client.getObject({
                     id,
                     options: { showContent: true },
@@ -237,16 +272,9 @@ export async function getAllShops(client: SuiClient): Promise<Shop[]> {
  */
 export async function getAllListedProducts(client: SuiClient): Promise<Product[]> {
     try {
-        console.log('[getAllListedProducts] Starting product discovery...');
-        console.log('[getAllListedProducts] PACKAGE_ID:', PACKAGE_ID);
-
         const shops = await getAllShops(client);
-        console.log(`[getAllListedProducts] Found ${shops.length} shops`);
 
-        if (shops.length === 0) {
-            console.warn('[getAllListedProducts] No shops found in marketplace');
-            return [];
-        }
+        if (shops.length === 0) return [];
 
         // Initialize Kiosk Client
         const kioskClient = new KioskClient({
@@ -257,10 +285,7 @@ export async function getAllListedProducts(client: SuiClient): Promise<Product[]
         // Fetch Kiosks for all shop owners and extract products
         const productsPromises = shops.map(async (shop) => {
             try {
-                console.log(`[getAllListedProducts] Checking shop: ${shop.name} (${shop.owner})`);
-
                 const { kioskIds } = await kioskClient.getOwnedKiosks({ address: shop.owner });
-                console.log(`[getAllListedProducts] Shop ${shop.name} has ${kioskIds.length} kiosk(s)`);
 
                 if (kioskIds.length === 0) return [];
 
@@ -275,32 +300,15 @@ export async function getAllListedProducts(client: SuiClient): Promise<Product[]
                             }
                         });
 
-                        console.log(`[getAllListedProducts] Kiosk ${kioskId} has ${kiosk.items.length} item(s)`);
-
-                        if (kiosk.items.length > 0) {
-                            console.log('[getAllListedProducts] Sample item types:', kiosk.items.map(i => i.type).join(', '));
-                        }
-
                         // Parse items that match our Product type
-                        const products = kiosk.items
+                        return kiosk.items
                             .filter(item => {
-                                const expectedType = `${PACKAGE_ID}::product::Product`;
-                                const isProduct = item.type === expectedType;
-
-                                if (!isProduct && kiosk.items.length > 0) {
-                                    console.log(`[getAllListedProducts] Type mismatch: expected "${expectedType}", got "${item.type}"`);
-                                }
-
-                                return isProduct;
+                                // Relaxed type check but verify package ID starts with ours
+                                return item.type.startsWith(`${PACKAGE_ID}::product::Product`);
                             })
                             .map(item => {
                                 const fields = (item.data?.content as any)?.fields;
-                                if (!fields) {
-                                    console.warn(`[getAllListedProducts] No fields found for item ${item.objectId}`);
-                                    return null;
-                                }
-
-                                console.log(`[getAllListedProducts] Found product: ${fields.name}`);
+                                if (!fields) return null;
 
                                 return {
                                     id: item.data!.objectId,
@@ -317,29 +325,24 @@ export async function getAllListedProducts(client: SuiClient): Promise<Product[]
                             })
                             .filter((p): p is Product => p !== null);
 
-                        return products;
                     } catch (kioskErr) {
-                        console.error(`[getAllListedProducts] Error fetching kiosk ${kioskId}:`, kioskErr);
+                        console.error(`Error fetching kiosk ${kioskId}:`, kioskErr);
                         return [];
                     }
                 }));
 
                 return kioskProducts.flat();
             } catch (err) {
-                console.error(`[getAllListedProducts] Error processing shop ${shop.id}:`, err);
+                console.error(`Error processing shop ${shop.id}:`, err);
                 return [];
             }
         });
 
         const allProducts = await Promise.all(productsPromises);
-        const flatProducts = allProducts.flat();
-
-        console.log(`[getAllListedProducts] Total products found: ${flatProducts.length}`);
-
-        return flatProducts;
+        return allProducts.flat();
 
     } catch (error) {
-        console.error('[getAllListedProducts] Fatal error:', error);
+        console.error('Error fetching all listed products:', error);
         return [];
     }
 }
