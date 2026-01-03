@@ -38,10 +38,31 @@ export function useKiosk(ownerAddress?: string) {
             }
           });
 
+          // Fetch full object data for each item to get content.fields
+          const itemsWithData = await Promise.all(
+            kiosk.items.map(async (item: any) => {
+              try {
+                // Fetch the full object to get content.fields
+                const fullObject = await client.getObject({
+                  id: item.objectId,
+                  options: { showContent: true }
+                });
+
+                return {
+                  ...item,
+                  data: fullObject.data
+                };
+              } catch (error) {
+                console.error(`Failed to fetch object ${item.objectId}:`, error);
+                return item;
+              }
+            })
+          );
+
           return {
             id,
             cap: kioskOwnerCaps[index],
-            items: kiosk.items,
+            items: itemsWithData,
             itemIds: kiosk.itemIds,
           };
         })

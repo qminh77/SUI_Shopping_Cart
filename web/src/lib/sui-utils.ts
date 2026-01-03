@@ -293,29 +293,11 @@ export async function getAllListedProducts(
             network: Network.TESTNET,
         });
 
-        // Loop through each shop to find products
+        // Loop through each shop to find products in their Kiosks
         const productsPromises = shops.map(async (shop) => {
             const shopProducts: Product[] = [];
 
-            // 1. Fetch products directly owned by the shop owner (Wallet)
-            try {
-                const { data } = await client.getOwnedObjects({
-                    owner: shop.owner,
-                    filter: {
-                        StructType: `${PACKAGE_ID}::product::Product`,
-                    },
-                    options: {
-                        showContent: true,
-                    },
-                });
-
-                const directProducts = data.map(parseProduct).filter((p): p is Product => p !== null);
-                shopProducts.push(...directProducts);
-            } catch (err) {
-                console.error(`[getAllListedProducts] Error fetching owned objects for ${shop.id}:`, err);
-            }
-
-            // 2. Fetch products in Kiosks (Keep as fallback/advanced feature)
+            // Fetch products in Kiosks (only listed products should appear on /shop)
             try {
                 const { kioskIds } = await kioskClient.getOwnedKiosks({ address: shop.owner });
                 // console.log(`[getAllListedProducts] Shop ${shop.id} has ${kioskIds.length} kiosks`);
@@ -328,16 +310,32 @@ export async function getAllListedProducts(
                                 options: { withObjects: true, withListingPrices: true }
                             });
 
-                            // Log found items for debugging
-                            // console.log(`[getAllListedProducts] Kiosk ${kioskId} items:`, kiosk.items.length);
+                            console.log(`[getAllListedProducts] Kiosk ${kioskId} items:`, kiosk.items.length);
 
-                            return kiosk.items
-                                .filter(item => {
-                                    const isProduct = item.type.includes('::product::Product');
-                                    // if (!isProduct) console.log('Skipping non-product item:', item.type);
-                                    return isProduct;
+                            // Filter product items
+                            const productItems = kiosk.items.filter(item => item.type.includes('::product::Product'));
+
+                            // Fetch full object data for each product
+                            const itemsWithData = await Promise.all(
+                                productItems.map(async (item: any) => {
+                                    try {
+                                        const fullObject = await client.getObject({
+                                            id: item.objectId,
+                                            options: { showContent: true }
+                                        });
+                                        return { ...item, data: fullObject.data };
+                                    } catch (error) {
+                                        console.error(`Failed to fetch object ${item.objectId}:`, error);
+                                        return null;
+                                    }
                                 })
+                            );
+
+                            // Parse items with full data
+                            return itemsWithData
+
                                 .map(item => {
+                                    if (!item) return null;
                                     const fields = (item.data?.content as any)?.fields;
                                     if (!fields) return null;
                                     return {

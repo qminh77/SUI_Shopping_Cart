@@ -112,32 +112,20 @@ export function useProducts(shopId?: string) {
 
             const tx = new Transaction();
 
-            if (kioskId && kioskCapId) {
-                // Auto-list mode
-                const { createProductAndListTx } = await import('@/lib/kiosk-utils');
-                createProductAndListTx(
-                    tx,
-                    shopId,
-                    name,
-                    description,
-                    imageUrl,
-                    price,
-                    kioskId,
-                    kioskCapId
-                );
-            } else {
-                const priceInMist = suiToMist(price);
-                tx.moveCall({
-                    target: `${PACKAGE_ID}::product::mint_to_sender`,
-                    arguments: [
-                        tx.pure.address(shopId),
-                        tx.pure.string(name),
-                        tx.pure.string(description),
-                        tx.pure.string(imageUrl),
-                        tx.pure.u64(priceInMist),
-                    ],
-                });
-            }
+            // Convert price from SUI to MIST (required for blockchain)
+            const priceInMist = suiToMist(price);
+
+            // Always mint to sender (placing+listing will happen separately if needed)
+            tx.moveCall({
+                target: `${PACKAGE_ID}::product::mint_to_sender`,
+                arguments: [
+                    tx.pure.address(shopId),
+                    tx.pure.string(name),
+                    tx.pure.string(description),
+                    tx.pure.string(imageUrl),
+                    tx.pure.u64(priceInMist),
+                ],
+            });
 
             const result = await signAndExecute({
                 transaction: tx,

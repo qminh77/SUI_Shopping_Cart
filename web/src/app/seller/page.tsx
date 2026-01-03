@@ -8,7 +8,7 @@ import CreateShopForm from '@/components/shops/CreateShopForm';
 import { useShop } from '@/hooks/useShop';
 import { useProducts } from '@/hooks/useProducts';
 import { useKiosk } from '@/hooks/useKiosk';
-import { mistToSui, Product, PACKAGE_ID, getUserShop } from '@/lib/sui-utils'; // Modified
+import { mistToSui, Product, PACKAGE_ID, getUserShop, suiToMist } from '@/lib/sui-utils'; // Modified
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
 import { Package, ShoppingBag, Eye, EyeOff, Plus, AlertCircle, Loader2 } from 'lucide-react';
@@ -39,6 +39,7 @@ export default function SellerPage() {
 
     const { userProducts, createProduct, isCreatingProduct } = useProducts();
     const {
+        kiosks,
         hasKiosk,
         isLoadingKiosks,
         createKiosk,
@@ -62,52 +63,94 @@ export default function SellerPage() {
         const walletItems = userProducts?.map(p => ({ ...p, status: 'WALLET' })) || [];
 
         const kioskItems = userKiosk?.items.map((item: any) => {
-            // Parse fields from Kiosk item content
-            // Kiosk items are wrapped, fields are in data.content.fields
-            const fields = item.data?.content?.fields;
-            if (!fields) return null;
+            console.log('[Kiosk Item Debug]', JSON.stringify(item, null, 2));
+
+            // Try multiple ways to access the fields
+            let fields = null;
+
+            // Method 1: Via data.content.fields
+            if (item.data?.content?.fields) {
+                fields = item.data.content.fields;
+            }
+            // Method 2: Direct fields
+            else if (item.fields) {
+                fields = item.fields;
+            }
+            // Method 3: objectData with type check
+            else if (item.objectData?.content?.dataType === 'moveObject') {
+                fields = item.objectData.content.fields;
+            }
+
+            if (!fields) {
+                console.warn('[Kiosk Item] No fields found for item:', item.data?.objectId);
+                return null;
+            }
+
+            console.log('[Kiosk Item Fields]', fields);
 
             return {
-                id: item.data.objectId,
+                id: item.data?.objectId || item.objectId,
                 shopId: fields.shop_id,
-                name: fields.name,
-                description: fields.description,
-                imageUrl: fields.image_url,
-                price: Number(fields.price),
-                creator: fields.creator,
-                listed: true, // Kiosk items are considered listed (for MVP simplicity)
-                createdAt: Number(fields.created_at),
+                name: fields.name || 'Unknown Product',
+                description: fields.description || '',
+                imageUrl: fields.image_url || '',
+                price: item.listing ? Number(item.listing.price) : Number(fields.price || 0),
+                creator: fields.creator || '',
+                listed: !!item.listing,
+                createdAt: Number(fields.created_at || Date.now()),
                 status: 'KIOSK'
             } as Product & { status: string };
         }).filter((i): i is Product & { status: string } => i !== null) || [];
 
+        console.log('[All Products]', { walletItems: walletItems.length, kioskItems: kioskItems.length });
         return [...walletItems, ...kioskItems];
     }, [userProducts, userKiosk]);
 
     const handleCreateProduct = async () => {
         if (!userShop) return;
 
-        // Auto-create Kiosk if missing? 
-        // For now, if no kiosk, we warn or fall back to wallet (but we prefer Kiosk)
-        if (!hasKiosk) {
-            toast.warning('Please create a Kiosk first to list items automatically.');
-            return;
-        }
-
         try {
-            await createProduct({
-                shopId: userShop.owner_wallet, // Use owner wallet as ID
+            // Auto-create Kiosk if it doesn't exist
+            if (!hasKiosk) {
+                toast.info('Creating your Kiosk first...');
+                await createKiosk();
+                // Wait for the Kiosk to be created and query to refresh
+                await new Promise(resolve => setTimeout(resolve, 3000));
+            }
+
+            // Step 1: Create product (mints to wallet)
+            const result = await createProduct({
+                shopId: userShop.owner_wallet,
                 name: productFormData.name,
                 description: productFormData.description,
                 imageUrl: productFormData.imageUrl,
                 price: parseFloat(productFormData.price),
-                // Pass Kiosk info for auto-listing
-                kioskId: userKiosk?.id,
-                kioskCapId: userKiosk?.cap.objectId
             });
+
+            // Step 2: Auto-list to Kiosk if Kiosk exists
+            const currentKiosk = userKiosk || kiosks?.[0];
+            if (currentKiosk && result?.effects?.created) {
+                // Extract the product ID from the created objects
+                const createdProduct = result.effects.created.find((obj: any) =>
+                    obj.owner && typeof obj.owner === 'object' && 'AddressOwner' in obj.owner
+                );
+
+                if (createdProduct) {
+                    const productId = createdProduct.reference.objectId;
+                    const priceInMist = suiToMist(parseFloat(productFormData.price));
+
+                    // Auto-list the product to Kiosk
+                    toast.info('Listing product to Kiosk...');
+                    await placeAndList({
+                        productId,
+                        price: priceInMist,
+                    });
+                }
+            }
 
             setProductFormData({ name: '', description: '', imageUrl: '', price: '' });
         } catch (error) {
+            console.error('Create product error:', error);
             // Error handled in hook
         }
     };
@@ -254,41 +297,170 @@ export default function SellerPage() {
                         </CardHeader>
                     </Card>
 
-                    {/* Kiosk Status */}
+                    {/* Kiosk Status - Simplified */}
                     <Card className="bg-white/[0.02] border border-white/5 cut-corner rounded-none hover:bg-white/[0.04] transition-colors">
                         <CardHeader className="flex flex-row items-center justify-between pb-2">
                             <div>
-                                <CardTitle className=" text-xl font-bold uppercase tracking-wide flex items-center gap-2">
+                                <CardTitle className="text-xl font-bold uppercase tracking-wide flex items-center gap-2">
                                     <ShoppingBag className="text-blue-500 w-5 h-5" />
-                                    Kiosk Status
+                                    Kiosk
                                 </CardTitle>
                             </div>
                         </CardHeader>
                         <CardContent className="flex items-center justify-between pt-4">
-                            <p className="text-sm text-neutral-400">
-                                {hasKiosk ? 'Your Kiosk is ready for listing products' : 'Create a Kiosk to list and sell products'}
-                            </p>
                             {hasKiosk ? (
-                                <Badge variant="secondary" className="text-green-400 bg-green-900/20 border border-green-500/20 rounded-none font-mono tracking-widest uppercase">ACTIVE</Badge>
+                                <>
+                                    <p className="text-sm text-neutral-400">
+                                        Ready to list products
+                                    </p>
+                                    <Badge variant="secondary" className="text-green-400 bg-green-900/20 border border-green-500/20 rounded-none font-mono tracking-widest uppercase">ACTIVE</Badge>
+                                </>
                             ) : (
-                                <Button
-                                    onClick={handleCreateKiosk}
-                                    disabled={isCreatingKiosk || isLoadingKiosks}
-                                    className="bg-blue-600 hover:bg-blue-500 text-white text-xs uppercase font-bold px-4 py-2 cut-corner-bottom-right transition-colors rounded-none"
-                                >
-                                    {isCreatingKiosk ? 'Creating...' : 'Create Kiosk'}
-                                </Button>
+                                <>
+                                    <p className="text-sm text-neutral-400">
+                                        Will be created automatically
+                                    </p>
+                                    <Badge variant="secondary" className="text-yellow-400 bg-yellow-900/20 border border-yellow-500/20 rounded-none font-mono tracking-widest uppercase">AUTO</Badge>
+                                </>
                             )}
                         </CardContent>
                     </Card>
                 </div>
+
+                {/* Kiosk Management Section */}
+                {hasKiosk && userKiosk && (
+                    <div className="bg-white/[0.02] border border-white/5 p-6 cut-corner rounded-none">
+                        <div className="flex items-center justify-between mb-6">
+                            <div>
+                                <h3 className="text-lg font-bold uppercase tracking-wide flex items-center gap-2">
+                                    <ShoppingBag className="text-blue-500 w-5 h-5" />
+                                    Kiosk Management
+                                </h3>
+                                <p className="text-xs text-neutral-400 mt-1 font-mono">Manage your marketplace listing</p>
+                            </div>
+                        </div>
+
+                        {/* Kiosk Details */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            <div className="bg-black/20 border border-white/5 p-4 cut-corner">
+                                <p className="text-xs text-neutral-500 uppercase tracking-wider mb-1 font-mono">Kiosk ID</p>
+                                <div className="flex items-center gap-2">
+                                    <code className="text-sm text-white font-mono break-all">{userKiosk.id.slice(0, 20)}...{userKiosk.id.slice(-8)}</code>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => {
+                                            navigator.clipboard.writeText(userKiosk.id);
+                                            toast.success('Kiosk ID copied!');
+                                        }}
+                                        className="h-6 px-2 text-neutral-400 hover:text-white"
+                                    >
+                                        <Package className="w-3 h-3" />
+                                    </Button>
+                                </div>
+                            </div>
+
+                            <div className="bg-black/20 border border-white/5 p-4 cut-corner">
+                                <p className="text-xs text-neutral-500 uppercase tracking-wider mb-1 font-mono">Products in Kiosk</p>
+                                <p className="text-2xl font-bold text-white">{userKiosk.items.length}</p>
+                            </div>
+                        </div>
+
+                        {/* Kiosk Products List */}
+                        {userKiosk.items.length > 0 && (
+                            <div>
+                                <h4 className="text-sm font-bold uppercase tracking-wide mb-3 text-neutral-300">Listed Products</h4>
+                                <div className="space-y-2">
+                                    {userKiosk.items.map((item: any) => {
+                                        // Try multiple ways to get fields
+                                        let fields = null;
+                                        if (item.data?.content?.fields) {
+                                            fields = item.data.content.fields;
+                                        } else if (item.fields) {
+                                            fields = item.fields;
+                                        } else if (item.objectData?.content?.fields) {
+                                            fields = item.objectData.content.fields;
+                                        }
+
+                                        if (!fields) return null;
+
+                                        return (
+                                            <div key={item.data.objectId} className="bg-black/20 border border-white/5 p-3 flex items-center justify-between hover:bg-white/[0.02] transition-colors cut-corner">
+                                                <div className="flex items-center gap-3 flex-1 min-w-0">
+                                                    {fields.image_url ? (
+                                                        <div className="w-10 h-10 bg-neutral-900 border border-white/10 overflow-hidden shrink-0">
+                                                            <img src={fields.image_url} alt="" className="w-full h-full object-cover" />
+                                                        </div>
+                                                    ) : (
+                                                        <div className="w-10 h-10 bg-neutral-900 border border-white/10 flex items-center justify-center shrink-0">
+                                                            <Package className="w-5 h-5 text-neutral-700" />
+                                                        </div>
+                                                    )}
+                                                    <div className="min-w-0">
+                                                        <h5 className="font-bold text-white text-sm truncate font-mono uppercase">{fields.name}</h5>
+                                                        <div className="flex items-center gap-2 text-xs mt-0.5">
+                                                            <span className="text-neutral-400 font-mono">{mistToSui(item.listing ? Number(item.listing.price) : Number(fields.price))} SUI</span>
+                                                            {item.listing && (
+                                                                <Badge variant="outline" className="px-1.5 py-0 rounded-none text-[10px] uppercase font-mono text-green-400 border-green-500/30 bg-green-900/10">
+                                                                    Listed
+                                                                </Badge>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => handleToggleListing({ id: item.data.objectId, status: 'KIOSK', listed: true } as any)}
+                                                    disabled={isProcessing}
+                                                    className="ml-4 text-neutral-500 hover:text-white hover:bg-white/10 rounded-none border border-transparent hover:border-white/10"
+                                                    title="Unlist from Kiosk"
+                                                >
+                                                    {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <EyeOff className="w-4 h-4" />}
+                                                </Button>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Manual Kiosk Creation (if not exists) */}
+                {!hasKiosk && (
+                    <div className="bg-yellow-900/10 border border-yellow-500/20 p-6 cut-corner rounded-none">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h3 className="text-lg font-bold uppercase tracking-wide text-yellow-100 flex items-center gap-2">
+                                    <ShoppingBag className="text-yellow-500 w-5 h-5" />
+                                    Create Kiosk
+                                </h3>
+                                <p className="text-sm text-yellow-200/70 mt-1">
+                                    A Kiosk will be created automatically when you create your first product, or you can create it manually now.
+                                </p>
+                            </div>
+                            <Button
+                                onClick={handleCreateKiosk}
+                                disabled={isCreatingKiosk || isLoadingKiosks}
+                                className="bg-yellow-600 hover:bg-yellow-500 text-black font-bold uppercase tracking-wider px-6 h-10 cut-corner-bottom-right rounded-none"
+                            >
+                                {isCreatingKiosk ? (
+                                    <span className="flex items-center gap-2">
+                                        <Loader2 className="w-4 h-4 animate-spin" /> Creating...
+                                    </span>
+                                ) : 'Create Kiosk Now'}
+                            </Button>
+                        </div>
+                    </div>
+                )}
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Create Product Form */}
                     <div className="lg:col-span-1">
                         <div className="bg-neutral-900/50 border border-white/10 p-6 cut-corner backdrop-blur-sm sticky top-24">
                             <h3 className="text-lg font-bold mb-1 uppercase tracking-wide">Create Product</h3>
-                            <p className="text-xs text-neutral-400 mb-6 font-mono">Mint a product NFT linked to your shop</p>
+                            <p className="text-xs text-neutral-400 mb-6 font-mono">Product will be auto-listed to your Kiosk</p>
 
                             {userShop.status !== 'ACTIVE' ? (
                                 <div className="p-4 border border-red-500/20 bg-red-900/10 text-center">
@@ -355,9 +527,9 @@ export default function SellerPage() {
                                     >
                                         {isCreatingProduct ? (
                                             <span className="flex items-center justify-center gap-2">
-                                                <Loader2 className="w-3 h-3 animate-spin" /> Minting...
+                                                <Loader2 className="w-3 h-3 animate-spin" /> Creating & Listing...
                                             </span>
-                                        ) : 'Create Product NFT'}
+                                        ) : 'Create & List Product'}
                                     </Button>
                                 </div>
                             )}
@@ -424,6 +596,6 @@ export default function SellerPage() {
             </div>
 
             <Footer />
-        </div>
+        </div >
     );
 }
