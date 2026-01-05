@@ -3,6 +3,7 @@
 module sui_ecommerce::product {
     use sui::package;
     use sui::transfer_policy;
+    use sui::object::{Self, UID, ID};
     use std::string::String;
 
     /// OTW for the module
@@ -16,9 +17,28 @@ module sui_ecommerce::product {
         description: String,
         image_url: String,
         price: u64,            // Price in MIST (1 SUI = 1_000_000_000 MIST)
+        stock: u64,            // Available quantity in inventory
         creator: address,      // Original creator
         listed: bool,          // DEPRECATED - Kiosk is source of truth
         created_at: u64,       // Epoch when created
+    }
+
+    use sui::event;
+
+    /// Event emitted when a new product is created
+    public struct ProductCreated has copy, drop {
+        product_id: ID,
+        shop_id: address,
+        name: String,
+        price: u64,
+        stock: u64,
+        creator: address,
+    }
+
+    /// Event emitted when stock changes
+    public struct StockChanged has copy, drop {
+        product_id: ID,
+        new_stock: u64,
     }
 
     /// Init module: claim publisher and create transfer policy
@@ -40,15 +60,29 @@ module sui_ecommerce::product {
         description: String,
         image_url: String,
         price: u64,
+        stock: u64,
         ctx: &mut TxContext
     ): Product {
+        let id = object::new(ctx);
+        let product_id = object::uid_to_inner(&id);
+        
+        event::emit(ProductCreated {
+            product_id,
+            shop_id,
+            name,
+            price,
+            stock,
+            creator: ctx.sender(),
+        });
+
         let product = Product {
-            id: object::new(ctx),
+            id,
             shop_id,
             name,
             description,
             image_url,
             price,
+            stock,
             creator: ctx.sender(),
             listed: false,  // Default to false, Kiosk will handle listing
             created_at: ctx.epoch(),
@@ -64,9 +98,10 @@ module sui_ecommerce::product {
         description: String,
         image_url: String,
         price: u64,
+        stock: u64,
         ctx: &mut TxContext
     ) {
-        let product = mint(shop_id, name, description, image_url, price, ctx);
+        let product = mint(shop_id, name, description, image_url, price, stock, ctx);
         transfer::public_transfer(product, ctx.sender());
     }
 
@@ -107,8 +142,26 @@ module sui_ecommerce::product {
         product.listed
     }
 
+
     /// Get product creation timestamp
     public fun created_at(product: &Product): u64 {
         product.created_at
+    }
+
+    /// Get product stock
+    public fun stock(product: &Product): u64 {
+        product.stock
+    }
+
+    /// Decrease stock after purchase (requires mutable reference)
+    /// Restricted to package visibility so only the purchase module can call it
+    public(package) fun decrease_stock(product: &mut Product, quantity: u64) {
+        assert!(product.stock >= quantity, 0); // EStockInsufficient
+        product.stock = product.stock - quantity;
+        
+        event::emit(StockChanged {
+            product_id: object::uid_to_inner(&product.id),
+            new_stock: product.stock,
+        });
     }
 }

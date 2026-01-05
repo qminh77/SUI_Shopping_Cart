@@ -14,6 +14,7 @@ export interface Product {
     description: string;
     imageUrl: string;
     price: number; // in MIST
+    stock: number; // Available inventory quantity
     creator: string;
     listed: boolean;
     createdAt: number;
@@ -32,9 +33,11 @@ export interface Receipt {
     id: string;
     productId: string;
     productName: string;
+    quantity: number;
     buyer: string;
     seller: string;
-    pricePaid: number;
+    pricePaid: number; // Unit Price
+    totalPaid: number; // Total Transaction
     purchaseDate: number;
     transactionDigest: string;
 }
@@ -63,6 +66,7 @@ export function parseProduct(obj: SuiObjectResponse): Product | null {
         description: fields.description,
         imageUrl: fields.image_url,
         price: Number(fields.price),
+        stock: Number(fields.stock || 0), // Default to 0 for old products
         creator: fields.creator,
         listed: true, // Force listed to true for display
         createdAt: Number(fields.created_at) * 1000 > 1700000000000 ? Number(fields.created_at) : Date.now(), // Fallback for epoch
@@ -103,9 +107,11 @@ export function parseReceipt(obj: SuiObjectResponse): Receipt | null {
         id: obj.data.objectId,
         productId: fields.product_id,
         productName: fields.product_name,
+        quantity: Number(fields.quantity || 1),
         buyer: fields.buyer,
         seller: fields.seller,
         pricePaid: Number(fields.price_paid),
+        totalPaid: Number(fields.total_paid || fields.price_paid),
         purchaseDate: Number(fields.purchase_date),
         transactionDigest: fields.transaction_digest,
     };
@@ -149,7 +155,6 @@ export async function getUserShop(
         return null;
     }
 }
-
 
 /**
  * Get all products from a specific shop owner
@@ -275,104 +280,47 @@ export async function getAllListedProducts(
     knownShops?: { owner: string, id: string }[]
 ): Promise<Product[]> {
     try {
-        let shops: { owner: string, id: string }[] = [];
+        console.log('Fetching all products via events from:', PACKAGE_ID);
 
-        if (knownShops && knownShops.length > 0) {
-            console.log(`[getAllListedProducts] Using ${knownShops.length} known shops from DB`);
-            shops = knownShops;
-        } else {
-            console.log('[getAllListedProducts] Discovering shops from chain...');
-            shops = await getAllShops(client);
-        }
-
-        if (shops.length === 0) return [];
-
-        // Initialize Kiosk Client (keep this for future Kiosk support)
-        const kioskClient = new KioskClient({
-            client,
-            network: Network.TESTNET,
+        // Query ProductCreated events
+        const events = await client.queryEvents({
+            query: {
+                MoveEventType: `${PACKAGE_ID}::product::ProductCreated`
+            },
+            limit: 50,
+            order: 'descending'
         });
 
-        // Loop through each shop to find products in their Kiosks
-        const productsPromises = shops.map(async (shop) => {
-            const shopProducts: Product[] = [];
+        console.log('Product events found:', events.data.length);
 
-            // Fetch products in Kiosks (only listed products should appear on /shop)
+        if (events.data.length === 0) return [];
+
+        // Extract object IDs
+        // @ts-expect-error - parsedJson type definition missing in SDK events
+        const objectIds = events.data.map(e => e.parsedJson?.product_id).filter(Boolean);
+
+        if (objectIds.length === 0) return [];
+
+        // Fetch objects
+        const objects = await client.multiGetObjects({
+            ids: objectIds,
+            options: { showContent: true, showOwner: true }
+        });
+
+        const products = objects.map(obj => {
             try {
-                const { kioskIds } = await kioskClient.getOwnedKiosks({ address: shop.owner });
-                // console.log(`[getAllListedProducts] Shop ${shop.id} has ${kioskIds.length} kiosks`);
-
-                if (kioskIds.length > 0) {
-                    const kioskProducts = await Promise.all(kioskIds.map(async (kioskId) => {
-                        try {
-                            const kiosk = await kioskClient.getKiosk({
-                                id: kioskId,
-                                options: { withObjects: true, withListingPrices: true }
-                            });
-
-                            console.log(`[getAllListedProducts] Kiosk ${kioskId} items:`, kiosk.items.length);
-
-                            // Filter product items
-                            const productItems = kiosk.items.filter(item => item.type.includes('::product::Product'));
-
-                            // Fetch full object data for each product
-                            const itemsWithData = await Promise.all(
-                                productItems.map(async (item: any) => {
-                                    try {
-                                        const fullObject = await client.getObject({
-                                            id: item.objectId,
-                                            options: { showContent: true }
-                                        });
-                                        return { ...item, data: fullObject.data };
-                                    } catch (error) {
-                                        console.error(`Failed to fetch object ${item.objectId}:`, error);
-                                        return null;
-                                    }
-                                })
-                            );
-
-                            // Parse items with full data
-                            return itemsWithData
-
-                                .map(item => {
-                                    if (!item) return null;
-                                    const fields = (item.data?.content as any)?.fields;
-                                    if (!fields) return null;
-                                    return {
-                                        id: item.data!.objectId,
-                                        shopId: fields.shop_id,
-                                        name: fields.name,
-                                        description: fields.description,
-                                        imageUrl: fields.image_url,
-                                        // Use listing price if available, otherwise field price
-                                        price: item.listing ? Number(item.listing.price) : Number(fields.price),
-                                        creator: fields.creator,
-                                        listed: !!item.listing, // Only considered listed if in Kiosk list
-                                        createdAt: Number(fields.created_at),
-                                        kioskId: kioskId
-                                    } as Product;
-                                })
-                                .filter((p): p is Product => p !== null);
-                        } catch (e) {
-                            console.error(`[getAllListedProducts] Failed to fetch kiosk ${kioskId}:`, e);
-                            return [];
-                        }
-                    }));
-                    shopProducts.push(...kioskProducts.flat());
-                }
-            } catch (err) {
-                console.error(`[getAllListedProducts] Kiosk check failed for shop ${shop.id}:`, err);
+                // IMPORTANT: Pass the whole obj to parseProduct, not just fields/id
+                return parseProduct(obj);
+            } catch (e) {
+                console.error('Error parsing product:', e);
+                return null;
             }
+        }).filter((p): p is Product => p !== null);
 
-            return shopProducts;
-        });
-
-        const allProducts = await Promise.all(productsPromises);
-        const flatList = allProducts.flat();
-        console.log(`[getAllListedProducts] Found ${flatList.length} products total.`);
-        return flatList;
+        console.log('Parsed products:', products.length);
+        return products;
     } catch (error) {
-        console.error('Error fetching all listed products:', error);
+        console.error('Error getting all listed products:', error);
         return [];
     }
 }

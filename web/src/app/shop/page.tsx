@@ -112,8 +112,10 @@ export default function ShopPage() {
                                             )}
 
                                             {/* Badge */}
-                                            <div className="absolute top-0 right-0 bg-blue-600/90 text-white text-[10px] font-bold px-3 py-1 uppercase tracking-wider backdrop-blur-md cut-corner-bottom-right">
-                                                NFT
+                                            {/* Stock Badge */}
+                                            <div className={`absolute top-0 right-0 text-white text-[10px] font-bold px-3 py-1 uppercase tracking-wider backdrop-blur-md cut-corner-bottom-right ${product.stock > 0 ? 'bg-green-600/90' : 'bg-red-600/90'
+                                                }`}>
+                                                {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
                                             </div>
                                         </div>
 

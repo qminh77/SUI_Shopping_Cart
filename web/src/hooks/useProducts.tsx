@@ -97,6 +97,7 @@ export function useProducts(shopId?: string) {
             description,
             imageUrl,
             price,
+            stock,
             kioskId,
             kioskCapId,
         }: {
@@ -105,6 +106,7 @@ export function useProducts(shopId?: string) {
             description: string;
             imageUrl: string;
             price: number;
+            stock: number;
             kioskId?: string;
             kioskCapId?: string;
         }) => {
@@ -115,16 +117,24 @@ export function useProducts(shopId?: string) {
             // Convert price from SUI to MIST (required for blockchain)
             const priceInMist = suiToMist(price);
 
-            // Always mint to sender (placing+listing will happen separately if needed)
-            tx.moveCall({
-                target: `${PACKAGE_ID}::product::mint_to_sender`,
+            // Mint and Share the product (Shared Object for Inventory)
+            const [product] = tx.moveCall({
+                target: `${PACKAGE_ID}::product::mint`,
                 arguments: [
                     tx.pure.address(shopId),
                     tx.pure.string(name),
                     tx.pure.string(description),
                     tx.pure.string(imageUrl),
                     tx.pure.u64(priceInMist),
+                    tx.pure.u64(stock),
                 ],
+            });
+
+            // Share the object so it can be bought concurrently
+            tx.moveCall({
+                target: '0x2::transfer::public_share_object',
+                arguments: [product],
+                typeArguments: [`${PACKAGE_ID}::product::Product`],
             });
 
             const result = await signAndExecute({

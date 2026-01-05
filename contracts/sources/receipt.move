@@ -8,9 +8,11 @@ module sui_ecommerce::receipt {
         id: UID,
         product_id: address,      // Product that was purchased
         product_name: String,      // Snapshot of product name
+        quantity: u64,             // Number of units purchased
         buyer: address,            // Who bought it
         seller: address,           // Who sold it
-        price_paid: u64,          // Price in MIST
+        price_paid: u64,          // Unit price in MIST
+        total_paid: u64,          // Total amount paid (quantity * price_paid)
         purchase_date: u64,       // Epoch timestamp
         transaction_digest: String, // TX hash for verification
     }
@@ -19,18 +21,22 @@ module sui_ecommerce::receipt {
     public fun mint_receipt(
         product_id: address,
         product_name: String,
+        quantity: u64,
         seller: address,
         price_paid: u64,
         transaction_digest: String,
         ctx: &mut TxContext
     ): Receipt {
+        let total_paid = price_paid * quantity;
         Receipt {
             id: object::new(ctx),
             product_id,
             product_name,
+            quantity,
             buyer: ctx.sender(),
             seller,
             price_paid,
+            total_paid,
             purchase_date: ctx.epoch(),
             transaction_digest,
         }

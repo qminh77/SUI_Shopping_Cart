@@ -9,8 +9,9 @@ interface CartItem extends Product {
 
 interface CartContextType {
     items: CartItem[];
-    addToCart: (product: Product) => void;
+    addToCart: (product: Product, quantity?: number) => void;
     removeFromCart: (productId: string) => void;
+    updateQuantity: (productId: string, quantity: number) => void;
     clearCart: () => void;
     getTotalItems: () => number;
     getTotalPrice: () => number;
@@ -48,17 +49,39 @@ export function CartProvider({ children }: { children: ReactNode }) {
         }
     }, [items, isInitialized]);
 
-    const addToCart = (product: Product) => {
+    const addToCart = (product: Product, quantity: number = 1) => {
         setItems(currentItems => {
             const existingItem = currentItems.find(item => item.id === product.id);
 
             if (existingItem) {
-                // Product already in cart - NFTs can only be quantity 1
-                return currentItems;
+                const newQuantity = existingItem.quantity + quantity;
+                // Cap at stock limit
+                const finalQuantity = Math.min(newQuantity, product.stock);
+
+                return currentItems.map(item =>
+                    item.id === product.id
+                        ? { ...item, quantity: finalQuantity }
+                        : item
+                );
             }
 
-            return [...currentItems, { ...product, quantity: 1 }];
+            // Cap initial add at stock limit
+            const finalQuantity = Math.min(quantity, product.stock);
+            return [...currentItems, { ...product, quantity: finalQuantity }];
         });
+    };
+
+    const updateQuantity = (productId: string, quantity: number) => {
+        setItems(currentItems =>
+            currentItems.map(item => {
+                if (item.id === productId) {
+                    // Ensure quantity is between 1 and stock
+                    const validQuantity = Math.min(Math.max(1, quantity), item.stock);
+                    return { ...item, quantity: validQuantity };
+                }
+                return item;
+            })
+        );
     };
 
     const removeFromCart = (productId: string) => {
@@ -82,6 +105,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
             items,
             addToCart,
             removeFromCart,
+            updateQuantity,
             clearCart,
             getTotalItems,
             getTotalPrice,

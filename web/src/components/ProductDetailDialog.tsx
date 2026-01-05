@@ -1,22 +1,23 @@
 'use client';
 
+import { Transaction } from '@mysten/sui/transactions';
+import { useSignAndExecuteTransaction } from '@mysten/dapp-kit';
+import { PACKAGE_ID } from '@/lib/sui-utils';
+import { useState } from "react";
 import {
     Dialog,
     DialogContent,
-    DialogHeader,
     DialogTitle,
-    DialogDescription
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Product, mistToSui, formatAddress } from '@/lib/sui-utils';
+import { Product, mistToSui } from '@/lib/sui-utils';
 import { useCart } from '@/contexts/CartContext';
 import { useCurrentAccount } from '@mysten/dapp-kit';
-import { useProducts } from '@/hooks/useProducts';
 import { useKiosk } from '@/hooks/useKiosk';
-import { ShoppingCart, Clock, Package, Share2, ExternalLink } from 'lucide-react';
+import { ShoppingCart, Clock, Package } from 'lucide-react';
 import { toast } from "sonner";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
@@ -32,7 +33,10 @@ interface ProductDetailDialogProps {
 export function ProductDetailDialog({ product, open, onOpenChange, kioskId }: ProductDetailDialogProps) {
     const { addToCart, items } = useCart();
     const account = useCurrentAccount();
-    const { purchaseFromKiosk, isPurchasing } = useKiosk(account?.address);
+    const { mutate: signAndExecute } = useSignAndExecuteTransaction();
+    const { purchaseFromKiosk, isPurchasing: isKioskPurchasing } = useKiosk(account?.address);
+    const [quantity, setQuantity] = useState(1);
+    const [isBuying, setIsBuying] = useState(false);
 
     if (!product) return null;
 
@@ -49,26 +53,61 @@ export function ProductDetailDialog({ product, open, onOpenChange, kioskId }: Pr
             return;
         }
 
-        // Only allow purchase if product is in a Kiosk
-        if (!kioskId) {
-            toast.error('This product must be listed in a Kiosk to purchase. Please contact the seller.');
-            return;
-        }
+        setIsBuying(true);
 
         try {
-            await purchaseFromKiosk({
-                kioskId,
-                productId: product.id,
-                price: product.price,
-                productName: product.name,
-                seller: product.creator,
+            // Path 1: Legacy Kiosk Purchase (Unique NFT)
+            if (kioskId) {
+                await purchaseFromKiosk({
+                    kioskId,
+                    productId: product.id,
+                    price: product.price,
+                    productName: product.name,
+                    seller: product.creator,
+                });
+                onOpenChange(false);
+                return;
+            }
+
+            // Path 2: Shared Object Purchase (E-commerce Inventory)
+            const tx = new Transaction();
+            const totalAmount = BigInt(product.price) * BigInt(quantity);
+
+            // Split coins for payment
+            const [payment] = tx.splitCoins(tx.gas, [tx.pure.u64(totalAmount)]);
+
+            // Call purchase::buy
+            tx.moveCall({
+                target: `${PACKAGE_ID}::purchase::buy`,
+                arguments: [
+                    tx.object(product.id),
+                    tx.pure.u64(quantity),
+                    payment,
+                ],
             });
-            onOpenChange(false);
-        } catch (error) {
-            console.error('Purchase error:', error);
-            toast.error('Purchase failed');
+
+            await signAndExecute({
+                transaction: tx,
+            }, {
+                onSuccess: () => {
+                    toast.success('Purchase successful! Receipt sent to your wallet.');
+                    onOpenChange(false);
+                },
+                onError: (err) => {
+                    console.error('Purchase failed', err);
+                    toast.error('Purchase failed: ' + err.message);
+                }
+            });
+
+        } catch (error: any) {
+            console.error('Purchase structure error:', error);
+            toast.error(error.message || 'Purchase failed');
+        } finally {
+            setIsBuying(false);
         }
     };
+
+    const isProcessing = isKioskPurchasing || isBuying;
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -92,7 +131,7 @@ export function ProductDetailDialog({ product, open, onOpenChange, kioskId }: Pr
 
                         <div className="absolute top-8 left-8 z-10">
                             <Badge variant="secondary" className="bg-black/40 backdrop-blur-md border border-white/10 text-white hover:bg-black/60 rounded-none uppercase tracking-[0.2em] text-xs px-4 py-2 font-bold shadow-xl">
-                                NFT Asset
+                                {product.stock > 0 ? 'In Stock' : 'Out of Stock'}
                             </Badge>
                         </div>
                     </div>
@@ -112,6 +151,7 @@ export function ProductDetailDialog({ product, open, onOpenChange, kioskId }: Pr
                                         </Badge>
                                     </div>
 
+
                                     <div className="space-y-2">
                                         <DialogTitle className="text-3xl md:text-4xl font-bold tracking-tight text-white leading-[1.1] uppercase font-sans">
                                             {product.name}
@@ -121,6 +161,39 @@ export function ProductDetailDialog({ product, open, onOpenChange, kioskId }: Pr
                                                 {mistToSui(product.price)}
                                             </span>
                                             <span className="text-sm font-bold text-neutral-500 uppercase tracking-widest">SUI Token</span>
+                                        </div>
+
+                                        {/* Quantity Selector */}
+                                        <div className="space-y-2 pt-4">
+                                            <span className="text-xs uppercase tracking-wider text-neutral-500">Quantity</span>
+                                            <div className="flex items-center gap-2">
+                                                <Button
+                                                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                                                    className="h-8 w-8 p-0 rounded-none border-white/20"
+                                                    variant="outline"
+                                                    disabled={isProcessing}
+                                                >
+                                                    -
+                                                </Button>
+                                                <Input
+                                                    type="number"
+                                                    min="1"
+                                                    max={product.stock}
+                                                    value={quantity}
+                                                    onChange={(e) => setQuantity(Math.min(product.stock, Math.max(1, parseInt(e.target.value) || 1)))}
+                                                    className="h-8 w-16 text-center bg-black/40 border-white/20 rounded-none text-white"
+                                                    disabled={isProcessing}
+                                                />
+                                                <Button
+                                                    onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
+                                                    className="h-8 w-8 p-0 rounded-none border-white/20"
+                                                    variant="outline"
+                                                    disabled={isProcessing}
+                                                >
+                                                    +
+                                                </Button>
+                                                <span className="text-xs text-neutral-500 ml-2">of {product.stock} available</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -144,9 +217,9 @@ export function ProductDetailDialog({ product, open, onOpenChange, kioskId }: Pr
                                     <div className="bg-white/[0.02] border border-white/5 p-4 hover:border-white/10 transition-colors">
                                         <span className="text-[10px] uppercase text-neutral-500 block mb-2 tracking-wider">Status</span>
                                         <div className="flex items-center gap-2">
-                                            <span className={cn("w-2 h-2 rounded-full", product.listed ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]" : "bg-red-500")}></span>
+                                            <span className={cn("w-2 h-2 rounded-full", product.stock > 0 ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]" : "bg-red-500")}></span>
                                             <span className="text-sm font-bold text-white uppercase tracking-tight">
-                                                {product.listed ? 'Listed for Sale' : 'Private'}
+                                                {product.stock > 0 ? 'In Stock' : 'Out of Stock'}
                                             </span>
                                         </div>
                                     </div>
@@ -168,20 +241,20 @@ export function ProductDetailDialog({ product, open, onOpenChange, kioskId }: Pr
                             <div className="grid grid-cols-2 gap-4">
                                 <Button
                                     onClick={handleBuyNow}
-                                    disabled={!account || isPurchasing || !product.listed}
+                                    disabled={!account || isProcessing || product.stock <= 0}
                                     className="w-full bg-blue-600 hover:bg-blue-500 text-white rounded-none uppercase font-bold tracking-widest h-14 cut-corner-bottom-right shadow-[0_0_20px_rgba(37,99,235,0.2)] hover:shadow-[0_0_30px_rgba(37,99,235,0.4)] transition-all duration-300"
                                 >
-                                    {isPurchasing ? 'Processing...' : !account ? 'Connect Wallet' : 'Purchase Now'}
+                                    {isProcessing ? 'Processing...' : !account ? 'Connect Wallet' : product.stock <= 0 ? 'Out of Stock' : 'Purchase Now'}
                                 </Button>
 
                                 <Button
                                     onClick={handleAddToCart}
-                                    disabled={isInCart || !product.listed || !kioskId}
+                                    disabled={isInCart || product.stock <= 0}
                                     variant="outline"
                                     className="w-full border-white/10 hover:bg-white/5 text-white rounded-none uppercase font-bold tracking-widest h-14 hover:text-blue-400 hover:border-blue-400/30 transition-all duration-300"
                                 >
                                     <ShoppingCart className="w-4 h-4 mr-2" />
-                                    {isInCart ? 'In Cart' : !kioskId ? 'Not in Kiosk' : 'Add to Cart'}
+                                    {isInCart ? 'In Cart' : 'Add to Cart'}
                                 </Button>
                             </div>
                         </div>
