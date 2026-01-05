@@ -273,6 +273,95 @@ export async function getAllShops(client: SuiClient): Promise<Shop[]> {
 }
 
 /**
+ * Get SUI Kiosk ID for a specific address
+ */
+export async function getKioskId(client: SuiClient, address: string): Promise<string | undefined> {
+    try {
+        const { data } = await client.getOwnedObjects({
+            owner: address,
+            filter: {
+                StructType: '0x2::kiosk::KioskOwnerCap'
+            },
+            options: {
+                showContent: true
+            }
+        });
+
+        if (data.length === 0) return undefined;
+
+        // KioskOwnerCap has a 'for' field containing the Kiosk ID
+        const fields = (data[0].data?.content as any)?.fields;
+        return fields?.for;
+    } catch (e) {
+        console.error('Error fetching Kiosk ID:', e);
+        return undefined;
+    }
+}
+
+/**
+ * Get all products inside a Kiosk
+ */
+export async function getKioskProducts(client: SuiClient, kioskId: string): Promise<Product[]> {
+    try {
+        // Kiosk implementation uses Dynamic Object Fields to store items
+        // We fetch all dynamic fields and filter for our Product type
+        let allData: any[] = [];
+        let cursor: string | null | undefined = null;
+        let hasNextPage = true;
+
+        // Safety limit to prevent infinite loops
+        let pages = 0;
+        const MAX_PAGES = 50;
+
+        while (hasNextPage && pages < MAX_PAGES) {
+            const res = await client.getDynamicFields({
+                parentId: kioskId,
+                cursor,
+            });
+
+            allData = [...allData, ...res.data];
+            cursor = res.nextCursor;
+            hasNextPage = res.hasNextPage;
+            pages++;
+        }
+
+        console.log(`[getKioskProducts] Raw Dynamic fields found in ${kioskId}:`, allData.length);
+
+        // Filter for fields that hold our Product type
+        // Note: checking for exact type match or just containing the type string
+        const productFields = allData.filter(item =>
+            item.objectType.includes(`${PACKAGE_ID}::product::Product`)
+        );
+
+        if (productFields.length === 0) return [];
+
+        const objectIds = productFields.map(item => item.objectId);
+
+        // Fetch the actual product objects
+        const objects = await client.multiGetObjects({
+            ids: objectIds,
+            options: { showContent: true, showOwner: true }
+        });
+
+        return objects.map(obj => {
+            const product = parseProduct(obj);
+            if (product) {
+                // Explicitly set kioskId since we found it in a kiosk
+                product.kioskId = kioskId;
+                return product;
+            }
+            return null;
+        }).filter((p): p is Product => p !== null);
+
+    } catch (e) {
+        console.error(`Error fetching products from kiosk ${kioskId}:`, e);
+        return [];
+    }
+}
+
+
+
+/**
  * Get all listed products across all shops (from Kiosks)
  */
 export async function getAllListedProducts(
@@ -280,7 +369,46 @@ export async function getAllListedProducts(
     knownShops?: { owner: string, id: string }[]
 ): Promise<Product[]> {
     try {
-        console.log('Fetching all products via events from:', PACKAGE_ID);
+        const allProducts: Product[] = [];
+        const processedProductIds = new Set<string>();
+
+        // Method 1: Fetch from validated Kiosks (if shops are known)
+        if (knownShops && knownShops.length > 0) {
+            console.log(`[getAllListedProducts] Checking Kiosks for ${knownShops.length} shops...`);
+
+            await Promise.all(knownShops.map(async (shop) => {
+                try {
+                    const kioskId = await getKioskId(client, shop.owner);
+                    if (kioskId) {
+                        // Kiosk holds products as the owner
+                        const kioskProducts = await getKioskProducts(client, kioskId);
+
+                        kioskProducts.forEach(p => {
+                            if (!processedProductIds.has(p.id)) {
+                                allProducts.push(p);
+                                processedProductIds.add(p.id);
+                            }
+                        });
+                    }
+                } catch (e) {
+                    console.error(`Failed to fetch Kiosk items for shop ${shop.id}:`, e);
+                }
+            }));
+
+            console.log(`[getAllListedProducts] Found ${allProducts.length} items in Kiosks.`);
+        }
+
+        // Method 2: Fallback to Events if Kiosk fetch yielded low results or no shops provided
+        // This ensures we don't show empty page if Kiosk indexing is slow, 
+        // BUT we must be careful not to include unlisted wallet items.
+        // For now, if we found items in Kiosks, we return them to be precise.
+        // If 0 items, we try events.
+
+        if (allProducts.length > 0) {
+            return allProducts;
+        }
+
+        console.log('Fetching all products via events (Fallback) from:', PACKAGE_ID);
 
         // Query ProductCreated events
         const events = await client.queryEvents({
@@ -307,7 +435,7 @@ export async function getAllListedProducts(
             options: { showContent: true, showOwner: true }
         });
 
-        const products = objects.map(obj => {
+        const eventProducts = objects.map(obj => {
             try {
                 // IMPORTANT: Pass the whole obj to parseProduct, not just fields/id
                 return parseProduct(obj);
@@ -317,8 +445,18 @@ export async function getAllListedProducts(
             }
         }).filter((p): p is Product => p !== null);
 
-        console.log('Parsed products:', products.length);
-        return products;
+        // Filter event products: ONLY include if they are owned by a Kiosk mechanism 
+        // (Owner is ObjectOwner, not AddressOwner)
+        // This is a heuristic to filter out Wallet items.
+        const filteredEventProducts = eventProducts.filter(p => {
+            // We can't easily verify if the owner ID is a Kiosk without checking, 
+            // but usually Wallet items are AddressOwner.
+            // parseProduct sets p.kioskId if owner is ObjectOwner.
+            return !!p.kioskId;
+        });
+
+        console.log('Parsed and filtered event products:', filteredEventProducts.length);
+        return filteredEventProducts;
     } catch (error) {
         console.error('Error getting all listed products:', error);
         return [];

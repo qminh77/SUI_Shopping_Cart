@@ -7,7 +7,7 @@ import { PACKAGE_ID, parseReceipt, Receipt } from '@/lib/sui-utils';
 export function useReceipts(ownerAddress?: string) {
     const client = useSuiClient();
 
-    const { data: receipts, isLoading } = useQuery({
+    const { data: receipts, isLoading, refetch } = useQuery({
         queryKey: ['receipts', ownerAddress],
         queryFn: async () => {
             if (!ownerAddress) return [];
@@ -31,5 +31,6 @@ export function useReceipts(ownerAddress?: string) {
     return {
         receipts: receipts || [],
         isLoading,
+        refetch,
     };
 }

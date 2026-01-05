@@ -15,6 +15,13 @@ interface CartContextType {
     clearCart: () => void;
     getTotalItems: () => number;
     getTotalPrice: () => number;
+    // Selection methods
+    selectedItems: Set<string>;
+    toggleSelection: (productId: string) => void;
+    selectAll: () => void;
+    deselectAll: () => void;
+    getSelectedItems: () => CartItem[];
+    removeSelectedItems: () => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -24,13 +31,17 @@ const CART_STORAGE_KEY = 'sui-commerce-cart';
 export function CartProvider({ children }: { children: ReactNode }) {
     const [items, setItems] = useState<CartItem[]>([]);
     const [isInitialized, setIsInitialized] = useState(false);
+    const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
 
     // Load cart from localStorage on mount
     useEffect(() => {
         try {
             const savedCart = localStorage.getItem(CART_STORAGE_KEY);
             if (savedCart) {
-                setItems(JSON.parse(savedCart));
+                const parsedCart = JSON.parse(savedCart);
+                setItems(parsedCart);
+                // Select all items by default when loading cart
+                setSelectedItems(new Set(parsedCart.map((item: CartItem) => item.id)));
             }
         } catch (error) {
             console.error('Failed to load cart from localStorage:', error);
@@ -67,6 +78,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
             // Cap initial add at stock limit
             const finalQuantity = Math.min(quantity, product.stock);
+
+            // Auto-select new item
+            setSelectedItems(prev => new Set(prev).add(product.id));
+
             return [...currentItems, { ...product, quantity: finalQuantity }];
         });
     };
@@ -86,10 +101,45 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     const removeFromCart = (productId: string) => {
         setItems(currentItems => currentItems.filter(item => item.id !== productId));
+        setSelectedItems(prev => {
+            const next = new Set(prev);
+            next.delete(productId);
+            return next;
+        });
     };
 
     const clearCart = () => {
         setItems([]);
+        setSelectedItems(new Set());
+    };
+
+    const toggleSelection = (productId: string) => {
+        setSelectedItems(prev => {
+            const next = new Set(prev);
+            if (next.has(productId)) {
+                next.delete(productId);
+            } else {
+                next.add(productId);
+            }
+            return next;
+        });
+    };
+
+    const selectAll = () => {
+        setSelectedItems(new Set(items.map(item => item.id)));
+    };
+
+    const deselectAll = () => {
+        setSelectedItems(new Set());
+    };
+
+    const getSelectedItems = () => {
+        return items.filter(item => selectedItems.has(item.id));
+    };
+
+    const removeSelectedItems = () => {
+        setItems(currentItems => currentItems.filter(item => !selectedItems.has(item.id)));
+        setSelectedItems(new Set());
     };
 
     const getTotalItems = () => {
@@ -109,6 +159,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
             clearCart,
             getTotalItems,
             getTotalPrice,
+            selectedItems,
+            toggleSelection,
+            selectAll,
+            deselectAll,
+            getSelectedItems,
+            removeSelectedItems
         }}>
             {children}
         </CartContext.Provider>

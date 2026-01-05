@@ -17,7 +17,7 @@ export function useProducts(shopId?: string) {
     const account = useCurrentAccount();
     const client = useSuiClient();
     const queryClient = useQueryClient();
-    const { mutate: signAndExecute } = useSignAndExecuteTransaction();
+    const { mutateAsync: signAndExecute } = useSignAndExecuteTransaction();
 
     // Fetch all listed products or products from a specific shop
     const { data: products, isLoading, error } = useQuery({
@@ -131,18 +131,38 @@ export function useProducts(shopId?: string) {
             });
 
             // Share the object so it can be bought concurrently
-            tx.moveCall({
-                target: '0x2::transfer::public_share_object',
-                arguments: [product],
-                typeArguments: [`${PACKAGE_ID}::product::Product`],
-            });
+            // Transfer to user so they own it (required for Kiosk placement)
+            tx.transferObjects([product], tx.pure.address(account.address));
 
             const result = await signAndExecute({
                 transaction: tx,
             });
 
+            // Manually fetch full response to ensure we have effects and objectChanges
+            // (dapp-kit hook might not return them by default, and types prevent passing options)
+            if (!result.effects || !(result as any).objectChanges) {
+                try {
+                    const fullResponse = await client.waitForTransaction({
+                        digest: result.digest,
+                        options: {
+                            showEffects: true,
+                            showObjectChanges: true,
+                            showEvents: true
+                        }
+                    });
+                    return fullResponse;
+                } catch (e) {
+                    console.warn('Failed to fetch full transaction details, returning partial result', e);
+                    return result;
+                }
+            }
+
             return result;
         },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['userProducts'] });
+            queryClient.invalidateQueries({ queryKey: ['allProducts'] });
+        }
     });
 
 

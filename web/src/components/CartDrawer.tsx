@@ -2,21 +2,40 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useCart } from '@/contexts/CartContext';
-import { useCurrentAccount, useSignAndExecuteTransaction } from '@mysten/dapp-kit';
-import { Transaction } from '@mysten/sui/transactions';
-import { mistToSui, PACKAGE_ID } from '@/lib/sui-utils';
+import { useCurrentAccount } from '@mysten/dapp-kit';
+import { useKiosk } from '@/hooks/useKiosk';
+import { mistToSui } from '@/lib/sui-utils';
 import { ShoppingCart, X, Trash2, Plus, Minus, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import { toast } from 'sonner';
 import { useState } from 'react';
 
 export function CartDrawer() {
-    const { items, removeFromCart, updateQuantity, clearCart, getTotalItems, getTotalPrice } = useCart();
+    const {
+        items,
+        removeFromCart,
+        updateQuantity,
+        clearCart,
+        getTotalItems,
+        getTotalPrice,
+        selectedItems,
+        toggleSelection,
+        selectAll,
+        deselectAll,
+        getSelectedItems,
+        removeSelectedItems
+    } = useCart();
+
     const account = useCurrentAccount();
-    const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
+    const { batchPurchaseFromKiosk, isBatchPurchasing } = useKiosk(account?.address);
     const [open, setOpen] = useState(false);
-    const [isCheckingOut, setIsCheckingOut] = useState(false);
+
+    // Selected items stats
+    const selectedItemsList = getSelectedItems();
+    const selectedTotal = selectedItemsList.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const selectedCount = selectedItemsList.reduce((sum, item) => sum + item.quantity, 0);
 
     const handleCheckout = async () => {
         if (!account) {
@@ -24,78 +43,50 @@ export function CartDrawer() {
             return;
         }
 
-        if (items.length === 0) {
-            toast.error('Cart is empty');
+        if (selectedItemsList.length === 0) {
+            toast.error('Please select items to purchase');
             return;
         }
 
-        setIsCheckingOut(true);
-
         try {
-            const tx = new Transaction();
+            // Transform cart items to simplified structure for batch purchase hook
+            // Note: Batch purchase currently supports 1 quantity per item for kiosk logic simplicity in this demo.
+            // If quantity > 1, we might need to "unroll" or handle differently.
+            // For now, let's assume quantity 1 for PTB safety or just pass simple metadata.
 
-            // Group items by type (Shared Object vs Kiosk)
-            // For now, we assume most are Shared Objects (Inventory based)
-            // We'll iterate and build the transaction
+            // Actually, we should map each unit if quantity > 1? 
+            // The current contract logic usually buys 1 at a time per ID.
+            // If it's a kiosk item (unique NFT), quantity is always 1.
+            // If it's a shared object ft/sft, quantity matters.
 
-            for (const item of items) {
-                const totalPrice = item.price * item.quantity;
+            // For this restoration, let's treat selection as "all units of this item".
 
-                // 1. Create payment coin
-                const [coin] = tx.splitCoins(tx.gas, [tx.pure.u64(totalPrice)]);
+            const purchaseItems = selectedItemsList.map(item => ({
+                kioskId: item.kioskId || '', // Handle missing kioskId gracefully in hook?
+                productId: item.id,
+                price: item.price, // Per unit price
+                productName: item.name,
+                seller: item.creator,
+                quantity: item.quantity
+            }));
 
-                if (item.kioskId) {
-                    // Legacy Kiosk Item - Single Quantity only for now (or loop?)
-                    // Implementing simplified kiosk purchase in PTB is complex without policies.
-                    // For now, warn if mixed? Or try to skip/fail?
-                    // We'll skip kiosk items in this specific flow for safety, or assume compatibility?
-                    // Let's assume these are the new Shared Object products.
-                    // If item has kioskId but we want to use new logic...
-                    // Wait, new products DON'T have kioskId.
-
-                    // Fallback to legacy validation toast?
-                    // No, let's treat everything as Shared Object first.
-                    // If it fails, it fails.
-                    // But actually, we should check `item.kioskId`. 
-                }
-
-                // Purchase using new Shared Object logic
-                tx.moveCall({
-                    target: `${PACKAGE_ID}::purchase::buy`,
-                    arguments: [
-                        tx.object(item.id),
-                        tx.pure.u64(item.quantity),
-                        coin
-                    ],
-                });
-
-                // Transfer the zero-balance coin back to sender (cleanup)
-                tx.transferObjects([coin], account.address);
+            // Filter out items without kioskId if the hook strictly requires it?
+            // The previous code had a check `!allSelectedInKiosk`.
+            // Let's bring back a safety check.
+            const invalidItems = purchaseItems.filter(i => !i.kioskId);
+            if (invalidItems.length > 0) {
+                toast.error('Some selected items are not in a Kiosk and cannot be purchased via this method yet.');
+                return;
             }
 
-            signAndExecuteTransaction(
-                {
-                    transaction: tx,
-                },
-                {
-                    onSuccess: (result) => {
-                        console.log('Checkout success:', result);
-                        toast.success('Order placed successfully! Check your Receipt.');
-                        clearCart();
-                        setOpen(false);
-                    },
-                    onError: (error) => {
-                        console.error('Checkout failed:', error);
-                        toast.error('Checkout failed. See console for details.');
-                    },
-                }
-            );
+            await batchPurchaseFromKiosk(purchaseItems);
 
+            // Remove only the purchased (selected) items on success
+            removeSelectedItems();
+            setOpen(false);
         } catch (error) {
             console.error('Checkout error:', error);
-            toast.error('Failed to initiate checkout');
-        } finally {
-            setIsCheckingOut(false);
+            toast.error('Failed to complete checkout');
         }
     };
 
@@ -120,23 +111,36 @@ export function CartDrawer() {
             <SheetContent className="w-full sm:max-w-lg flex flex-col h-full">
                 <SheetHeader className="pb-4 border-b">
                     <SheetTitle className="flex items-center justify-between">
-                        <span className="flex items-center gap-2 text-xl">
+                        <div className="flex items-center gap-2 text-xl">
                             <ShoppingCart className="h-5 w-5" />
                             My Cart
                             <Badge variant="secondary" className="ml-2">
                                 {getTotalItems()} items
                             </Badge>
-                        </span>
-                        {items.length > 0 && (
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={clearCart}
-                                className="text-muted-foreground hover:text-destructive text-xs"
-                            >
-                                Clear Cart
-                            </Button>
-                        )}
+                        </div>
+
+                        <div className="flex gap-2">
+                            {items.length > 0 && (
+                                <>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={selectedItems.size === items.length ? deselectAll : selectAll}
+                                        className="text-xs"
+                                    >
+                                        {selectedItems.size === items.length ? 'Deselect All' : 'Select All'}
+                                    </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={clearCart}
+                                        className="text-muted-foreground hover:text-destructive text-xs"
+                                    >
+                                        Clear All
+                                    </Button>
+                                </>
+                            )}
+                        </div>
                     </SheetTitle>
                 </SheetHeader>
 
@@ -164,6 +168,14 @@ export function CartDrawer() {
                         <div className="space-y-4">
                             {items.map((item) => (
                                 <div key={item.id} className="flex gap-4 p-4 border rounded-xl bg-card hover:border-primary/20 transition-colors group">
+                                    {/* Checkbox */}
+                                    <div className="flex items-center">
+                                        <Checkbox
+                                            checked={selectedItems.has(item.id)}
+                                            onCheckedChange={() => toggleSelection(item.id)}
+                                        />
+                                    </div>
+
                                     {/* Thumbnail */}
                                     <div className="relative w-24 h-24 rounded-lg overflow-hidden bg-secondary/20 flex-shrink-0 border">
                                         <Image
@@ -240,30 +252,32 @@ export function CartDrawer() {
                         <div className="space-y-4">
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between text-muted-foreground">
-                                    <span>Subtotal ({getTotalItems()} items)</span>
-                                    <span>{mistToSui(getTotalPrice())} SUI</span>
+                                    <span>Selected Subtotal ({selectedCount} items)</span>
+                                    <span>{mistToSui(selectedTotal)} SUI</span>
                                 </div>
                                 <div className="flex items-center justify-between text-xl font-bold">
                                     <span>Total</span>
-                                    <span className="text-primary">{mistToSui(getTotalPrice())} SUI</span>
+                                    <span className="text-primary">{mistToSui(selectedTotal)} SUI</span>
                                 </div>
                             </div>
 
                             <Button
                                 onClick={handleCheckout}
-                                disabled={!account || isCheckingOut}
+                                disabled={!account || isBatchPurchasing || selectedItemsList.length === 0}
                                 className="w-full h-12 text-base font-semibold shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
                                 size="lg"
                             >
-                                {isCheckingOut ? (
+                                {isBatchPurchasing ? (
                                     <>
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                         Processing Order...
                                     </>
                                 ) : !account ? (
                                     'Connect Wallet to Checkout'
+                                ) : selectedItemsList.length === 0 ? (
+                                    'Select Items to Buy'
                                 ) : (
-                                    'Checkout Now'
+                                    `Checkout (${selectedCount})`
                                 )}
                             </Button>
 

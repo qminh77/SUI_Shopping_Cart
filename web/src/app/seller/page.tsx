@@ -2,12 +2,13 @@
 
 import { useState, useMemo } from 'react';
 import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { WalletConnection } from '@/components/WalletConnection';
 import CreateShopForm from '@/components/shops/CreateShopForm';
 import { useShop } from '@/hooks/useShop';
 import { useProducts } from '@/hooks/useProducts';
 import { useKiosk } from '@/hooks/useKiosk';
+import { useReceipts } from '@/hooks/useReceipts';
 import { mistToSui, Product, PACKAGE_ID, getUserShop, suiToMist } from '@/lib/sui-utils';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
@@ -25,6 +26,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 export default function SellerPage() {
     const account = useCurrentAccount();
     const client = useSuiClient();
+    const queryClient = useQueryClient();
     const { shop: userShop, isLoading: isLoadingShop, syncChainShop } = useShop();
 
     // Check if shop exists on-chain
@@ -53,6 +55,12 @@ export default function SellerPage() {
         userKiosk
     } = useKiosk(account?.address);
 
+    // Filter out products that have been purchased (receipts)
+    const { receipts } = useReceipts(account?.address);
+    const purchasedProductIds = useMemo(() => {
+        return new Set(receipts?.map(r => r.productId) || []);
+    }, [receipts]);
+
     const [productFormData, setProductFormData] = useState({
         name: '',
         description: '',
@@ -60,6 +68,9 @@ export default function SellerPage() {
         price: '',
         stock: '100', // Default stock quantity
     });
+
+    // Optimistic Cache: Client-side truth for immediate updates
+    const [optimisticCache, setOptimisticCache] = useState<Record<string, Product & { status: string; isOptimistic?: boolean }>>({});
 
     // Query for Sales History
     const { data: salesHistory, isLoading: isLoadingSales } = useQuery({
@@ -122,11 +133,108 @@ export default function SellerPage() {
             } as Product & { status: string };
         }).filter((i: any): i is Product & { status: string } => i !== null) || [];
 
-        return [...walletItems, ...kioskItems];
-    }, [userProducts, userKiosk]);
+        // Robust Optimistic Merge Logic
+        const mergedMap = new Map<string, Product & { status: string; isOptimistic?: boolean }>();
+
+        // 1. Add Optimistic Cache Items (Highest Priority - Client Side Source of Truth)
+        // These are items currently in transition (being created, listed, or unlisted)
+        Object.values(optimisticCache).forEach(item => {
+            mergedMap.set(item.id, item);
+        });
+
+        // 2. Add Kiosk Items (Listed) from Blockchain
+        kioskItems.forEach((item: any) => {
+            // Only add if not already in cache (Cache overrides fetched data to hide 'gap' transitions)
+            if (!mergedMap.has(item.id)) {
+                mergedMap.set(item.id, item);
+            }
+        });
+
+        // 3. Add Wallet Items (Unlisted) from Blockchain
+        walletItems.forEach(item => {
+            // Only add if not already in cache or kiosk
+            if (!mergedMap.has(item.id)) {
+                mergedMap.set(item.id, item);
+            }
+        });
+
+        // Filter out items that have been purchased (Receipts) and return
+        return Array.from(mergedMap.values()).filter(p => !purchasedProductIds.has(p.id));
+    }, [userProducts, userKiosk, optimisticCache, purchasedProductIds]);
+
+    // Consolidate Kiosk Items with Optimistic updates for "Listed Products" section
+    const currentKioskItems = useMemo(() => {
+        if (!userKiosk) return [];
+        const rawItems = userKiosk.items || [];
+
+        // Map to standard format for easier handling
+        let processedItems = rawItems.map((item: any) => {
+            // Try multiple ways to get fields
+            let fields = null;
+            if (item.data?.content?.fields) {
+                fields = item.data.content.fields;
+            } else if (item.fields) {
+                fields = item.fields;
+            } else if (item.objectData?.content?.fields) {
+                fields = item.objectData.content.fields;
+            }
+
+            if (!fields) return null;
+
+            const productPrice = item.listing ? Number(item.listing.price) : Number(fields.price || 0);
+
+            return {
+                ...item,
+                data: { ...item.data, objectId: item.data?.objectId || item.objectId }, // normalize ID access
+                // Add parsed fields for display
+                parsed: {
+                    id: item.data?.objectId || item.objectId,
+                    shopId: fields.shop_id,
+                    name: fields.name || 'Unknown Product',
+                    description: fields.description || '',
+                    imageUrl: fields.image_url || '',
+                    price: productPrice,
+                    stock: parseInt(fields.stock || '1'),
+                    creator: fields.creator || '',
+                    listed: true,
+                    status: 'KIOSK',
+                    createdAt: Number(fields.created_at || Date.now())
+                }
+            };
+        }).filter((i: any) => i !== null);
+
+
+        // Apply Optimistic Updates
+        const mergedMap = new Map();
+        processedItems.forEach((item: any) => mergedMap.set(item.data.objectId, item));
+
+        Object.values(optimisticCache).forEach(optItem => {
+            // If item is optimistically LISTED (KIOSK), ensure it's in the list
+            // Note: cache item has Product interface, need to wrap it to match kiosk item structure
+            if (optItem.status === 'KIOSK') {
+                mergedMap.set(optItem.id, {
+                    data: { objectId: optItem.id },
+                    listing: { price: optItem.price }, // Mock listing
+                    parsed: optItem,
+                    isOptimistic: true
+                });
+            }
+            // If item is optimistically UNLISTED (WALLET), remove it from the list
+            else if (optItem.status === 'WALLET') {
+                mergedMap.delete(optItem.id);
+            }
+        });
+
+        return Array.from(mergedMap.values());
+
+    }, [userKiosk, optimisticCache]);
 
     const handleCreateProduct = async () => {
-        if (!userShop) return;
+        console.log('[SellerPage] handleCreateProduct called');
+        if (!userShop) {
+            console.warn('[SellerPage] No userShop found');
+            return;
+        }
 
         try {
             // Auto-create Kiosk if it doesn't exist
@@ -145,34 +253,79 @@ export default function SellerPage() {
                 imageUrl: productFormData.imageUrl,
                 price: parseFloat(productFormData.price),
                 stock: parseInt(productFormData.stock) || 100, // Parse stock or default to 100
-            });
+            }) as any;
 
-            // Step 2: Auto-list to Kiosk if Kiosk exists
-            const currentKiosk = userKiosk || kiosks?.[0];
-            if (currentKiosk && result?.effects?.created) {
-                // Extract the product ID from the created objects
+            console.log('[SellerPage] Product created, result:', result);
+
+            let realProductId: string | null = null;
+            const priceInMist = suiToMist(parseFloat(productFormData.price));
+
+            // Extract the product ID from the created objects
+            if (result?.effects?.created) {
                 const createdProduct = result.effects.created.find((obj: any) =>
                     obj.owner && typeof obj.owner === 'object' && 'AddressOwner' in obj.owner
                 );
 
                 if (createdProduct) {
-                    const productId = createdProduct.reference.objectId;
-                    const priceInMist = suiToMist(parseFloat(productFormData.price));
+                    realProductId = createdProduct.reference.objectId;
 
-                    // Auto-list the product to Kiosk
-                    toast.info('Listing product to Kiosk...');
-                    await placeAndList({
-                        productId,
+                    // OPTIMISTIC UPDATE: Add to sticky cache immediately after approval
+                    const optimisticProduct: Product & { status: string; isOptimistic: boolean } = {
+                        id: realProductId!,
+                        shopId: userShop.owner_wallet,
+                        name: productFormData.name,
+                        description: productFormData.description,
+                        imageUrl: productFormData.imageUrl,
                         price: priceInMist,
-                    });
+                        stock: parseInt(productFormData.stock) || 100,
+                        creator: account?.address || '',
+                        listed: true, // We are auto-listing
+                        status: 'KIOSK',
+                        createdAt: Date.now(),
+                        isOptimistic: true // Show loading spinner
+                    };
+
+                    setOptimisticCache(prev => ({
+                        ...prev,
+                        [realProductId!]: optimisticProduct
+                    }));
+
+                    // Step 2: Auto-list to Kiosk if Kiosk exists
+                    const currentKiosk = userKiosk || kiosks?.[0];
+                    if (currentKiosk) {
+                        toast.info('Listing product to Kiosk...');
+                        await placeAndList({
+                            productId: realProductId!,
+                            price: priceInMist,
+                        });
+                    }
                 }
             }
 
+            // Force refresh of queries to ensure consistency
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: ['userProducts'] }),
+                queryClient.invalidateQueries({ queryKey: ['kiosks'] }),
+                queryClient.invalidateQueries({ queryKey: ['allProducts'] })
+            ]);
 
             setProductFormData({ name: '', description: '', imageUrl: '', price: '', stock: '100' });
+
+            // Keep in cache for 20s to allow blockchain indexing to catch up
+            if (realProductId) {
+                setTimeout(() => {
+                    setOptimisticCache(prev => {
+                        const next = { ...prev };
+                        delete next[realProductId!];
+                        return next;
+                    });
+                }, 20000);
+            }
+
         } catch (error) {
             console.error('Create product error:', error);
-            // Error handled in hook
+            // On failure, we don't need to clear anything as the cache was only set on success
+            toast.error('Failed to create product');
         }
     };
 
@@ -190,6 +343,11 @@ export default function SellerPage() {
             return;
         }
 
+        if (product.id.startsWith('temp-')) {
+            console.warn('Cannot toggle listing for temporary product');
+            return;
+        }
+
         const isListed = product.status === 'KIOSK' || product.listed;
 
         try {
@@ -198,16 +356,45 @@ export default function SellerPage() {
                 await takeFromKiosk(product.id);
             } else {
                 // LIST: Place from Wallet to Kiosk
-                // Note: We currently don't have a UI to update price on list, using original price
                 await placeAndList({
                     productId: product.id,
-                    price: product.price // Logic assumed price in MIST already if reading from object? 
-                    // Wait, sui-utils define Product price as u64 (MIST).
-                    // placeAndList expects MIST.
+                    price: product.price
                 });
             }
+
+            // INSTANT UI UPDATE: Update cache immediately after transaction confirmation
+            const optimisticItem: Product & { status: string; isOptimistic?: boolean } = {
+                ...product,
+                status: isListed ? 'WALLET' : 'KIOSK',
+                listed: !isListed,
+                isOptimistic: true
+            };
+
+            setOptimisticCache(prev => ({
+                ...prev,
+                [product.id]: optimisticItem
+            }));
+
+            // Force refresh of queries in background
+            Promise.all([
+                queryClient.invalidateQueries({ queryKey: ['userProducts'] }),
+                queryClient.invalidateQueries({ queryKey: ['kiosks'] }),
+                queryClient.invalidateQueries({ queryKey: ['allProducts'] })
+            ]);
+
+            // Keep in cache for 20s to bridge indexer gap
+            setTimeout(() => {
+                setOptimisticCache(prev => {
+                    const next = { ...prev };
+                    delete next[product.id];
+                    return next;
+                });
+            }, 20000);
+
         } catch (error) {
             console.error('Toggle listing error', error);
+            // On failure, the UI remains in its current state as we didn't update cache yet
+            toast.error(`Failed to ${isListed ? 'unlist' : 'list'} product`);
         }
     };
 
@@ -411,34 +598,30 @@ export default function SellerPage() {
 
                                     <div className="bg-black/20 border border-white/5 p-4 cut-corner">
                                         <p className="text-xs text-neutral-500 uppercase tracking-wider mb-1 font-mono">Products in Kiosk</p>
-                                        <p className="text-2xl font-bold text-white">{userKiosk.items.length}</p>
+                                        <p className="text-2xl font-bold text-white">{currentKioskItems.length}</p>
                                     </div>
                                 </div>
 
                                 {/* Kiosk Products List */}
-                                {userKiosk.items.length > 0 && (
+                                {currentKioskItems.length > 0 && (
                                     <div>
                                         <h4 className="text-sm font-bold uppercase tracking-wide mb-3 text-neutral-300">Listed Products</h4>
                                         <div className="space-y-2">
-                                            {userKiosk.items.map((item: any) => {
-                                                // Try multiple ways to get fields
-                                                let fields = null;
-                                                if (item.data?.content?.fields) {
-                                                    fields = item.data.content.fields;
-                                                } else if (item.fields) {
-                                                    fields = item.fields;
-                                                } else if (item.objectData?.content?.fields) {
-                                                    fields = item.objectData.content.fields;
-                                                }
+                                            {currentKioskItems.map((item: any) => {
+                                                const fields = item.parsed; // Use pre-parsed fields from memo
 
+                                                // Should not happen as we filter nulls, but safety check
                                                 if (!fields) return null;
 
+                                                // Use parsed price
+                                                const productPrice = fields.price;
+
                                                 return (
-                                                    <div key={item.data.objectId} className="bg-black/20 border border-white/5 p-3 flex items-center justify-between hover:bg-white/[0.02] transition-colors cut-corner">
+                                                    <div key={item.data.objectId} className={`bg-black/20 border border-white/5 p-3 flex items-center justify-between hover:bg-white/[0.02] transition-colors cut-corner ${item.isOptimistic ? 'opacity-70 border-blue-500/30' : ''}`}>
                                                         <div className="flex items-center gap-3 flex-1 min-w-0">
-                                                            {fields.image_url ? (
+                                                            {fields.imageUrl ? (
                                                                 <div className="w-10 h-10 bg-neutral-900 border border-white/10 overflow-hidden shrink-0">
-                                                                    <img src={fields.image_url} alt="" className="w-full h-full object-cover" />
+                                                                    <img src={fields.imageUrl} alt="" className="w-full h-full object-cover" />
                                                                 </div>
                                                             ) : (
                                                                 <div className="w-10 h-10 bg-neutral-900 border border-white/10 flex items-center justify-center shrink-0">
@@ -448,24 +631,22 @@ export default function SellerPage() {
                                                             <div className="min-w-0">
                                                                 <h5 className="font-bold text-white text-sm truncate font-mono uppercase">{fields.name}</h5>
                                                                 <div className="flex items-center gap-2 text-xs mt-0.5">
-                                                                    <span className="text-neutral-400 font-mono">{mistToSui(item.listing ? Number(item.listing.price) : Number(fields.price))} SUI</span>
-                                                                    {item.listing && (
-                                                                        <Badge variant="outline" className="px-1.5 py-0 rounded-none text-[10px] uppercase font-mono text-green-400 border-green-500/30 bg-green-900/10">
-                                                                            Listed
-                                                                        </Badge>
-                                                                    )}
+                                                                    <span className="text-neutral-400 font-mono">{mistToSui(productPrice)} SUI</span>
+                                                                    <Badge variant="outline" className="px-1.5 py-0 rounded-none text-[10px] uppercase font-mono text-green-400 border-green-500/30 bg-green-900/10">
+                                                                        Listed
+                                                                    </Badge>
                                                                 </div>
                                                             </div>
                                                         </div>
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
-                                                            onClick={() => handleToggleListing({ id: item.data.objectId, status: 'KIOSK', listed: true } as any)}
+                                                            onClick={() => handleToggleListing(fields)}
                                                             disabled={isProcessing}
                                                             className="ml-4 text-neutral-500 hover:text-white hover:bg-white/10 rounded-none border border-transparent hover:border-white/10"
                                                             title="Unlist from Kiosk"
                                                         >
-                                                            {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <EyeOff className="w-4 h-4" />}
+                                                            {isProcessing && !item.isOptimistic ? <Loader2 className="w-4 h-4 animate-spin" /> : <EyeOff className="w-4 h-4" />}
                                                         </Button>
                                                     </div>
                                                 );
@@ -645,7 +826,7 @@ export default function SellerPage() {
                                                         className="ml-4 text-neutral-500 hover:text-white hover:bg-white/10 rounded-none border border-transparent hover:border-white/10"
                                                         title={isListed ? 'Unlist (Take from Kiosk)' : 'List (Place in Kiosk)'}
                                                     >
-                                                        {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : (isListed ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />)}
+                                                        {isProcessing && !product.isOptimistic ? <Loader2 className="w-4 h-4 animate-spin" /> : (isListed ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />)}
                                                     </Button>
                                                 </div>
                                             );

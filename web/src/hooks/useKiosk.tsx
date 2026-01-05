@@ -28,6 +28,8 @@ export function useKiosk(ownerAddress?: string) {
 
 
       // Fetch items for each kiosk
+      console.log('[useKiosk] Kiosks found:', kioskIds);
+
       const kiosksWithItems = await Promise.all(
         kioskIds.map(async (id, index) => {
           const kiosk = await kioskClient.getKiosk({
@@ -41,6 +43,8 @@ export function useKiosk(ownerAddress?: string) {
           // Fetch full object data for each item to get content.fields
           const itemsWithData = await Promise.all(
             kiosk.items.map(async (item: any) => {
+              // console.log('[useKiosk] Fetching item data:', item.objectId);
+
               try {
                 // Fetch the full object to get content.fields
                 const fullObject = await client.getObject({
@@ -53,11 +57,12 @@ export function useKiosk(ownerAddress?: string) {
                   data: fullObject.data
                 };
               } catch (error) {
-                console.error(`Failed to fetch object ${item.objectId}:`, error);
+                console.error(`[useKiosk] Failed to fetch object ${item.objectId}:`, error);
                 return item;
               }
             })
           );
+          console.log('[useKiosk] Parsed Items for kiosk', id, itemsWithData);
 
           return {
             id,
@@ -152,6 +157,14 @@ export function useKiosk(ownerAddress?: string) {
         transaction: tx,
       });
 
+      // Ensure we have effects
+      if (!result.effects) {
+        return await client.waitForTransaction({
+          digest: result.digest,
+          options: { showEffects: true }
+        });
+      }
+
       return result;
     },
     onSuccess: () => {
@@ -214,30 +227,12 @@ export function useKiosk(ownerAddress?: string) {
         transaction: tx,
       });
 
-      // Step 2: Mint Receipt (Separate transaction to include digest)
-      try {
-        const receiptTx = new Transaction();
-        const [receipt] = receiptTx.moveCall({
-          target: `${PACKAGE_ID}::receipt::mint_receipt`,
-          arguments: [
-            receiptTx.pure.address(params.productId),
-            receiptTx.pure.string(params.productName),
-            receiptTx.pure.address(params.seller),
-            receiptTx.pure.u64(params.price),
-            receiptTx.pure.string(purchaseResult.digest),
-          ],
+      // Ensure we have effects
+      if (!purchaseResult.effects) {
+        return await client.waitForTransaction({
+          digest: purchaseResult.digest,
+          options: { showEffects: true }
         });
-
-        receiptTx.transferObjects([receipt], receiptTx.pure.address(account.address));
-
-        await signAndExecute({
-          transaction: receiptTx,
-        });
-
-        toast.success('Receipt minted!');
-      } catch (err) {
-        console.error('Failed to mint receipt:', err);
-        toast.error('Purchase success, but failed to mint receipt');
       }
 
       return purchaseResult;
@@ -252,6 +247,86 @@ export function useKiosk(ownerAddress?: string) {
     onError: (error) => {
       console.error('Purchase error:', error);
       toast.error('Purchase failed');
+    },
+  });
+
+  // Batch Purchase from Kiosk
+  const batchPurchaseFromKiosk = useMutation({
+    mutationFn: async (items: Array<{
+      kioskId: string;
+      productId: string;
+      price: number;
+      productName: string;
+      seller: string;
+      quantity: number;
+    }>) => {
+      if (!account?.address) {
+        throw new Error('No account connected');
+      }
+
+      if (items.length === 0) {
+        throw new Error('No items to purchase');
+      }
+
+      const tx = new Transaction();
+      const productType = `${PACKAGE_ID}::product::Product`;
+
+      // Process each item
+      for (const item of items) {
+        // We only support quantity 1 for Kiosk items in this loop for now
+        // Iterate quantity times if needed (though kiosk items are unique)
+
+        // Split coin for payment
+        const [coin] = tx.splitCoins(tx.gas, [tx.pure.u64(item.price)]);
+
+        // Purchase from kiosk
+        const [product, request] = tx.moveCall({
+          target: '0x2::kiosk::purchase',
+          arguments: [
+            tx.object(item.kioskId),
+            tx.pure.id(item.productId),
+            coin,
+          ],
+          typeArguments: [productType],
+        });
+
+        // Confirm with transfer policy
+        tx.moveCall({
+          target: '0x2::transfer_policy::confirm_request',
+          arguments: [
+            tx.object(TRANSFER_POLICY_ID),
+            request,
+          ],
+          typeArguments: [productType],
+        });
+
+        // Transfer product to buyer
+        tx.transferObjects([product], tx.pure.address(account.address));
+      }
+
+      const purchaseResult = await signAndExecute({
+        transaction: tx,
+      });
+
+      if (!purchaseResult.effects) {
+        return await client.waitForTransaction({
+          digest: purchaseResult.digest,
+          options: { showEffects: true }
+        });
+      }
+
+      return purchaseResult;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['allProducts'] });
+      queryClient.invalidateQueries({ queryKey: ['userProducts'] });
+      queryClient.invalidateQueries({ queryKey: ['kiosks'] });
+      queryClient.invalidateQueries({ queryKey: ['receipts'] });
+      toast.success(`Purchased ${variables.length} items successfully!`);
+    },
+    onError: (error) => {
+      console.error('Batch purchase error:', error);
+      toast.error('Batch purchase failed');
     },
   });
 
@@ -277,7 +352,16 @@ export function useKiosk(ownerAddress?: string) {
       // Transfer back to owner
       tx.transferObjects([item], tx.pure.address(account!.address));
 
-      const result = await signAndExecute({ transaction: tx });
+      const result = await signAndExecute({ transaction: tx }, {
+        onSuccess: () => { }
+      });
+
+      if (!result.effects) {
+        return await client.waitForTransaction({
+          digest: result.digest,
+          options: { showEffects: true }
+        });
+      }
       return result;
     },
     onSuccess: () => {
@@ -308,7 +392,9 @@ export function useKiosk(ownerAddress?: string) {
     createKiosk: createKiosk.mutateAsync,
     placeAndList: placeAndList.mutateAsync,
     purchaseFromKiosk: purchaseFromKiosk.mutateAsync,
+    batchPurchaseFromKiosk: batchPurchaseFromKiosk.mutateAsync,
     takeFromKiosk: takeFromKiosk.mutateAsync,
     isTaking: takeFromKiosk.isPending,
+    isBatchPurchasing: batchPurchaseFromKiosk.isPending,
   };
 }

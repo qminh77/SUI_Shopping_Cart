@@ -21,7 +21,7 @@ export default function ProfilePage() {
     const client = useSuiClient();
 
     // Fetch Receipts
-    const { receipts, isLoading: isLoadingReceipts } = useReceipts(account?.address);
+    const { receipts, isLoading: isLoadingReceipts, refetch: refetchReceipts } = useReceipts(account?.address);
 
     // Fetch Kiosk/Listed Items
     const { userKiosk, isLoadingKiosks } = useKiosk(account?.address);
@@ -233,7 +233,8 @@ export default function ProfilePage() {
                                         creator: fields?.creator || '',
                                         listed: true,
                                         createdAt: Number(fields?.created_at) || 0,
-                                        shopId: fields?.shop_id || ''
+                                        shopId: fields?.shop_id || '',
+                                        stock: 1
                                     };
 
                                     return <ProductCard key={item.objectId} product={product} status="Listed" />;
