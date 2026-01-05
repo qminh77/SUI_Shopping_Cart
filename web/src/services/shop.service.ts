@@ -63,10 +63,15 @@ export async function getShopByWallet(wallet: string) {
         .from('shops')
         .select('*')
         .eq('owner_wallet', wallet)
-        .single()
+        .maybeSingle() // Use maybeSingle() instead of single() to avoid throwing on not found
 
-    if (error && error.code !== 'PGRST116') throw error // Ignore 'Row not found'
-    return data
+    // Only throw on actual database errors, not on "not found"
+    if (error) {
+        console.error('[getShopByWallet] Error:', error)
+        throw error
+    }
+
+    return data // Will be null if not found, which is fine
 }
 
 export async function updateShop(wallet: string, data: UpdateShopInput) {
