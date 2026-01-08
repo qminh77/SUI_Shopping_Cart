@@ -220,6 +220,22 @@ export function useKiosk(ownerAddress?: string) {
         typeArguments: [productType],
       });
 
+      // Mint Receipt
+      const receipt = tx.moveCall({
+        target: `${PACKAGE_ID}::receipt::mint_receipt`,
+        arguments: [
+          tx.pure.address(params.productId),
+          tx.pure.string(params.productName),
+          tx.pure.u64(1),
+          tx.pure.address(params.seller),
+          tx.pure.u64(params.price),
+          tx.pure.string('Kiosk Purchase'),
+        ],
+      });
+
+      // Transfer receipt to buyer
+      tx.transferObjects([receipt], tx.pure.address(account.address));
+
       // Transfer product to buyer
       tx.transferObjects([product], tx.pure.address(account.address));
 
@@ -299,6 +315,23 @@ export function useKiosk(ownerAddress?: string) {
           ],
           typeArguments: [productType],
         });
+
+        // Mint Receipt
+        // public fun mint_receipt(product_id: address, product_name: String, quantity: u64, seller: address, price_paid: u64, transaction_digest: String, ctx: &mut TxContext): Receipt
+        const receipt = tx.moveCall({
+          target: `${PACKAGE_ID}::receipt::mint_receipt`,
+          arguments: [
+            tx.pure.address(item.productId), // Product ID as address
+            tx.pure.string(item.productName),
+            tx.pure.u64(1), // Quantity 1 for NFT
+            tx.pure.address(item.seller),
+            tx.pure.u64(item.price),
+            tx.pure.string('Kiosk Purchase'), // Placeholder for digest
+          ],
+        });
+
+        // Transfer receipt to buyer
+        tx.transferObjects([receipt], tx.pure.address(account.address));
 
         // Transfer product to buyer
         tx.transferObjects([product], tx.pure.address(account.address));

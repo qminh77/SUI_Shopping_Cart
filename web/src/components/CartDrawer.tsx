@@ -5,7 +5,7 @@ import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useCart } from '@/contexts/CartContext';
 import { useCurrentAccount } from '@mysten/dapp-kit';
-import { useKiosk } from '@/hooks/useKiosk';
+import { useCheckout } from '@/hooks/useCheckout';
 import { mistToSui } from '@/lib/sui-utils';
 import { ShoppingCart, X, Trash2, Plus, Minus, Loader2 } from 'lucide-react';
 import Image from 'next/image';
@@ -29,7 +29,8 @@ export function CartDrawer() {
     } = useCart();
 
     const account = useCurrentAccount();
-    const { batchPurchaseFromKiosk, isBatchPurchasing } = useKiosk(account?.address);
+    // Use the new Unified Checkout Hook
+    const { checkout, isProcessing } = useCheckout();
     const [open, setOpen] = useState(false);
 
     // Selected items stats
@@ -49,44 +50,24 @@ export function CartDrawer() {
         }
 
         try {
-            // Transform cart items to simplified structure for batch purchase hook
-            // Note: Batch purchase currently supports 1 quantity per item for kiosk logic simplicity in this demo.
-            // If quantity > 1, we might need to "unroll" or handle differently.
-            // For now, let's assume quantity 1 for PTB safety or just pass simple metadata.
+            // Hardcoded shipping address for MVP (In real app, ask via Form/Dialog before checkout)
+            const shippingStart = {
+                fullName: 'Buyer Name',
+                phone: '0123456789',
+                address: '123 Blockchain Street',
+                city: 'Sui City'
+            };
 
-            // Actually, we should map each unit if quantity > 1? 
-            // The current contract logic usually buys 1 at a time per ID.
-            // If it's a kiosk item (unique NFT), quantity is always 1.
-            // If it's a shared object ft/sft, quantity matters.
-
-            // For this restoration, let's treat selection as "all units of this item".
-
-            const purchaseItems = selectedItemsList.map(item => ({
-                kioskId: item.kioskId || '', // Handle missing kioskId gracefully in hook?
-                productId: item.id,
-                price: item.price, // Per unit price
-                productName: item.name,
-                seller: item.creator,
-                quantity: item.quantity
-            }));
-
-            // Filter out items without kioskId if the hook strictly requires it?
-            // The previous code had a check `!allSelectedInKiosk`.
-            // Let's bring back a safety check.
-            const invalidItems = purchaseItems.filter(i => !i.kioskId);
-            if (invalidItems.length > 0) {
-                toast.error('Some selected items are not in a Kiosk and cannot be purchased via this method yet.');
-                return;
-            }
-
-            await batchPurchaseFromKiosk(purchaseItems);
+            await checkout({
+                items: selectedItemsList,
+                shippingAddress: shippingStart
+            });
 
             // Remove only the purchased (selected) items on success
             removeSelectedItems();
             setOpen(false);
         } catch (error) {
-            console.error('Checkout error:', error);
-            toast.error('Failed to complete checkout');
+            // Error is handled in hook (toast)
         }
     };
 
@@ -263,11 +244,11 @@ export function CartDrawer() {
 
                             <Button
                                 onClick={handleCheckout}
-                                disabled={!account || isBatchPurchasing || selectedItemsList.length === 0}
+                                disabled={!account || isProcessing || selectedItemsList.length === 0}
                                 className="w-full h-12 text-base font-semibold shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
                                 size="lg"
                             >
-                                {isBatchPurchasing ? (
+                                {isProcessing ? (
                                     <>
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                         Processing Order...

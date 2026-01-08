@@ -105,6 +105,21 @@ module sui_ecommerce::product {
         transfer::public_transfer(product, ctx.sender());
     }
 
+    /// Mint and share object (For Retail/Shopee Mode)
+    /// This makes the Product a Shared Object, allowing multiple buyers to interact with it.
+    public fun create_shared_product(
+        shop_id: address,
+        name: String,
+        description: String,
+        image_url: String,
+        price: u64,
+        stock: u64,
+        ctx: &mut TxContext
+    ) {
+        let product = mint(shop_id, name, description, image_url, price, stock, ctx);
+        transfer::public_share_object(product);
+    }
+
     // ====== Accessor Functions ======
 
     /// Get product name

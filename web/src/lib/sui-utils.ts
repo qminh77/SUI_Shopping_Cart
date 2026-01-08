@@ -53,7 +53,6 @@ export function parseProduct(obj: SuiObjectResponse): Product | null {
     const fields = obj.data.content.fields as any;
 
     // Check if owner is a Kiosk (shared object or address owned)
-    // Note: Kiosks are shared objects usually, but items inside point to Kiosk as owner
     let kioskId: string | undefined;
     if (obj.data.owner && typeof obj.data.owner === 'object' && 'ObjectOwner' in obj.data.owner) {
         kioskId = obj.data.owner.ObjectOwner;
@@ -65,11 +64,12 @@ export function parseProduct(obj: SuiObjectResponse): Product | null {
         name: fields.name,
         description: fields.description,
         imageUrl: fields.image_url,
-        price: Number(fields.price),
-        stock: Number(fields.stock || 0), // Default to 0 for old products
+        // Move numbers are returned as strings in JSON
+        price: Number(fields.price || 0),
+        stock: Number(fields.stock || 0),
         creator: fields.creator,
-        listed: true, // Force listed to true for display
-        createdAt: Number(fields.created_at) * 1000 > 1700000000000 ? Number(fields.created_at) : Date.now(), // Fallback for epoch
+        listed: true, // Legacy field, always true for display if found
+        createdAt: Number(fields.created_at || 0),
         kioskId,
     };
 }
