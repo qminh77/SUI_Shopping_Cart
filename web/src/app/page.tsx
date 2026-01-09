@@ -66,18 +66,18 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <FeatureCard
               icon={<Shield className="w-6 h-6 text-blue-400" />}
-              title="VERIFIABLE OWNERSHIP"
-              desc="Every product is an NFT with cryptographically proven ownership on the Sui blockchain."
+              title="VERIFIED SELLERS"
+              desc="Every seller is verified on-chain with transparent transaction history and reputation tracking."
             />
             <FeatureCard
               icon={<Zap className="w-6 h-6 text-blue-400" />}
               title="INSTANT SETTLEMENT"
-              desc="Sub-second transaction finality implies you never have to wait. Speed is the new standard."
+              desc="Sub-second transaction finality means you never have to wait. Speed is the new standard."
             />
             <FeatureCard
               icon={<Box className="w-6 h-6 text-blue-400" />}
-              title="NFT RECEIPTS"
-              desc="Immutable proof of purchase stored permanently as NFTs for every single transaction."
+              title="DIGITAL RECEIPTS"
+              desc="Permanent proof of purchase stored on-chain for warranty claims and order verification."
             />
           </div>
         </section>

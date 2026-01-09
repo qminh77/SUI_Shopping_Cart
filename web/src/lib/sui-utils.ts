@@ -464,6 +464,58 @@ export async function getAllListedProducts(
 }
 
 /**
+ * Get all retail products (Shared Objects) - Pure Retail Mode
+ * Fetches products created as Shared Objects via ProductCreated events
+ */
+export async function getAllRetailProducts(client: SuiClient): Promise<Product[]> {
+    try {
+        console.log('[getAllRetailProducts] Fetching Shared Object products via events...');
+
+        // Query ProductCreated events to find all products
+        const events = await client.queryEvents({
+            query: { MoveEventType: `${PACKAGE_ID}::product::ProductCreated` },
+            limit: 100,
+            order: 'descending'
+        });
+
+        console.log(`[getAllRetailProducts] Found ${events.data.length} ProductCreated events`);
+
+        if (events.data.length === 0) return [];
+
+        // Extract product IDs from events
+        const objectIds = events.data
+            .map(e => (e.parsedJson as any)?.product_id)
+            .filter(Boolean);
+
+        if (objectIds.length === 0) return [];
+
+        // Fetch the actual product objects
+        const objects = await client.multiGetObjects({
+            ids: objectIds,
+            options: { showContent: true, showOwner: true }
+        });
+
+        // Parse and filter products
+        const products = objects
+            .map(obj => parseProduct(obj))
+            .filter((p): p is Product => {
+                // Only show products that:
+                // 1. Were parsed successfully
+                // 2. Have stock available (for retail products)
+                return p !== null && p.stock > 0;
+            });
+
+        console.log(`[getAllRetailProducts] Returning ${products.length} active retail products`);
+        return products;
+
+    } catch (error) {
+        console.error('[getAllRetailProducts] Error:', error);
+        return [];
+    }
+}
+
+
+/**
  * Convert SUI to MIST (1 SUI = 1_000_000_000 MIST)
  */
 export function suiToMist(sui: number): number {

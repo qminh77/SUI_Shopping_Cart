@@ -58,6 +58,7 @@ export function CartDrawer() {
                 city: 'Sui City'
             };
 
+            // Start checkout directly
             await checkout({
                 items: selectedItemsList,
                 shippingAddress: shippingStart

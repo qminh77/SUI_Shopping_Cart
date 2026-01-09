@@ -52,10 +52,10 @@ export default function ShopPage() {
                         Verified Marketplace
                     </Badge>
                     <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4 uppercase">
-                        Discover <span className="text-blue-500">NFT Products</span>
+                        Discover <span className="text-blue-500">Products</span>
                     </h1>
                     <p className="max-w-xl text-neutral-400 text-lg leading-relaxed font-light">
-                        Browse and purchase digital assets from verified creators.
+                        Browse and purchase items from verified sellers.
                         Secured by the Sui blockchain.
                     </p>
                 </div>

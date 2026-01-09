@@ -3,7 +3,7 @@ import { Transaction } from '@mysten/sui/transactions';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
-    getAllListedProducts,
+    getAllRetailProducts,
     getShopProducts,
     PACKAGE_ID,
     Product,
@@ -27,25 +27,8 @@ export function useProducts(shopId?: string) {
                 return await getShopProducts(client, shopId);
             }
 
-            // Fetch active shops from DB to ensure we check the right kiosks
-            let activeShops: { owner: string, id: string }[] = [];
-            try {
-                const res = await fetch('/api/shops?limit=100');
-                if (res.ok) {
-                    const json = await res.json();
-                    if (json.data && Array.isArray(json.data)) {
-                        activeShops = json.data.map((s: any) => ({
-                            owner: s.owner_wallet,
-                            id: s.id
-                        }));
-                        console.log('[useProducts] Fetched active shops from DB:', activeShops.length);
-                    }
-                }
-            } catch (e) {
-                console.error('[useProducts] Failed to fetch shops from DB:', e);
-            }
-
-            return await getAllListedProducts(client, activeShops);
+            // Fetch all Retail (Shared Object) products
+            return await getAllRetailProducts(client);
         },
         staleTime: 2 * 60 * 1000, // Cache for 2 minutes
         gcTime: 5 * 60 * 1000,
