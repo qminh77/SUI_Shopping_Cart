@@ -89,6 +89,32 @@ export function useShop() {
             const result = await signAndExecute({ transaction: tx });
             console.log('[useShop] On-chain shop created:', result.digest);
 
+            // Step 1.5: Wait for transaction and extract Shop object ID
+            console.log('[useShop] Waiting for transaction to get Shop object ID...');
+            const txDetails = await client.waitForTransaction({
+                digest: result.digest,
+                options: {
+                    showEffects: true,
+                    showObjectChanges: true,
+                }
+            });
+
+            // Find the created Shop object
+            let onChainShopId: string | null = null;
+            if ((txDetails as any).objectChanges) {
+                const shopObject = (txDetails as any).objectChanges.find(
+                    (change: any) => change.type === 'created' &&
+                        change.objectType?.includes('::shop::Shop')
+                );
+
+                if (shopObject) {
+                    onChainShopId = shopObject.objectId;
+                    console.log('[useShop] Found on-chain Shop ID:', onChainShopId);
+                } else {
+                    console.warn('[useShop] Could not find Shop object in transaction changes');
+                }
+            }
+
             // Step 2: Save to Supabase database
             console.log('[useShop] Saving shop to database...');
             const res = await fetch('/api/shops', {
@@ -97,6 +123,7 @@ export function useShop() {
                 body: JSON.stringify({
                     ...data,
                     owner_wallet: account?.address,
+                    on_chain_shop_id: onChainShopId, // NEW: Store the blockchain shop ID
                     transaction_digest: result.digest, // Store the transaction for reference
                 })
             });

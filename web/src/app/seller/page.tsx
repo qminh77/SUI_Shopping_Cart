@@ -87,13 +87,27 @@ export default function SellerPage() {
         setIsCreating(true);
 
         try {
+            // STEP 1: Get the on-chain shop object
+            console.log('[ProductCreate] Fetching on-chain shop for wallet:', userShop.owner_wallet);
+            const onChainShop = await getUserShop(client, userShop.owner_wallet);
+
+            if (!onChainShop) {
+                toast.error('Shop not found on blockchain. Please contact support or recreate your shop.');
+                console.error('[ProductCreate] No on-chain shop found for wallet:', userShop.owner_wallet);
+                setIsCreating(false);
+                return;
+            }
+
+            console.log('[ProductCreate] Using on-chain shop ID:', onChainShop.id);
+
+            // STEP 2: Create product transaction
             const tx = new Transaction();
             const priceMist = suiToMist(parseFloat(productFormData.price));
 
             tx.moveCall({
                 target: `${PACKAGE_ID}::product::create_shared_product`,
                 arguments: [
-                    tx.pure.address(userShop.owner_wallet),
+                    tx.pure.address(onChainShop.id), // ✅ Use actual shop object ID
                     tx.pure.string(productFormData.name),
                     tx.pure.string(productFormData.description),
                     tx.pure.string(productFormData.imageUrl),
@@ -140,6 +154,7 @@ export default function SellerPage() {
             // Sync to Supabase
             if (productId) {
                 try {
+                    console.log('[ProductCreate] Syncing product to database:', productId);
                     const syncResponse = await fetch('/api/products/sync', {
                         method: 'POST',
                         headers: {
@@ -199,6 +214,154 @@ export default function SellerPage() {
         return (
             <div className="min-h-screen bg-background flex items-center justify-center">
                 <Loader2 className="animate-spin w-8 h-8 text-primary" />
+            </div>
+        );
+    }
+
+    // Show pending approval UI if shop is pending
+    if (userShop && userShop.status === 'PENDING') {
+        return (
+            <div className="min-h-screen flex flex-col bg-background">
+                <Navigation />
+                <main className="flex-1 max-w-4xl mx-auto w-full p-6 pt-12 space-y-6">
+                    {/* Status Card */}
+                    <Card className="border-yellow-500/50 bg-yellow-50/10 dark:bg-yellow-950/10">
+                        <CardContent className="pt-6">
+                            <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+                                <div className="h-16 w-16 rounded-full bg-yellow-500/20 flex items-center justify-center">
+                                    <Loader2 className="h-8 w-8 text-yellow-500 animate-spin" />
+                                </div>
+                                <div className="flex-1">
+                                    <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
+                                        Đơn đăng ký đang chờ duyệt
+                                        <Badge variant="outline" className="bg-yellow-500/20 text-yellow-700 dark:text-yellow-400 border-yellow-500/50">
+                                            PENDING
+                                        </Badge>
+                                    </h2>
+                                    <p className="text-muted-foreground">
+                                        Đơn đăng ký shop của bạn đang được quản trị viên xem xét.
+                                        Vui lòng kiên nhẫn chờ đợi trong khi chúng tôi xác minh thông tin của bạn.
+                                    </p>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Shop Information */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <Store className="w-5 h-5 text-primary" />
+                                Thông tin Shop đã đăng ký
+                            </CardTitle>
+                            <CardDescription>
+                                Thông tin bạn đã gửi để đăng ký
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            {/* Basic Information */}
+                            <div className="space-y-3">
+                                <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
+                                    Thông tin cơ bản
+                                </h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <p className="text-sm text-muted-foreground">Tên Shop</p>
+                                        <p className="font-medium">{userShop.shop_name}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-muted-foreground">Loại hình</p>
+                                        <p className="font-medium">
+                                            {userShop.business_type === 'PERSONAL' ? 'Cá nhân' : 'Doanh nghiệp'}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-muted-foreground">Năm thành lập</p>
+                                        <p className="font-medium">{userShop.established_year}</p>
+                                    </div>
+                                    {userShop.tax_code && (
+                                        <div>
+                                            <p className="text-sm text-muted-foreground">Mã số thuế</p>
+                                            <p className="font-medium">{userShop.tax_code}</p>
+                                        </div>
+                                    )}
+                                </div>
+                                {userShop.shop_description && (
+                                    <div>
+                                        <p className="text-sm text-muted-foreground">Mô tả</p>
+                                        <p className="text-sm">{userShop.shop_description}</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Contact Information */}
+                            <div className="space-y-3 pt-4 border-t">
+                                <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
+                                    Thông tin liên hệ
+                                </h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <p className="text-sm text-muted-foreground">Email</p>
+                                        <p className="font-medium">{userShop.contact_email}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-muted-foreground">Số điện thoại</p>
+                                        <p className="font-medium">{userShop.contact_phone}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-muted-foreground">Thành phố</p>
+                                        <p className="font-medium">{userShop.address_city}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-muted-foreground">Địa chỉ chi tiết</p>
+                                        <p className="font-medium">{userShop.address_detail}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Admin Note (if any) */}
+                            {userShop.admin_note && (
+                                <div className="space-y-2 pt-4 border-t">
+                                    <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
+                                        Ghi chú từ quản trị viên
+                                    </h3>
+                                    <div className="bg-muted/50 p-4 rounded-lg">
+                                        <p className="text-sm">{userShop.admin_note}</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Submission Date */}
+                            <div className="pt-4 border-t">
+                                <p className="text-sm text-muted-foreground">
+                                    Ngày gửi đơn: {new Date(userShop.created_at).toLocaleDateString('vi-VN', {
+                                        year: 'numeric',
+                                        month: 'long',
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    })}
+                                </p>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Help Card */}
+                    <Card className="bg-muted/50">
+                        <CardContent className="pt-6">
+                            <div className="space-y-3">
+                                <h3 className="font-semibold">⏱️ Quy trình phê duyệt</h3>
+                                <ul className="space-y-2 text-sm text-muted-foreground">
+                                    <li>• Thời gian xét duyệt trung bình: 1-3 ngày làm việc</li>
+                                    <li>• Quản trị viên sẽ xác minh thông tin shop của bạn</li>
+                                    <li>• Bạn sẽ nhận được thông báo khi shop được phê duyệt</li>
+                                    <li>• Nếu có vấn đề, quản trị viên sẽ để lại ghi chú ở trên</li>
+                                </ul>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </main>
+                <Footer />
             </div>
         );
     }

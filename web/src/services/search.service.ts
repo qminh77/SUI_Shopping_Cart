@@ -45,7 +45,7 @@ export async function searchProducts(params: SearchParams): Promise<SearchResult
             imageUrl: item.image_url || '',
             price: Number(item.price),
             stock: Number(item.stock),
-            creator: item.shop_id || '', // Using shop_id as creator
+            creator: item.seller_wallet || item.creator_wallet || '', // Use new fields
             listed: true,
             createdAt: new Date(item.created_at).getTime(),
             categoryId: item.category_id,
@@ -130,7 +130,7 @@ export async function getProductsByCategory(
             imageUrl: item.image_url || '',
             price: Number(item.price),
             stock: Number(item.stock),
-            creator: item.shop_id || '',
+            creator: item.seller_wallet || item.creator_wallet || '', // Use new fields
             listed: true,
             createdAt: new Date(item.created_at).getTime()
         }));
@@ -164,7 +164,7 @@ export async function getProductsWithCategory(limit: number = 50): Promise<Produ
             imageUrl: item.image_url || '',
             price: Number(item.price),
             stock: Number(item.stock),
-            creator: item.shop_id,
+            creator: item.seller_wallet || item.creator_wallet || item.shop_id, // Use new fields with fallback
             listed: true,
             createdAt: new Date(item.created_at).getTime(),
             categoryId: item.category_id,

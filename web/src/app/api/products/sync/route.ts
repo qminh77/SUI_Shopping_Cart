@@ -55,6 +55,8 @@ export async function POST(request: NextRequest) {
         const productData = {
             id: product.id,
             shop_id: product.shopId,
+            creator_wallet: product.creator, // NEW: Store creator wallet
+            seller_wallet: product.creator,  // NEW: Store seller wallet (same as creator for retail products)
             name: product.name,
             description: product.description || '',
             image_url: product.imageUrl || '',
