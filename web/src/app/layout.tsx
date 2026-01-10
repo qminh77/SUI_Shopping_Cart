@@ -4,6 +4,10 @@ import "./globals.css";
 import { SuiProviders } from "@/providers/SuiProviders";
 import { CartProvider } from "@/contexts/CartContext";
 import { Toaster } from "sonner";
+import Background3D from "@/components/Background3D";
+import { CustomCursor } from "@/components/ui/custom-cursor";
+import { NoiseOverlay } from "@/components/ui/noise-overlay";
+import { Preloader } from "@/components/ui/preloader";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,10 +34,6 @@ export const metadata: Metadata = {
   },
 };
 
-import Background3D from "@/components/Background3D";
-
-// ... imports
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -45,6 +45,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
+        <Preloader />
+        <CustomCursor />
+        <NoiseOverlay />
         <Background3D />
         <SuiProviders>
           <CartProvider>

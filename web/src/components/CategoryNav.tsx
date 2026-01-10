@@ -1,130 +1,129 @@
 'use client';
 
 import Link from 'next/link';
-import { useTopLevelCategories, useCategoryTree } from '@/hooks/useCategories';
-import { Badge } from '@/components/ui/badge';
-import { ChevronDown, Loader2 } from 'lucide-react';
-import { useState } from 'react';
+import { useCategories } from '@/hooks/useCategories';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+    NavigationMenu,
+    NavigationMenuContent,
+    NavigationMenuItem,
+    NavigationMenuLink,
+    NavigationMenuList,
+    NavigationMenuTrigger,
+    navigationMenuTriggerStyle,
+} from '@/components/ui/navigation-menu';
+import { Package, LayoutGrid } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { MatrixText } from '@/components/ui/matrix-text';
 
 export function CategoryNav() {
-    const { data: topCategories, isLoading } = useTopLevelCategories();
-    const { data: categoryTree } = useCategoryTree();
-    const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
+    const { data: categories = [], isLoading } = useCategories();
 
     if (isLoading) {
         return (
-            <div className="border-b border-white/10 bg-black/40 backdrop-blur-sm">
-                <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-center">
-                    <Loader2 className="w-5 h-5 animate-spin text-blue-400" />
+            <div className="border-b border-border bg-card/50">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex items-center space-x-2 py-3">
+                        {[1, 2, 3].map((i) => (
+                            <Skeleton key={i} className="h-10 w-28" />
+                        ))}
+                    </div>
                 </div>
             </div>
         );
     }
 
-    if (!topCategories || topCategories.length === 0) {
+    if (categories.length === 0) {
         return null;
     }
 
+    const topLevelCategories = categories.filter(cat => !cat.parent_id);
+
     return (
-        <nav className="sticky top-0 z-40 border-b border-white/10 bg-black/60 backdrop-blur-md">
-            <div className="max-w-7xl mx-auto">
-                <div className="flex items-center overflow-x-auto scrollbar-hide">
-                    {/* All Products Link */}
-                    <Link
-                        href="/shop"
-                        className="flex-shrink-0 px-6 py-4 text-sm font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors border-r border-white/5"
-                    >
-                        All Products
-                    </Link>
-
-                    {/* Category Links */}
-                    {topCategories.map(category => {
-                        const treeNode = categoryTree?.find(t => t.id === category.id);
-                        const hasSubcategories = treeNode && treeNode.children.length > 0;
-
-                        return (
-                            <div
-                                key={category.id}
-                                className="relative"
-                                onMouseEnter={() => setHoveredCategory(category.id)}
-                                onMouseLeave={() => setHoveredCategory(null)}
-                            >
-                                <Link
-                                    href={`/shop/${category.slug}`}
-                                    className={cn(
-                                        "flex items-center gap-2 px-6 py-4 text-sm font-medium transition-colors border-r border-white/5",
-                                        hoveredCategory === category.id
-                                            ? "text-white bg-white/10"
-                                            : "text-white/70 hover:text-white hover:bg-white/5"
-                                    )}
-                                >
-                                    {category.icon && (
-                                        <span className="text-lg">{category.icon}</span>
-                                    )}
-                                    <span>{category.name}</span>
-                                    {treeNode && treeNode.product_count > 0 && (
-                                        <Badge variant="secondary" className="ml-1 bg-blue-500/20 text-blue-300 text-xs">
-                                            {treeNode.product_count}
-                                        </Badge>
-                                    )}
-                                    {hasSubcategories && (
-                                        <ChevronDown className="w-3 h-3 opacity-50" />
-                                    )}
+        <div className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-16 z-40 hidden md:block">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-center">
+                <NavigationMenu className="py-2">
+                    <NavigationMenuList className="space-x-1">
+                        {/* All Products */}
+                        <NavigationMenuItem>
+                            <NavigationMenuLink asChild className={cn(navigationMenuTriggerStyle(), "uppercase tracking-wider font-bold text-xs hover:text-foreground text-muted-foreground cursor-pointer")}>
+                                <Link href="/shop">
+                                    <LayoutGrid className="h-4 w-4 mr-2" />
+                                    <MatrixText text="All Products" speed={20} />
                                 </Link>
+                            </NavigationMenuLink>
+                        </NavigationMenuItem>
 
-                                {/* Mega Menu Dropdown for Subcategories */}
-                                {hasSubcategories && hoveredCategory === category.id && (
-                                    <div className="absolute top-full left-0 min-w-[250px] bg-black/95 backdrop-blur-md border border-white/10 shadow-2xl z-50">
-                                        <div className="p-4">
-                                            <div className="space-y-1">
-                                                {treeNode.children.map(subcat => (
-                                                    <Link
-                                                        key={subcat.id}
-                                                        href={`/shop/${subcat.slug}`}
-                                                        className="block px-4 py-2 text-sm text-white/70 hover:text-white hover:bg-white/10 rounded transition-colors"
-                                                    >
-                                                        <div className="flex items-center justify-between">
-                                                            <span className="flex items-center gap-2">
-                                                                {subcat.icon && (
-                                                                    <span className="text-base">{subcat.icon}</span>
-                                                                )}
-                                                                {subcat.name}
+                        {/* Categories Dropdown */}
+                        <NavigationMenuItem>
+                            <NavigationMenuTrigger className="uppercase tracking-wider font-bold text-xs text-muted-foreground hover:text-foreground">
+                                <Package className="h-4 w-4 mr-2" />
+                                <MatrixText text="Categories" speed={20} />
+                            </NavigationMenuTrigger>
+                            <NavigationMenuContent>
+                                <div className="grid gap-4 p-6 w-[800px] grid-cols-3 lg:grid-cols-4">
+                                    {topLevelCategories.map((category) => {
+                                        const subcategories = categories.filter(
+                                            cat => cat.parent_id === category.id
+                                        );
+
+                                        return (
+                                            <div key={category.id} className="flex flex-col gap-2 p-2 hover:bg-muted/50 transition-colors border border-transparent hover:border-border/50">
+                                                <Link
+                                                    href={`/shop/${category.slug}`}
+                                                    className="group block select-none space-y-1 no-underline outline-none"
+                                                >
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        {category.icon && (
+                                                            <span className="text-xl shrink-0 text-muted-foreground group-hover:text-foreground transition-colors">
+                                                                {category.icon}
                                                             </span>
-                                                            {subcat.product_count > 0 && (
-                                                                <span className="text-xs text-blue-400">
-                                                                    {subcat.product_count}
-                                                                </span>
-                                                            )}
+                                                        )}
+                                                        <div className="font-bold text-sm leading-none group-hover:text-foreground text-foreground/80 transition-colors uppercase tracking-tight">
+                                                            <MatrixText text={category.name} speed={15} />
                                                         </div>
-                                                    </Link>
-                                                ))}
+                                                    </div>
+                                                    {category.description && (
+                                                        <p className="line-clamp-2 text-[10px] leading-snug text-muted-foreground group-hover:text-muted-foreground/80">
+                                                            {category.description}
+                                                        </p>
+                                                    )}
+                                                </Link>
+
+                                                {/* Subcategories */}
+                                                {subcategories.length > 0 && (
+                                                    <div className="pl-3 border-l border-border space-y-1 mt-auto">
+                                                        {subcategories.map((subcat) => (
+                                                            <Link
+                                                                key={subcat.id}
+                                                                href={`/shop/${subcat.slug}`}
+                                                                className="block select-none py-1 text-[11px] leading-none no-underline outline-none text-muted-foreground hover:text-foreground transition-colors truncate"
+                                                            >
+                                                                {subcat.name}
+                                                            </Link>
+                                                        ))}
+                                                    </div>
+                                                )}
                                             </div>
+                                        );
+                                    })}
+                                </div>
+                            </NavigationMenuContent>
+                        </NavigationMenuItem>
 
-                                            <Link
-                                                href={`/shop/${category.slug}`}
-                                                className="block mt-3 pt-3 border-t border-white/10 px-4 py-2 text-sm text-blue-400 hover:text-blue-300 transition-colors"
-                                            >
-                                                View All {category.name} →
-                                            </Link>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        );
-                    })}
-                </div>
+                        {/* Quick Links */}
+                        {topLevelCategories.slice(0, 5).map((category) => (
+                            <NavigationMenuItem key={category.id}>
+                                <NavigationMenuLink asChild className={cn(navigationMenuTriggerStyle(), "uppercase tracking-wider font-bold text-xs text-muted-foreground hover:text-foreground cursor-pointer")}>
+                                    <Link href={`/shop/${category.slug}`}>
+                                        <MatrixText text={category.name} speed={20} />
+                                    </Link>
+                                </NavigationMenuLink>
+                            </NavigationMenuItem>
+                        ))}
+                    </NavigationMenuList>
+                </NavigationMenu>
             </div>
-
-            <style jsx>{`
-                .scrollbar-hide::-webkit-scrollbar {
-                    display: none;
-                }
-                .scrollbar-hide {
-                    -ms-overflow-style: none;
-                    scrollbar-width: none;
-                }
-            `}</style>
-        </nav>
+        </div>
     );
 }

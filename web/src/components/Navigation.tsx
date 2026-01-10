@@ -1,133 +1,233 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { WalletConnection } from './WalletConnection';
-import { CartDrawer } from './CartDrawer';
-import { cn } from '@/lib/utils';
-import { ShoppingCart, Menu, X, Shield, LayoutDashboard, User } from 'lucide-react';
-import { useState } from 'react';
-import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
+import Image from 'next/image';
+import { usePathname } from 'next/navigation';
+import { ShoppingBag, User, Store, Shield, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { MatrixText } from '@/components/ui/matrix-text';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+    Sheet,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+    SheetTrigger,
+} from '@/components/ui/sheet';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { WalletConnectButton } from '@/components/WalletConnectButton';
+import { CartDrawer } from '@/components/CartDrawer';
+import { useCurrentAccount } from '@mysten/dapp-kit';
+import { formatAddress } from '@/lib/sui-utils';
+import { useState } from 'react';
 
 export function Navigation() {
     const pathname = usePathname();
-    const isActive = (path: string) => pathname === path;
-    const [isOpen, setIsOpen] = useState(false);
+    const account = useCurrentAccount();
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-    const NavItems = [
-        { href: '/shop', label: 'Marketplace', icon: ShoppingCart },
-        { href: '/seller', label: 'Seller Dashboard', icon: LayoutDashboard },
-        { href: '/profile', label: 'Profile', icon: User },
+    const isActive = (path: string) => pathname?.startsWith(path);
+
+    const navLinks = [
+        { href: '/shop', label: 'Shop', show: true },
+        { href: '/profile/orders', label: 'My Orders', show: !!account },
+        { href: '/seller', label: 'Seller Hub', icon: Store, show: !!account },
     ];
 
     return (
-        <nav className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-xl border-b border-white/5">
-            {/* Top glowing line */}
-            <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-blue-500/50 to-transparent" />
-
-            <div className="max-w-7xl mx-auto px-4 md:px-6 h-16 md:h-20 flex items-center justify-between">
-                {/* Logo Section */}
-                <Link href="/" className="flex items-center gap-3 group no-underline relative z-10">
-                    <div className="h-8 w-6 md:h-10 md:w-8 flex items-center justify-center animate-[float_6s_ease-in-out_infinite]">
-                        {/* Official Sui Droplet Shape */}
-                        <svg viewBox="0 0 384 512" className="h-full w-auto drop-shadow-[0_0_10px_rgba(77,162,255,0.4)]">
-                            <defs>
-                                <linearGradient id="suiGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <stop offset="0%" stopColor="#4DA2FF" />
-                                    <stop offset="100%" stopColor="#3D5E99" />
-                                </linearGradient>
-                            </defs>
-                            <path
-                                d="M192 0C86 0 0 172 0 286.5c0 124.5 86 225.5 192 225.5s192-101 192-225.5C384 172 298 0 192 0z"
-                                fill="url(#suiGradient)"
-                            />
-                        </svg>
+        <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex h-16 items-center justify-between">
+                {/* Logo */}
+                <Link href="/shop" className="flex items-center gap-3 group">
+                    <div className="relative h-8 w-20 transition-opacity duration-200 group-hover:opacity-80">
+                        <Image
+                            src="/logo.svg"
+                            alt="Sui"
+                            fill
+                            className="object-contain"
+                            priority
+                        />
                     </div>
-                    <div className="flex flex-col justify-center h-full">
-                        <span className="font-sans font-bold text-lg md:text-xl tracking-tighter leading-none flex items-center gap-1.5 text-white group-hover:text-blue-200 transition-colors">
-                            SUI <span className="font-light opacity-80 text-blue-400">COMMERCE</span>
-                        </span>
-                    </div>
+                    <span className="hidden sm:inline-block border-l border-border pl-3">
+                        <MatrixText text="SHOP" className="text-lg font-bold tracking-tight text-muted-foreground" hover={true} />
+                    </span>
                 </Link>
 
                 {/* Desktop Navigation */}
-                <div className="hidden md:flex items-center gap-1">
-                    <div className="flex items-center bg-white/5 rounded-full p-1 border border-white/5 mr-6 backdrop-blur-md">
-                        {NavItems.map((item) => (
-                            <Link
-                                key={item.href}
-                                href={item.href}
-                                className={cn(
-                                    "px-5 py-2 rounded-full text-xs uppercase tracking-wider font-bold transition-all duration-300 relative overflow-hidden",
-                                    isActive(item.href)
-                                        ? "text-white bg-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.5)]"
-                                        : "text-neutral-400 hover:text-white hover:bg-white/10"
-                                )}
-                            >
-                                {item.label}
+                <nav className="hidden md:flex items-center space-x-4">
+                    {navLinks.map((link) => link.show && (
+                        <Button
+                            key={link.href}
+                            variant={isActive(link.href) ? 'secondary' : 'ghost'}
+                            size="sm"
+                            asChild
+                        >
+                            <Link href={link.href} className="flex items-center font-medium group">
+                                {link.icon && <link.icon className="h-4 w-4 mr-2 group-hover:text-primary transition-colors" />}
+                                <MatrixText text={link.label} className={isActive(link.href) ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"} />
                             </Link>
-                        ))}
-                    </div>
+                        </Button>
+                    ))}
+                </nav>
 
-                    <div className="flex items-center gap-4 pl-6 border-l border-white/10">
-                        <CartDrawer />
-                        <WalletConnection />
-                    </div>
-                </div>
-
-                {/* Mobile Navigation */}
-                <div className="flex md:hidden items-center gap-3">
+                {/* Right Section */}
+                <div className="flex items-center space-x-4">
+                    {/* Cart */}
                     <CartDrawer />
 
-                    <Sheet open={isOpen} onOpenChange={setIsOpen}>
-                        <SheetTrigger asChild>
-                            <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 rounded-sm w-10 h-10">
-                                <Menu className="w-6 h-6" />
+                    {/* Mobile Menu */}
+                    <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                        <SheetTrigger asChild className="md:hidden">
+                            <Button variant="ghost" size="icon">
+                                <Menu className="h-5 w-5" />
                             </Button>
                         </SheetTrigger>
-                        <SheetContent side="right" className="w-[300px] border-l border-white/10 bg-black/95 backdrop-blur-xl p-0">
-                            <div className="flex flex-col h-full">
-                                <div className="p-6 border-b border-white/10">
-                                    <SheetTitle className="text-xl font-bold tracking-tighter text-white mb-2">MENU</SheetTitle>
-                                    <p className="text-xs text-neutral-500 uppercase tracking-widest">Navigation</p>
-                                </div>
-
-                                <div className="flex-1 py-6 px-4 space-y-2">
-                                    {NavItems.map((item) => {
-                                        const Icon = item.icon;
-                                        return (
-                                            <Link
-                                                key={item.href}
-                                                href={item.href}
-                                                onClick={() => setIsOpen(false)}
-                                                className={cn(
-                                                    "flex items-center gap-4 px-4 py-4 text-sm uppercase tracking-wider font-bold transition-all border-l-2",
-                                                    isActive(item.href)
-                                                        ? "border-blue-500 bg-blue-500/10 text-blue-400"
-                                                        : "border-transparent text-neutral-400 hover:text-white hover:bg-white/5"
-                                                )}
-                                            >
-                                                <Icon className="w-4 h-4" />
-                                                {item.label}
-                                            </Link>
-                                        );
-                                    })}
-                                </div>
-
-                                <div className="p-6 border-t border-white/10 bg-white/5">
-                                    <div className="mb-4">
-                                        <p className="text-xs text-neutral-500 uppercase tracking-widest mb-3">Wallet</p>
-                                        <div className="flex justify-center">
-                                            <WalletConnection />
-                                        </div>
+                        <SheetContent side="right" className="w-[280px] sm:w-[350px]">
+                            <SheetHeader>
+                                <SheetTitle><MatrixText text="MENU" speed={50} /></SheetTitle>
+                            </SheetHeader>
+                            <div className="mt-6 flex flex-col space-y-3">
+                                {account && (
+                                    <div className="pb-4 mb-4 border-b border-border">
+                                        <p className="text-sm font-medium mb-1 text-muted-foreground uppercase tracking-wider">Connected Wallet</p>
+                                        <p className="text-xs text-foreground font-mono truncate">
+                                            {formatAddress(account.address)}
+                                        </p>
                                     </div>
-                                </div>
+                                )}
+
+                                {navLinks.map((link) => link.show && (
+                                    <Button
+                                        key={link.href}
+                                        variant={isActive(link.href) ? 'secondary' : 'ghost'}
+                                        asChild
+                                        className="justify-start"
+                                        onClick={() => setMobileMenuOpen(false)}
+                                    >
+                                        <Link href={link.href}>
+                                            {link.icon && <link.icon className="h-4 w-4 mr-2" />}
+                                            <MatrixText text={link.label} />
+                                        </Link>
+                                    </Button>
+                                ))}
+
+                                {account && (
+                                    <>
+                                        <div className="pt-4 mt-4 border-t border-border space-y-3">
+                                            <Button
+                                                variant="ghost"
+                                                asChild
+                                                className="justify-start w-full"
+                                                onClick={() => setMobileMenuOpen(false)}
+                                            >
+                                                <Link href="/profile/addresses">
+                                                    <User className="h-4 w-4 mr-2" />
+                                                    <MatrixText text="MY ADDRESSES" />
+                                                </Link>
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                asChild
+                                                className="justify-start w-full"
+                                                onClick={() => setMobileMenuOpen(false)}
+                                            >
+                                                <Link href="/receipts">
+                                                    <ShoppingBag className="h-4 w-4 mr-2" />
+                                                    <MatrixText text="RECEIPTS" />
+                                                </Link>
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                asChild
+                                                className="justify-start w-full"
+                                                onClick={() => setMobileMenuOpen(false)}
+                                            >
+                                                <Link href="/admin">
+                                                    <Shield className="h-4 w-4 mr-2" />
+                                                    <MatrixText text="ADMIN PANEL" />
+                                                </Link>
+                                            </Button>
+                                        </div>
+                                    </>
+                                )}
+
+                                {!account && (
+                                    <div className="pt-4 mt-4 border-t border-border">
+                                        <WalletConnectButton />
+                                    </div>
+                                )}
                             </div>
                         </SheetContent>
                     </Sheet>
+
+                    {/* Desktop User Menu */}
+                    {account ? (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild className="hidden md:flex">
+                                <Button variant="ghost" className="relative h-9 w-9 rounded-full border border-border/50 hover:border-foreground/50 transition-colors">
+                                    <Avatar className="h-9 w-9">
+                                        <AvatarFallback className="bg-muted text-foreground font-mono border border-input text-xs">
+                                            {formatAddress(account.address).slice(0, 2).toUpperCase()}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent className="w-56 bg-card border-border" align="end" forceMount>
+                                <DropdownMenuLabel className="font-normal">
+                                    <div className="flex flex-col space-y-1">
+                                        <p className="text-sm font-medium leading-none">My Account</p>
+                                        <p className="text-xs leading-none text-muted-foreground font-mono">
+                                            {formatAddress(account.address)}
+                                        </p>
+                                    </div>
+                                </DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem asChild>
+                                    <Link href="/profile/orders" className="cursor-pointer group">
+                                        <User className="mr-2 h-4 w-4" />
+                                        <MatrixText text="My Orders" speed={15} />
+                                    </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                    <Link href="/profile/addresses" className="cursor-pointer group">
+                                        <User className="mr-2 h-4 w-4" />
+                                        <MatrixText text="My Addresses" speed={15} />
+                                    </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem asChild>
+                                    <Link href="/seller" className="cursor-pointer group">
+                                        <Store className="mr-2 h-4 w-4" />
+                                        <MatrixText text="Seller Dashboard" speed={15} />
+                                    </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                    <Link href="/receipts" className="cursor-pointer group">
+                                        <ShoppingBag className="mr-2 h-4 w-4" />
+                                        <MatrixText text="Receipts" speed={15} />
+                                    </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem asChild>
+                                    <Link href="/admin" className="cursor-pointer group">
+                                        <Shield className="mr-2 h-4 w-4" />
+                                        <MatrixText text="Admin Panel" speed={15} />
+                                    </Link>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    ) : (
+                        <WalletConnectButton className="hidden md:flex" />
+                    )}
                 </div>
             </div>
-        </nav>
+        </header>
     );
 }

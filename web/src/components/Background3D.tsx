@@ -3,13 +3,14 @@
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Points, PointMaterial } from '@react-three/drei';
 import { useRef, useState } from 'react';
+import { useTheme } from 'next-themes';
 
 
 function Stars(props: any) {
     const ref = useRef<any>(null);
     const [sphere] = useState(() => {
-        const positions = new Float32Array(5000 * 3);
-        for (let i = 0; i < 5000; i++) {
+        const positions = new Float32Array(3000 * 3); // Reduced count for cleaner look
+        for (let i = 0; i < 3000; i++) {
             const r = 1.5 * Math.cbrt(Math.random());
             const theta = Math.random() * 2 * Math.PI;
             const phi = Math.acos(2 * Math.random() - 1);
@@ -25,8 +26,8 @@ function Stars(props: any) {
 
     useFrame((state, delta) => {
         if (ref.current) {
-            ref.current.rotation.x -= delta / 10;
-            ref.current.rotation.y -= delta / 15;
+            ref.current.rotation.x -= delta / 15;
+            ref.current.rotation.y -= delta / 20;
         }
     });
 
@@ -35,10 +36,11 @@ function Stars(props: any) {
             <Points ref={ref} positions={sphere} stride={3} frustumCulled={false} {...props}>
                 <PointMaterial
                     transparent
-                    color="#4DA2FF"
-                    size={0.002}
+                    color="#a1a1aa" // Zinc-400 (Monochrome)
+                    size={0.0015} // Smaller/Finer
                     sizeAttenuation={true}
                     depthWrite={false}
+                    opacity={0.5}
                 />
             </Points>
         </group>
@@ -47,13 +49,10 @@ function Stars(props: any) {
 
 export default function Background3D() {
     return (
-        <div className="fixed inset-0 z-[-1] bg-black">
+        <div className="fixed inset-0 z-[-1] opacity-40 pointer-events-none">
             <Canvas camera={{ position: [0, 0, 1] }}>
                 <Stars />
             </Canvas>
-
-            {/* Overlay to ensure text readability */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black opacity-80 pointer-events-none" />
         </div>
     );
 }

@@ -3,24 +3,29 @@
 import { useEffect, useState } from 'react';
 import { useCurrentAccount } from '@mysten/dapp-kit';
 import { formatAddress, mistToSui } from '@/lib/sui-utils';
-import { Loader2, Package, Truck, CheckCircle, XCircle } from 'lucide-react';
+import { Loader2, Package, Truck, CheckCircle, XCircle, ShoppingBag } from 'lucide-react';
 import Image from 'next/image';
+import { Navigation } from '@/components/Navigation';
+import { Footer } from '@/components/Footer';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
-// Helper to format currency
-const formatPrice = (mist: number) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(mistToSui(mist) * 25000 * 100); // Rough conversion SUI to VND? Or just show SUI
-    // Let's show SUI for now
-    // return `${mistToSui(mist).toFixed(2)} SUI`;
-};
-
-// Map status to icon/color
-const getStatusBadge = (status: string) => {
+// Map status to badge variant and label
+const getStatusConfig = (status: string) => {
     switch (status) {
-        case 'PAID': return <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1"><CheckCircle size={12} /> Đã thanh toán</span>;
-        case 'SHIPPING': return <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1"><Truck size={12} /> Đang giao</span>;
-        case 'DELIVERED': return <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1"><CheckCircle size={12} /> Đã giao</span>;
-        case 'CANCELLED': return <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1"><XCircle size={12} /> Đã hủy</span>;
-        default: return <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs font-bold">{status}</span>;
+        case 'PAID':
+            return { variant: 'default' as const, label: 'Đã thanh toán', icon: CheckCircle };
+        case 'SHIPPING':
+            return { variant: 'secondary' as const, label: 'Đang giao', icon: Truck };
+        case 'DELIVERED':
+            return { variant: 'default' as const, label: 'Đã giao', icon: CheckCircle };
+        case 'CANCELLED':
+            return { variant: 'destructive' as const, label: 'Đã hủy', icon: XCircle };
+        default:
+            return { variant: 'outline' as const, label: status, icon: Package };
     }
 };
 
@@ -50,64 +55,127 @@ export default function OrderHistoryPage() {
         }
     };
 
-    if (loading) return <div className="flex justify-center p-8"><Loader2 className="animate-spin" /></div>;
-
-    if (!account) return <div className="text-center p-8">Vui lòng kết nối ví để xem đơn hàng.</div>;
-
     return (
-        <div className="container mx-auto py-8 max-w-4xl">
-            <h1 className="text-2xl font-bold mb-6 flex items-center gap-2">
-                <Package className="w-6 h-6" /> Đơn Mua Của Tôi
-            </h1>
+        <div className="min-h-screen flex flex-col bg-background">
+            <Navigation />
 
-            {orders.length === 0 ? (
-                <div className="text-center text-gray-500 py-12 bg-white rounded-lg shadow">
-                    Chưa có đơn hàng nào. Hãy mua sắm ngay!
+            <main className="flex-1 container mx-auto py-8 px-4 max-w-5xl">
+                {/* Header */}
+                <div className="mb-8">
+                    <h1 className="text-3xl font-bold tracking-tight mb-2 flex items-center gap-3">
+                        <Package className="w-8 h-8 text-primary" />
+                        Đơn Mua Của Tôi
+                    </h1>
+                    <p className="text-muted-foreground">
+                        Xem và quản lý tất cả đơn hàng của bạn
+                    </p>
                 </div>
-            ) : (
-                <div className="space-y-4">
-                    {orders.map((order) => (
-                        <div key={order.id} className="bg-white rounded-lg shadow p-4 border hover:border-blue-300 transition-colors">
-                            <div className="flex justify-between items-start mb-4 pb-2 border-b">
-                                <div>
-                                    <div className="text-sm text-gray-500">Mã đơn: {order.id.slice(0, 8)}...</div>
-                                    <div className="text-xs text-gray-400">{new Date(order.created_at).toLocaleString('vi-VN')}</div>
-                                </div>
-                                <div>{getStatusBadge(order.status)}</div>
-                            </div>
 
-                            <div className="space-y-3">
-                                {order.items.map((item: any) => (
-                                    <div key={item.id} className="flex justify-between items-center bg-gray-50 p-2 rounded">
-                                        <div className="flex items-center gap-3">
-                                            {/* Placeholder image if we don't store it in items, normally we should */}
-                                            <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center text-xs text-gray-500">IMG</div>
-                                            <div>
-                                                <div className="font-medium">{item.product_name}</div>
-                                                <div className="text-sm text-gray-500">x{item.quantity}</div>
+                {loading ? (
+                    <div className="flex justify-center items-center py-20">
+                        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                    </div>
+                ) : !account ? (
+                    <Card>
+                        <CardContent className="flex flex-col items-center justify-center py-16">
+                            <ShoppingBag className="w-16 h-16 text-muted-foreground/50 mb-4" />
+                            <h3 className="text-lg font-semibold mb-2">Chưa kết nối ví</h3>
+                            <p className="text-muted-foreground text-center mb-6">
+                                Vui lòng kết nối ví của bạn để xem đơn hàng
+                            </p>
+                        </CardContent>
+                    </Card>
+                ) : orders.length === 0 ? (
+                    <Card>
+                        <CardContent className="flex flex-col items-center justify-center py-16">
+                            <Package className="w-16 h-16 text-muted-foreground/50 mb-4" />
+                            <h3 className="text-lg font-semibold mb-2">Chưa có đơn hàng nào</h3>
+                            <p className="text-muted-foreground text-center mb-6">
+                                Hãy khám phá và mua sắm sản phẩm yêu thích của bạn!
+                            </p>
+                            <Button asChild>
+                                <Link href="/shop">
+                                    <ShoppingBag className="w-4 h-4 mr-2" />
+                                    Bắt đầu mua sắm
+                                </Link>
+                            </Button>
+                        </CardContent>
+                    </Card>
+                ) : (
+                    <div className="space-y-4">
+                        {orders.map((order) => {
+                            const statusConfig = getStatusConfig(order.status);
+                            const StatusIcon = statusConfig.icon;
+
+                            return (
+                                <Card key={order.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                                    <CardHeader className="bg-muted/50">
+                                        <div className="flex justify-between items-start">
+                                            <div className="space-y-1">
+                                                <CardTitle className="text-base font-semibold">
+                                                    Mã đơn: {order.id.slice(0, 8)}...
+                                                </CardTitle>
+                                                <CardDescription>
+                                                    {new Date(order.created_at).toLocaleString('vi-VN')}
+                                                </CardDescription>
+                                            </div>
+                                            <Badge variant={statusConfig.variant} className="gap-1">
+                                                <StatusIcon className="w-3 h-3" />
+                                                {statusConfig.label}
+                                            </Badge>
+                                        </div>
+                                    </CardHeader>
+
+                                    <CardContent className="p-4">
+                                        {/* Order Items */}
+                                        <div className="space-y-3 mb-4">
+                                            {order.items.map((item: any) => (
+                                                <div
+                                                    key={item.id}
+                                                    className="flex justify-between items-center p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors"
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-14 h-14 bg-muted rounded-md flex items-center justify-center overflow-hidden">
+                                                            <Package className="w-6 h-6 text-muted-foreground/50" />
+                                                        </div>
+                                                        <div>
+                                                            <div className="font-medium text-sm">{item.product_name}</div>
+                                                            <div className="text-xs text-muted-foreground">
+                                                                Số lượng: x{item.quantity}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="font-semibold text-primary">
+                                                        {mistToSui(item.price).toFixed(2)} SUI
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        <Separator className="my-4" />
+
+                                        {/* Order Summary */}
+                                        <div className="space-y-2">
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-sm text-muted-foreground">Người bán:</span>
+                                                <span className="text-sm font-mono">{formatAddress(order.seller_wallet)}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center pt-2">
+                                                <span className="text-base font-semibold">Tổng tiền:</span>
+                                                <span className="text-xl font-bold text-primary">
+                                                    {mistToSui(order.total_price).toFixed(2)} SUI
+                                                </span>
                                             </div>
                                         </div>
-                                        <div className="font-bold text-blue-600">
-                                            {mistToSui(item.price)} SUI
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
+                                    </CardContent>
+                                </Card>
+                            );
+                        })}
+                    </div>
+                )}
+            </main>
 
-                            <div className="mt-4 pt-2 border-t flex justify-end items-center gap-4">
-                                <div className="text-sm text-gray-500">Tổng tiền:</div>
-                                <div className="text-xl font-bold text-red-600">
-                                    {mistToSui(order.total_price)} SUI
-                                </div>
-                            </div>
-
-                            <div className="mt-2 text-xs text-gray-400 text-right">
-                                Shop: {formatAddress(order.seller_wallet)}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
+            <Footer />
         </div>
     );
 }

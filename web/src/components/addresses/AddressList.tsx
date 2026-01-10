@@ -68,7 +68,7 @@ export function AddressList() {
     if (isLoading) {
         return (
             <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-blue-400" />
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
         );
     }
@@ -78,37 +78,31 @@ export function AddressList() {
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
                 <div>
-                    <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                        <MapPin className="w-6 h-6 text-blue-400" />
+                    <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2 uppercase">
+                        <MapPin className="w-6 h-6 text-primary" />
                         Delivery Addresses
                     </h2>
-                    <p className="text-white/60 text-sm mt-1">
+                    <p className="text-muted-foreground text-sm mt-1">
                         Manage your shipping addresses
                     </p>
                 </div>
-                <Button
-                    onClick={() => setIsFormOpen(true)}
-                    className="bg-blue-500 hover:bg-blue-600 text-white"
-                >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Address
+                <Button onClick={() => setIsFormOpen(true)}>
+                    <Plus className="w-4 h-4 md:mr-2" />
+                    <span className="hidden md:inline">Add Address</span>
                 </Button>
             </div>
 
             {/* Address Grid */}
             {addresses.length === 0 ? (
-                <div className="text-center py-12 bg-black/20 backdrop-blur-sm border border-white/10 rounded-lg">
-                    <MapPin className="w-12 h-12 text-white/20 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-white mb-2">
-                        No addresses yet
-                    </h3>
-                    <p className="text-white/60 mb-6">
+                <div className="text-center py-12 bg-muted/30 border border-border rounded-lg">
+                    <MapPin className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
+                    <h3 className="text-lg font-bold mb-2 uppercase">No addresses yet</h3>
+                    <p className="text-muted-foreground mb-6">
                         Add your first delivery address to get started
                     </p>
                     <Button
                         onClick={() => setIsFormOpen(true)}
                         variant="outline"
-                        className="border-white/20 text-white hover:bg-white/10"
                     >
                         <Plus className="w-4 h-4 mr-2" />
                         Add Address
@@ -132,9 +126,9 @@ export function AddressList() {
 
             {/* Add/Edit Dialog */}
             <Dialog open={isFormOpen} onOpenChange={handleCancelForm}>
-                <DialogContent className="bg-black/95 backdrop-blur-md border-white/20 text-white max-w-2xl">
+                <DialogContent className="max-w-2xl bg-card border-border">
                     <DialogHeader>
-                        <DialogTitle className="text-xl">
+                        <DialogTitle className="uppercase tracking-wider">
                             {editingAddress ? 'Edit Address' : 'Add New Address'}
                         </DialogTitle>
                     </DialogHeader>
@@ -149,22 +143,19 @@ export function AddressList() {
 
             {/* Delete Confirmation Dialog */}
             <AlertDialog open={!!deletingAddressId} onOpenChange={() => setDeletingAddressId(null)}>
-                <AlertDialogContent className="bg-black/95 backdrop-blur-md border-white/20 text-white">
+                <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Delete Address?</AlertDialogTitle>
-                        <AlertDialogDescription className="text-white/70">
+                        <AlertDialogTitle className="uppercase text-destructive">Delete Address?</AlertDialogTitle>
+                        <AlertDialogDescription>
                             This action cannot be undone. This address will be permanently deleted.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel
-                            className="border-white/20 text-white hover:bg-white/10"
-                            onClick={() => setDeletingAddressId(null)}
-                        >
+                        <AlertDialogCancel onClick={() => setDeletingAddressId(null)}>
                             Cancel
                         </AlertDialogCancel>
                         <AlertDialogAction
-                            className="bg-red-500 hover:bg-red-600 text-white"
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                             onClick={handleDelete}
                         >
                             Delete

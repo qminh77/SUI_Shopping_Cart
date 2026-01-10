@@ -3,30 +3,23 @@
 import { useState, useMemo } from 'react';
 import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { WalletConnection } from '@/components/WalletConnection';
+import { WalletConnectButton } from '@/components/WalletConnectButton';
 import CreateShopForm from '@/components/shops/CreateShopForm';
 import { useShop } from '@/hooks/useShop';
-import { useRetail } from '@/hooks/useRetail'; // We might need a creation hook in useRetail or useProducts? 
-// Actually useProducts should be updated to create Shared Object, or we add logic here.
-// Let's check useProducts. It currently calls mint. We should update useProducts or call move directly.
-// To keep it clean, I'll use the Transaction block directly here or a new hook method.
-// Let's use useProducts but modified, OR just implement createSharedProduct here for now.
-
 import { Transaction } from '@mysten/sui/transactions';
 import { useSignAndExecuteTransaction } from '@mysten/dapp-kit';
-
-import { mistToSui, Product, PACKAGE_ID, getUserShop, suiToMist } from '@/lib/sui-utils';
+import { mistToSui, PACKAGE_ID, getUserShop, suiToMist } from '@/lib/sui-utils';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
-import { Package, ShoppingBag, AlertCircle, Loader2, Store } from 'lucide-react';
+import { Package, ShoppingBag, Loader2, Store, TrendingUp, DollarSign } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import Image from 'next/image';
 
 export default function SellerPage() {
     const account = useCurrentAccount();
@@ -34,7 +27,7 @@ export default function SellerPage() {
     const queryClient = useQueryClient();
     const { mutateAsync: signAndExecute } = useSignAndExecuteTransaction();
 
-    const { shop: userShop, isLoading: isLoadingShop, syncChainShop } = useShop();
+    const { shop: userShop, isLoading: isLoadingShop } = useShop();
 
     // Check if shop exists on-chain
     const { data: onChainShop, isLoading: isCheckingChain } = useQuery({
@@ -53,28 +46,17 @@ export default function SellerPage() {
         description: '',
         imageUrl: '',
         price: '',
-        stock: '100', // Default stock
+        stock: '100',
     });
 
     const [isCreating, setIsCreating] = useState(false);
 
-    // Fetch Shared Products (Retail Inventory)
-    // We need a way to fetch YOUR shared products. 
-    // Currently `useProducts` fetches owned objects (Wallet/Kiosk).
-    // Shared objects are harder to "list by owner" without an Indexer.
-    // However, `product::Product` has a `creator` field.
-    // We can query events `ProductCreated` filtered by creator? Or check if we have an Indexer yet?
-    // The previous plan mentioned Indexer is needed.
-    // FOR NOW: We will use `client.getOwnedObjects` won't work for Shared.
-    // RELIABLE WAY (MVP): Query `ProductCreated` events for this seller address.
-
+    // Fetch products
     const { data: myProducts, isLoading: isLoadingProducts } = useQuery({
         queryKey: ['my-retail-products', account?.address],
         queryFn: async () => {
             if (!account?.address) return [];
 
-            // Query events to find products created by me
-            // This is "Event Sourcing" - simple indexer pattern
             const events = await client.queryEvents({
                 query: {
                     MoveEventType: `${PACKAGE_ID}::product::ProductCreated`,
@@ -82,9 +64,7 @@ export default function SellerPage() {
                 }
             });
 
-            // The event contains the Object ID. We then fetch the object details.
             const objectIds = events.data.map(e => (e.parsedJson as any).product_id);
-
             if (objectIds.length === 0) return [];
 
             const objects = await client.multiGetObjects({
@@ -103,7 +83,7 @@ export default function SellerPage() {
                     price: Number(fields.price),
                     stock: Number(fields.stock),
                     shopId: fields.shop_id,
-                    creator: fields.creator, // or from event
+                    creator: fields.creator,
                     status: 'RETAIL'
                 };
             }).filter(Boolean);
@@ -111,10 +91,7 @@ export default function SellerPage() {
         enabled: !!account?.address
     });
 
-    // Query for Sales History (from DB or Chain events)
-    // Reusing the API we made earlier would be best, but let's stick to chain events for now or API?
-    // Creating API was for Order History.
-    // Let's use the API `GET /api/orders?role=seller`
+    // Fetch sales
     const { data: salesHistory } = useQuery({
         queryKey: ['seller-orders', account?.address],
         queryFn: async () => {
@@ -125,7 +102,6 @@ export default function SellerPage() {
         enabled: !!account?.address
     });
 
-    // Calculate total earnings
     const totalEarnings = useMemo(() => {
         return salesHistory?.reduce((acc: number, order: any) => acc + Number(order.total_price), 0) || 0;
     }, [salesHistory]);
@@ -138,12 +114,10 @@ export default function SellerPage() {
             const tx = new Transaction();
             const priceMist = suiToMist(parseFloat(productFormData.price));
 
-            // Call create_shared_product
-            // public fun create_shared_product(shop_id: address, name: String, description: String, image_url: String, price: u64, stock: u64, ctx: &mut TxContext)
             tx.moveCall({
                 target: `${PACKAGE_ID}::product::create_shared_product`,
                 arguments: [
-                    tx.pure.address(userShop.owner_wallet), // shop_id (using owner wallet as shop id mapping for now)
+                    tx.pure.address(userShop.owner_wallet),
                     tx.pure.string(productFormData.name),
                     tx.pure.string(productFormData.description),
                     tx.pure.string(productFormData.imageUrl),
@@ -153,15 +127,11 @@ export default function SellerPage() {
             });
 
             const result = await signAndExecute({ transaction: tx });
-
             await client.waitForTransaction({ digest: result.digest });
 
             toast.success('Product created successfully!');
             setProductFormData({ name: '', description: '', imageUrl: '', price: '', stock: '100' });
-
-            // Invalidate queries
             queryClient.invalidateQueries({ queryKey: ['my-retail-products'] });
-
         } catch (error) {
             console.error('Create product error:', error);
             toast.error('Failed to create product');
@@ -172,178 +142,243 @@ export default function SellerPage() {
 
     if (!account) {
         return (
-            <div className="min-h-screen flex flex-col bg-black text-white font-sans">
+            <div className="min-h-screen flex flex-col bg-background">
                 <Navigation />
-                <div className="flex-1 flex items-center justify-center p-6">
-                    <div className="max-w-md w-full p-8 bg-neutral-900/50 border border-white/10 cut-corner text-center backdrop-blur-md">
-                        <Store className="w-12 h-12 text-blue-500 mx-auto mb-4" />
-                        <h3 className="text-xl font-bold mb-2 uppercase tracking-wide">Seller Portal</h3>
-                        <p className="text-neutral-400 mb-6 font-light">Please connect your wallet to manage your shop.</p>
-                        <div className="flex justify-center">
-                            <WalletConnection />
-                        </div>
-                    </div>
-                </div>
+                <main className="flex-1 flex items-center justify-center p-6">
+                    <Card className="max-w-md w-full">
+                        <CardContent className="flex flex-col items-center justify-center py-16">
+                            <Store className="w-16 h-16 text-primary mb-4" />
+                            <h3 className="text-2xl font-bold mb-2">Seller Portal</h3>
+                            <p className="text-muted-foreground text-center mb-6">
+                                Kết nối ví để quản lý shop của bạn
+                            </p>
+                            <WalletConnectButton />
+                        </CardContent>
+                    </Card>
+                </main>
                 <Footer />
             </div>
         );
     }
 
     if (isLoadingShop) {
-        return <div className="min-h-screen bg-black flex items-center justify-center"><Loader2 className="animate-spin text-white" /></div>;
+        return (
+            <div className="min-h-screen bg-background flex items-center justify-center">
+                <Loader2 className="animate-spin w-8 h-8 text-primary" />
+            </div>
+        );
     }
 
     if (!userShop) {
         return (
-            <div className="min-h-screen flex flex-col bg-black text-white font-sans">
+            <div className="min-h-screen flex flex-col bg-background">
                 <Navigation />
-                <div className="flex-1 max-w-2xl mx-auto w-full p-6 pt-12">
+                <main className="flex-1 max-w-2xl mx-auto w-full p-6 pt-12">
                     <CreateShopForm />
-                </div>
+                </main>
                 <Footer />
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen flex flex-col bg-transparent text-white font-sans selection:bg-blue-500/30">
+        <div className="min-h-screen flex flex-col bg-background">
             <Navigation />
 
-            <div className="flex-1 max-w-7xl mx-auto w-full px-6 py-12 space-y-8 relative z-10">
-
+            <main className="flex-1 max-w-7xl mx-auto w-full px-4 py-8 space-y-8">
                 {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/5 pb-8">
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-6 border-b border-border">
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight mb-2 uppercase">Seller Dashboard</h1>
-                        <p className="text-neutral-400 font-mono text-sm">Manage inventory and orders</p>
+                        <h1 className="text-3xl font-bold tracking-tight mb-2 flex items-center gap-3">
+                            <Store className="w-8 h-8 text-primary" />
+                            Seller Dashboard
+                        </h1>
+                        <p className="text-muted-foreground">Quản lý sản phẩm và đơn hàng</p>
                     </div>
-                    <div>
-                        <Badge variant="outline" className={`rounded-none px-3 py-1 uppercase tracking-widest font-mono ${isMissingOnChain ? 'text-red-400 bg-red-900/20 border-red-500/20' : 'text-green-400 bg-green-900/20 border-green-500/20'}`}>
-                            {isMissingOnChain ? 'Not On Chain' : 'Active Shop'}
-                        </Badge>
-                    </div>
+                    <Badge variant={isMissingOnChain ? "destructive" : "default"}>
+                        {isMissingOnChain ? 'Chưa đồng bộ blockchain' : 'Shop đang hoạt động'}
+                    </Badge>
                 </div>
 
                 {/* Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <Card className="bg-white/[0.02] border border-white/5 cut-corner rounded-none">
-                        <CardHeader>
-                            <CardTitle className="uppercase tracking-wide flex items-center gap-2">
-                                <Store className="w-5 h-5 text-blue-500" /> {userShop.shop_name}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between pb-2">
+                            <CardTitle className="text-sm font-medium text-muted-foreground">
+                                Tên Shop
                             </CardTitle>
-                        </CardHeader>
-                    </Card>
-                    <Card className="bg-white/[0.02] border border-white/5 cut-corner rounded-none">
-                        <CardHeader>
-                            <CardTitle className="uppercase tracking-wide flex items-center gap-2">
-                                <ShoppingBag className="w-5 h-5 text-green-500" /> Revenue
-                            </CardTitle>
+                            <Store className="w-4 h-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold font-mono">{mistToSui(totalEarnings)} SUI</div>
+                            <div className="text-2xl font-bold">{userShop.shop_name}</div>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between pb-2">
+                            <CardTitle className="text-sm font-medium text-muted-foreground">
+                                Sản phẩm
+                            </CardTitle>
+                            <Package className="w-4 h-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{myProducts?.length || 0}</div>
+                            <p className="text-xs text-muted-foreground mt-1">Tổng sản phẩm</p>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between pb-2">
+                            <CardTitle className="text-sm font-medium text-muted-foreground">
+                                Doanh thu
+                            </CardTitle>
+                            <TrendingUp className="w-4 h-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold text-primary">
+                                {mistToSui(totalEarnings).toFixed(2)} SUI
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1">Tổng doanh thu</p>
                         </CardContent>
                     </Card>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Add Product Form */}
-                    <div className="lg:col-span-1">
-                        <div className="bg-neutral-900/50 border border-white/10 p-6 cut-corner backdrop-blur-sm sticky top-24">
-                            <h3 className="text-lg font-bold mb-1 uppercase tracking-wide">Add Product</h3>
-                            <p className="text-xs text-neutral-400 mb-6 font-mono">Add new item to your supermarket shelf</p>
-
-                            <div className="space-y-4">
-                                <div className="space-y-2">
-                                    <Label className="text-xs uppercase">Product Name</Label>
-                                    <Input
-                                        className="bg-black/40 border-white/10 rounded-none"
-                                        value={productFormData.name}
-                                        onChange={e => setProductFormData({ ...productFormData, name: e.target.value })}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="text-xs uppercase">Price (SUI)</Label>
-                                    <Input
-                                        type="number"
-                                        className="bg-black/40 border-white/10 rounded-none"
-                                        value={productFormData.price}
-                                        onChange={e => setProductFormData({ ...productFormData, price: e.target.value })}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="text-xs uppercase">Stock Quantity</Label>
-                                    <Input
-                                        type="number"
-                                        className="bg-black/40 border-white/10 rounded-none"
-                                        value={productFormData.stock}
-                                        onChange={e => setProductFormData({ ...productFormData, stock: e.target.value })}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="text-xs uppercase">Image URL</Label>
-                                    <Input
-                                        className="bg-black/40 border-white/10 rounded-none"
-                                        value={productFormData.imageUrl}
-                                        onChange={e => setProductFormData({ ...productFormData, imageUrl: e.target.value })}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="text-xs uppercase">Description</Label>
-                                    <Textarea
-                                        className="bg-black/40 border-white/10 rounded-none resize-none"
-                                        value={productFormData.description}
-                                        onChange={e => setProductFormData({ ...productFormData, description: e.target.value })}
-                                    />
-                                </div>
-
-                                <Button
-                                    className="w-full bg-blue-600 hover:bg-blue-500 rounded-none font-bold uppercase"
-                                    onClick={handleCreateProduct}
-                                    disabled={isCreating}
-                                >
-                                    {isCreating ? <Loader2 className="animate-spin w-4 h-4" /> : 'Create Product'}
-                                </Button>
+                    <Card className="lg:col-span-1">
+                        <CardHeader>
+                            <CardTitle>Thêm Sản Phẩm</CardTitle>
+                            <CardDescription>Thêm sản phẩm mới vào kho</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="name">Tên sản phẩm</Label>
+                                <Input
+                                    id="name"
+                                    value={productFormData.name}
+                                    onChange={e => setProductFormData({ ...productFormData, name: e.target.value })}
+                                    placeholder="VD: iPhone 15 Pro"
+                                />
                             </div>
-                        </div>
-                    </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="price">Giá (SUI)</Label>
+                                <Input
+                                    id="price"
+                                    type="number"
+                                    step="0.01"
+                                    value={productFormData.price}
+                                    onChange={e => setProductFormData({ ...productFormData, price: e.target.value })}
+                                    placeholder="0.00"
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="stock">Số lượng</Label>
+                                <Input
+                                    id="stock"
+                                    type="number"
+                                    value={productFormData.stock}
+                                    onChange={e => setProductFormData({ ...productFormData, stock: e.target.value })}
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="imageUrl">URL hình ảnh</Label>
+                                <Input
+                                    id="imageUrl"
+                                    value={productFormData.imageUrl}
+                                    onChange={e => setProductFormData({ ...productFormData, imageUrl: e.target.value })}
+                                    placeholder="https://..."
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="description">Mô tả</Label>
+                                <Textarea
+                                    id="description"
+                                    value={productFormData.description}
+                                    onChange={e => setProductFormData({ ...productFormData, description: e.target.value })}
+                                    placeholder="Mô tả sản phẩm..."
+                                    rows={3}
+                                />
+                            </div>
+
+                            <Button
+                                className="w-full"
+                                onClick={handleCreateProduct}
+                                disabled={isCreating || !productFormData.name || !productFormData.price}
+                            >
+                                {isCreating ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                        Đang tạo...
+                                    </>
+                                ) : (
+                                    'Tạo Sản Phẩm'
+                                )}
+                            </Button>
+                        </CardContent>
+                    </Card>
 
                     {/* Inventory List */}
-                    <div className="lg:col-span-2">
-                        <h3 className="text-lg font-bold mb-6 uppercase tracking-wide">Inventory</h3>
+                    <div className="lg:col-span-2 space-y-4">
+                        <h3 className="text-xl font-semibold">Kho Hàng</h3>
 
                         {isLoadingProducts ? (
-                            <div className="text-center py-10"><Loader2 className="animate-spin w-8 h-8 mx-auto" /></div>
-                        ) : myProducts?.length === 0 ? (
-                            <div className="text-center py-10 border border-white/10 bg-white/5">
-                                <Package className="w-12 h-12 text-neutral-600 mx-auto mb-2" />
-                                <p className="text-neutral-500">No products in inventory.</p>
+                            <div className="flex justify-center py-12">
+                                <Loader2 className="w-8 h-8 animate-spin text-primary" />
                             </div>
+                        ) : myProducts?.length === 0 ? (
+                            <Card>
+                                <CardContent className="flex flex-col items-center justify-center py-16">
+                                    <Package className="w-16 h-16 text-muted-foreground/50 mb-4" />
+                                    <p className="text-muted-foreground">Chưa có sản phẩm nào</p>
+                                </CardContent>
+                            </Card>
                         ) : (
                             <div className="space-y-4">
                                 {myProducts?.map((product: any) => (
-                                    <div key={product.id} className="bg-white/5 border border-white/10 p-4 flex gap-4 hover:bg-white/10 transition-colors">
-                                        <div className="w-20 h-20 bg-black shrink-0 overflow-hidden">
-                                            {product.imageUrl && <img src={product.imageUrl} className="w-full h-full object-cover" />}
-                                        </div>
-                                        <div className="flex-1">
-                                            <div className="flex justify-between items-start">
-                                                <h4 className="font-bold text-lg">{product.name}</h4>
-                                                <Badge variant="outline" className="rounded-none border-blue-500/50 text-blue-400">
-                                                    Stock: {product.stock}
-                                                </Badge>
+                                    <Card key={product.id} className="overflow-hidden hover:shadow-md transition-shadow">
+                                        <CardContent className="p-4">
+                                            <div className="flex gap-4">
+                                                <div className="w-20 h-20 shrink-0 bg-muted rounded-lg overflow-hidden flex items-center justify-center">
+                                                    {product.imageUrl ? (
+                                                        <Image
+                                                            src={product.imageUrl}
+                                                            alt={product.name}
+                                                            width={80}
+                                                            height={80}
+                                                            className="object-cover w-full h-full"
+                                                        />
+                                                    ) : (
+                                                        <Package className="w-8 h-8 text-muted-foreground/50" />
+                                                    )}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex justify-between items-start mb-2">
+                                                        <h4 className="font-semibold text-lg truncate">{product.name}</h4>
+                                                        <Badge variant="outline">
+                                                            Kho: {product.stock}
+                                                        </Badge>
+                                                    </div>
+                                                    <div className="text-primary font-bold text-lg mb-2">
+                                                        {mistToSui(product.price).toFixed(2)} SUI
+                                                    </div>
+                                                    <p className="text-muted-foreground text-sm line-clamp-2">
+                                                        {product.description}
+                                                    </p>
+                                                </div>
                                             </div>
-                                            <div className="text-green-400 font-mono font-bold mt-1">
-                                                {mistToSui(product.price)} SUI
-                                            </div>
-                                            <p className="text-neutral-400 text-sm mt-2 line-clamp-2">{product.description}</p>
-                                        </div>
-                                    </div>
+                                        </CardContent>
+                                    </Card>
                                 ))}
                             </div>
                         )}
                     </div>
                 </div>
-            </div>
+            </main>
+
             <Footer />
         </div>
     );
