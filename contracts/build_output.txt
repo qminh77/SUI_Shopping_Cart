@@ -1,0 +1,147 @@
+[note] Dependencies on Bridge, MoveStdlib, Sui, and SuiSystem are automatically added, but this feature is disabled for your package because you have explicitly included dependencies on Sui. Consider removing these dependencies from Move.toml.
+UPDATING GIT DEPENDENCY https://github.com/MystenLabs/sui.git
+From https://github.com/MystenLabs/sui
+ * [new branch]        ak/cp-validate-imm-obj    -> origin/ak/cp-validate-imm-obj
+ * [new branch]        amnn/clean-rustls-pemfile -> origin/amnn/clean-rustls-pemfile
+ * [new branch]        aschran/ipa-2             -> origin/aschran/ipa-2
+   b22a3dac..1c47b5a3  bella-ciao                -> origin/bella-ciao
+   476dc68f..dcbcced0  feature/h-implement-address-balances-consistent-reader -> origin/feature/h-implement-address-balances-consistent-reader
+ + 7a505cd4...4fc9e154 gh-pages                  -> origin/gh-pages  (forced update)
+ + 5667b079...ae258a40 graphql_canceled_log_uuid -> origin/graphql_canceled_log_uuid  (forced update)
+   43f11b6c..c5bfe55f  hc/dvx-1290-scanning-api-write -> origin/hc/dvx-1290-scanning-api-write
+ * [new branch]        jjm/restore-improvements  -> origin/jjm/restore-improvements
+   911155e2..9058a901  main                      -> origin/main
+   1073a8fb..20b81af5  mainnet                   -> origin/mainnet
+ * [new branch]        mdgeorge/skeleton-ephemeral-pub -> origin/mdgeorge/skeleton-ephemeral-pub
+ * [new branch]        ml/improve-errors-when-already-published -> origin/ml/improve-errors-when-already-published
+ * [new branch]        ml/recursive-publisher    -> origin/ml/recursive-publisher
+ * [new branch]        ml/test-upgrade           -> origin/ml/test-upgrade
+ * [new branch]        nickv/kv-store            -> origin/nickv/kv-store
+   4044c611..20b81af5  releases/sui-v1.62.0-release -> origin/releases/sui-v1.62.0-release
+   269c2cb0..9491ba0b  releases/sui-v1.63.0-release -> origin/releases/sui-v1.63.0-release
+ * [new branch]        tlee/deepbook-docs        -> origin/tlee/deepbook-docs
+ * [new branch]        tmw/fix-1.63              -> origin/tmw/fix-1.63
+ * [new branch]        tzakian/bella-ciao-perf   -> origin/tzakian/bella-ciao-perf
+ * [new tag]           sui_v1.63.2_1767921048_release -> sui_v1.63.2_1767921048_release
+ * [new tag]           sui_v1.64.0_1767889815_ci -> sui_v1.64.0_1767889815_ci
+ * [new tag]           sui_v1.64.0_1768035927_rel_notes -> sui_v1.64.0_1768035927_rel_notes
+ * [new tag]           sui_v1.64.0_1768040005_ci -> sui_v1.64.0_1768040005_ci
+ * [new tag]           sui_v1.64.0_1767895638_rel_notes -> sui_v1.64.0_1767895638_rel_notes
+ * [new tag]           sui_v1.64.0_1767899925_ci -> sui_v1.64.0_1767899925_ci
+ * [new tag]           sui_v1.64.0_1767906341_rel_notes -> sui_v1.64.0_1767906341_rel_notes
+ * [new tag]           sui_v1.64.0_1767910531_ci -> sui_v1.64.0_1767910531_ci
+ * [new tag]           sui_v1.64.0_1767918308_rel_notes -> sui_v1.64.0_1767918308_rel_notes
+ * [new tag]           sui_v1.64.0_1767922205_ci -> sui_v1.64.0_1767922205_ci
+ * [new tag]           sui_v1.64.0_1767929642_rel_notes -> sui_v1.64.0_1767929642_rel_notes
+ * [new tag]           sui_v1.64.0_1767933436_ci -> sui_v1.64.0_1767933436_ci
+ * [new tag]           sui_v1.64.0_1767949736_rel_notes -> sui_v1.64.0_1767949736_rel_notes
+ * [new tag]           sui_v1.64.0_1767953652_ci -> sui_v1.64.0_1767953652_ci
+ * [new tag]           sui_v1.64.0_1767960600_rel_notes -> sui_v1.64.0_1767960600_rel_notes
+ * [new tag]           sui_v1.64.0_1767964615_ci -> sui_v1.64.0_1767964615_ci
+ * [new tag]           sui_v1.64.0_1767982111_rel_notes -> sui_v1.64.0_1767982111_rel_notes
+ * [new tag]           sui_v1.64.0_1767986012_ci -> sui_v1.64.0_1767986012_ci
+ * [new tag]           sui_v1.64.0_1767992738_rel_notes -> sui_v1.64.0_1767992738_rel_notes
+ * [new tag]           sui_v1.64.0_1767996620_ci -> sui_v1.64.0_1767996620_ci
+ * [new tag]           sui_v1.64.0_1768004638_rel_notes -> sui_v1.64.0_1768004638_rel_notes
+ * [new tag]           sui_v1.64.0_1768009064_ci -> sui_v1.64.0_1768009064_ci
+Auto packing the repository in background for optimum performance.
+See "git help gc" for manual housekeeping.
+Auto packing the repository in background for optimum performance.
+See "git help gc" for manual housekeeping.
+Auto packing the repository in background for optimum performance.
+See "git help gc" for manual housekeeping.
+INCLUDING DEPENDENCY Sui
+INCLUDING DEPENDENCY MoveStdlib
+BUILDING sui_ecommerce
+[0m[1m[38;5;9merror[E01002][0m[1m: unexpected token[0m
+  [0m[34m┌─[0m ./sources/purchase.move:3:5
+  [0m[34m│[0m
+[0m[34m3[0m [0m[34m│[0m     [0m[31mpublic[0m entry fun buy_shared(
+  [0m[34m│[0m     [0m[31m^^^^^^[0m [0m[31mInvalid code unit. Expected 'address' or 'module'. Got 'public'[0m
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+  [0m[34m┌─[0m ./sources/product.move:6:23
+  [0m[34m│[0m
+[0m[34m6[0m [0m[34m│[0m     use sui::object::{[0m[33mSelf[0m, UID, ID};
+  [0m[34m│[0m                       [0m[33m^^^^[0m [0m[33mUnnecessary alias 'object' for module 'sui::object'. This alias is provided by default[0m
+  [0m[34m│[0m
+  [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+  [0m[34m┌─[0m ./sources/product.move:6:29
+  [0m[34m│[0m
+[0m[34m6[0m [0m[34m│[0m     use sui::object::{Self, [0m[33mUID[0m, ID};
+  [0m[34m│[0m                             [0m[33m^^^[0m [0m[33mUnnecessary alias 'UID' for module member 'sui::object::UID'. This alias is provided by default[0m
+  [0m[34m│[0m
+  [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+  [0m[34m┌─[0m ./sources/product.move:6:34
+  [0m[34m│[0m
+[0m[34m6[0m [0m[34m│[0m     use sui::object::{Self, UID, [0m[33mID[0m};
+  [0m[34m│[0m                                  [0m[33m^^[0m [0m[33mUnnecessary alias 'ID' for module member 'sui::object::ID'. This alias is provided by default[0m
+  [0m[34m│[0m
+  [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[Lint W99000][0m[1m: possible owned object share[0m
+    [0m[34m┌─[0m ./sources/product.move:51:9
+    [0m[34m│[0m
+[0m[34m 51[0m [0m[34m│[0m         [0m[33mtransfer::public_share_object(policy)[0m;
+    [0m[34m│[0m         [0m[33m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+    [0m[34m│[0m         [0m[33m│[0m                             [0m[34m│[0m
+    [0m[34m│[0m         [0m[33m│[0m                             [0m[34mCreating a fresh object and sharing it within the same function will ensure this does not abort.[0m
+    [0m[34m│[0m         [0m[33mPotential abort from a (potentially) owned object created by a different transaction.[0m
+    [0m[34m│[0m
+    [0m[34m┌─[0m /home/qminh77/.move/https___github_com_MystenLabs_sui_git_framework__testnet/crates/sui-framework/packages/sui-framework/sources/kiosk/transfer_policy.move:71:50
+    [0m[34m│[0m
+[0m[34m 71[0m [0m[34m│[0m public struct TransferPolicy<phantom T> has key, store {
+    [0m[34m│[0m                                                  [0m[34m-----[0m [0m[34mPotentially an owned object because 'store' grants access to public transfers[0m
+    [0m[34m·[0m
+[0m[34m115[0m [0m[34m│[0m public fun new<T>(pub: &Publisher, ctx: &mut TxContext): (TransferPolicy<T>, TransferPolicyCap<T>) {
+    [0m[34m│[0m                                                           [0m[34m-----------------[0m [0m[34mA potentially owned object coming from here[0m
+    [0m[34m│[0m
+    [0m[34m=[0m This warning can be suppressed with '#[allow(lint(share_owned))]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[Lint W99001][0m[1m: non-composable transfer to sender[0m
+    [0m[34m┌─[0m ./sources/product.move:105:9
+    [0m[34m│[0m
+[0m[34m 95[0m [0m[34m│[0m     public fun mint_to_sender(
+    [0m[34m│[0m                [0m[34m--------------[0m [0m[34mReturning an object from a function, allows a caller to use the object and enables composability via programmable transactions.[0m
+    [0m[34m·[0m
+[0m[34m105[0m [0m[34m│[0m         [0m[33mtransfer::public_transfer(product, ctx.sender())[0m;
+    [0m[34m│[0m         [0m[33m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+    [0m[34m│[0m         [0m[33m│[0m                                  [0m[34m│[0m
+    [0m[34m│[0m         [0m[33m│[0m                                  [0m[34mTransaction sender address coming from here[0m
+    [0m[34m│[0m         [0m[33mTransfer of an object to transaction sender address[0m
+    [0m[34m│[0m
+    [0m[34m=[0m This warning can be suppressed with '#[allow(lint(self_transfer))]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[Lint W99001][0m[1m: non-composable transfer to sender[0m
+   [0m[34m┌─[0m ./sources/shop.move:91:9
+   [0m[34m│[0m
+[0m[34m54[0m [0m[34m│[0m     public fun create_shop(
+   [0m[34m│[0m                [0m[34m-----------[0m [0m[34mReturning an object from a function, allows a caller to use the object and enables composability via programmable transactions.[0m
+   [0m[34m·[0m
+[0m[34m60[0m [0m[34m│[0m         let sender = ctx.sender();
+   [0m[34m│[0m                      [0m[34m------------[0m [0m[34mTransaction sender address coming from here[0m
+   [0m[34m·[0m
+[0m[34m91[0m [0m[34m│[0m         [0m[33mtransfer::transfer(shop, sender)[0m;
+   [0m[34m│[0m         [0m[33m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m [0m[33mTransfer of an object to transaction sender address[0m
+   [0m[34m│[0m
+   [0m[34m=[0m This warning can be suppressed with '#[allow(lint(self_transfer))]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[Lint W99001][0m[1m: non-composable transfer to sender[0m
+   [0m[34m┌─[0m ./sources/shop.move:94:9
+   [0m[34m│[0m
+[0m[34m54[0m [0m[34m│[0m     public fun create_shop(
+   [0m[34m│[0m                [0m[34m-----------[0m [0m[34mReturning an object from a function, allows a caller to use the object and enables composability via programmable transactions.[0m
+   [0m[34m·[0m
+[0m[34m60[0m [0m[34m│[0m         let sender = ctx.sender();
+   [0m[34m│[0m                      [0m[34m------------[0m [0m[34mTransaction sender address coming from here[0m
+   [0m[34m·[0m
+[0m[34m94[0m [0m[34m│[0m         [0m[33mtransfer::transfer(shop_cap, sender)[0m;
+   [0m[34m│[0m         [0m[33m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m [0m[33mTransfer of an object to transaction sender address[0m
+   [0m[34m│[0m
+   [0m[34m=[0m This warning can be suppressed with '#[allow(lint(self_transfer))]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+Failed to build Move modules: Compilation error.

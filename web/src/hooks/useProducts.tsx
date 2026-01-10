@@ -100,9 +100,9 @@ export function useProducts(shopId?: string) {
             // Convert price from SUI to MIST (required for blockchain)
             const priceInMist = suiToMist(price);
 
-            // Mint and Share the product (Shared Object for Inventory)
-            const [product] = tx.moveCall({
-                target: `${PACKAGE_ID}::product::mint`,
+            // Use mint_to_sender - it mints and transfers the product to the caller
+            tx.moveCall({
+                target: `${PACKAGE_ID}::product::mint_to_sender`,
                 arguments: [
                     tx.pure.address(shopId),
                     tx.pure.string(name),
@@ -112,10 +112,6 @@ export function useProducts(shopId?: string) {
                     tx.pure.u64(stock),
                 ],
             });
-
-            // Share the object so it can be bought concurrently
-            // Transfer to user so they own it (required for Kiosk placement)
-            tx.transferObjects([product], tx.pure.address(account.address));
 
             const result = await signAndExecute({
                 transaction: tx,
