@@ -73,67 +73,89 @@ export function useShop() {
         mutationFn: async (data: any) => {
             if (!account?.address) throw new Error('Wallet not connected');
 
-            // Step 1: Create Shop on-chain and register in Marketplace
-            console.log('[useShop] Creating shop on-chain...');
-            const tx = new Transaction();
+            try {
+                // Step 1: Create Shop on-chain and register in Marketplace
+                console.log('[useShop] Creating shop on-chain...');
+                console.log('[useShop] Using PACKAGE_ID:', PACKAGE_ID);
+                console.log('[useShop] Using MARKETPLACE_ID:', MARKETPLACE_ID);
+                console.log('[useShop] Shop name:', data.shop_name);
+                console.log('[useShop] Shop description:', data.shop_description);
 
-            tx.moveCall({
-                target: `${PACKAGE_ID}::shop::create_shop`,
-                arguments: [
-                    tx.object(MARKETPLACE_ID),
-                    tx.pure.string(data.shop_name),
-                    tx.pure.string(data.shop_description),
-                ],
-            });
+                const tx = new Transaction();
 
-            const result = await signAndExecute({ transaction: tx });
-            console.log('[useShop] On-chain shop created:', result.digest);
+                tx.moveCall({
+                    target: `${PACKAGE_ID}::shop::create_shop`,
+                    arguments: [
+                        tx.object(MARKETPLACE_ID),
+                        tx.pure.string(data.shop_name),
+                        tx.pure.string(data.shop_description),
+                    ],
+                });
 
-            // Step 1.5: Wait for transaction and extract Shop object ID
-            console.log('[useShop] Waiting for transaction to get Shop object ID...');
-            const txDetails = await client.waitForTransaction({
-                digest: result.digest,
-                options: {
-                    showEffects: true,
-                    showObjectChanges: true,
+                console.log('[useShop] Transaction built, sending to wallet for signature...');
+
+                const result = await signAndExecute({ transaction: tx });
+                console.log('[useShop] On-chain shop created:', result.digest);
+
+                // Step 1.5: Wait for transaction and extract Shop object ID
+                console.log('[useShop] Waiting for transaction to get Shop object ID...');
+                const txDetails = await client.waitForTransaction({
+                    digest: result.digest,
+                    options: {
+                        showEffects: true,
+                        showObjectChanges: true,
+                    }
+                });
+
+                // Find the created Shop object
+                let onChainShopId: string | null = null;
+                if ((txDetails as any).objectChanges) {
+                    const shopObject = (txDetails as any).objectChanges.find(
+                        (change: any) => change.type === 'created' &&
+                            change.objectType?.includes('::shop::Shop')
+                    );
+
+                    if (shopObject) {
+                        onChainShopId = shopObject.objectId;
+                        console.log('[useShop] Found on-chain Shop ID:', onChainShopId);
+                    } else {
+                        console.warn('[useShop] Could not find Shop object in transaction changes');
+                    }
                 }
-            });
 
-            // Find the created Shop object
-            let onChainShopId: string | null = null;
-            if ((txDetails as any).objectChanges) {
-                const shopObject = (txDetails as any).objectChanges.find(
-                    (change: any) => change.type === 'created' &&
-                        change.objectType?.includes('::shop::Shop')
-                );
+                // Step 2: Save to Supabase database
+                console.log('[useShop] Saving shop to database...');
+                const res = await fetch('/api/shops', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        ...data,
+                        owner_wallet: account?.address,
+                        on_chain_shop_id: onChainShopId, // NEW: Store the blockchain shop ID
+                        transaction_digest: result.digest, // Store the transaction for reference
+                    })
+                });
 
-                if (shopObject) {
-                    onChainShopId = shopObject.objectId;
-                    console.log('[useShop] Found on-chain Shop ID:', onChainShopId);
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.error || 'Failed to save shop to database');
+                }
+
+                return res.json();
+            } catch (error: any) {
+                console.error('[useShop] Detailed error:', error);
+
+                // Provide more helpful error messages
+                if (error.message?.includes('rejection') || error.message?.includes('User')) {
+                    throw new Error('Transaction was rejected. Please try again and approve the transaction in your wallet.');
+                } else if (error.message?.includes('Insufficient balance')) {
+                    throw new Error('Insufficient SUI balance. Please get testnet SUI from the faucet.');
+                } else if (error.message?.includes('already has a shop')) {
+                    throw new Error('You already have a shop registered.');
                 } else {
-                    console.warn('[useShop] Could not find Shop object in transaction changes');
+                    throw error;
                 }
             }
-
-            // Step 2: Save to Supabase database
-            console.log('[useShop] Saving shop to database...');
-            const res = await fetch('/api/shops', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    ...data,
-                    owner_wallet: account?.address,
-                    on_chain_shop_id: onChainShopId, // NEW: Store the blockchain shop ID
-                    transaction_digest: result.digest, // Store the transaction for reference
-                })
-            });
-
-            if (!res.ok) {
-                const err = await res.json();
-                throw new Error(err.error || 'Failed to save shop to database');
-            }
-
-            return res.json();
         },
         onSuccess: () => {
             toast.success('Shop created successfully! Awaiting admin approval.');
