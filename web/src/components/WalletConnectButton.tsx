@@ -13,7 +13,11 @@ import {
 import { Wallet, LogOut, ChevronDown, Check, Loader2 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
-export function WalletConnectButton() {
+interface WalletConnectButtonProps {
+    className?: string
+}
+
+export function WalletConnectButton({ className }: WalletConnectButtonProps) {
     const account = useCurrentAccount()
     const { mutate: connect } = useConnectWallet()
     const { mutate: disconnect } = useDisconnectWallet()
@@ -59,7 +63,7 @@ export function WalletConnectButton() {
     return (
         <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
             <DropdownMenuTrigger asChild>
-                <Button className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20">
+                <Button className={`gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 ${className}`}>
                     <Wallet className="h-4 w-4" />
                     Connect Wallet
                 </Button>

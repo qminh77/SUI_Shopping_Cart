@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { ShoppingBag, User, Store, Shield, Menu } from 'lucide-react';
+import { ShoppingBag, User, Store, Shield, Menu, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MatrixText } from '@/components/ui/matrix-text';
 import {
@@ -24,13 +24,14 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { WalletConnectButton } from '@/components/WalletConnectButton';
 import { CartDrawer } from '@/components/CartDrawer';
-import { useCurrentAccount } from '@mysten/dapp-kit';
+import { useCurrentAccount, useDisconnectWallet } from '@mysten/dapp-kit';
 import { formatAddress } from '@/lib/sui-utils';
 import { useState } from 'react';
 
 export function Navigation() {
     const pathname = usePathname();
     const account = useCurrentAccount();
+    const { mutate: disconnect } = useDisconnectWallet();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     const isActive = (path: string) => pathname?.startsWith(path);
@@ -154,6 +155,17 @@ export function Navigation() {
                                                     <MatrixText text="ADMIN PANEL" />
                                                 </Link>
                                             </Button>
+                                            <Button
+                                                variant="ghost"
+                                                className="justify-start w-full text-red-500 hover:text-red-500 hover:bg-red-500/10"
+                                                onClick={() => {
+                                                    disconnect();
+                                                    setMobileMenuOpen(false);
+                                                }}
+                                            >
+                                                <LogOut className="h-4 w-4 mr-2" />
+                                                <MatrixText text="LOG OUT" />
+                                            </Button>
                                         </div>
                                     </>
                                 )}
@@ -220,6 +232,14 @@ export function Navigation() {
                                         <Shield className="mr-2 h-4 w-4" />
                                         <MatrixText text="Admin Panel" speed={15} />
                                     </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                    className="text-red-500 focus:text-red-500 focus:bg-red-500/10 cursor-pointer"
+                                    onClick={() => disconnect()}
+                                >
+                                    <LogOut className="mr-2 h-4 w-4" />
+                                    <MatrixText text="Log Out" speed={15} />
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
