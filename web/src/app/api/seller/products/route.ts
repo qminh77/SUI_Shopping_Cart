@@ -22,11 +22,11 @@ export async function GET(request: NextRequest) {
 
         const supabase = await createSupabaseServerClient();
 
-        // 2. Get Products for this Shop (shop_id in products table is the wallet address)
+        // Query products by seller_wallet (not shop_id, which is now the on-chain shop object ID)
         const { data: products, error: productsError } = await supabase
             .from('products')
             .select('*')
-            .eq('shop_id', wallet)
+            .eq('seller_wallet', wallet)
             .order('created_at', { ascending: false });
 
         if (productsError) {
