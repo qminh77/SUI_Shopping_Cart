@@ -57,36 +57,12 @@ export default function SellerPage() {
         queryFn: async () => {
             if (!account?.address) return [];
 
-            const events = await client.queryEvents({
-                query: {
-                    MoveEventType: `${PACKAGE_ID}::product::ProductCreated`,
-                    Sender: account.address
-                }
-            });
-
-            const objectIds = events.data.map(e => (e.parsedJson as any).product_id);
-            if (objectIds.length === 0) return [];
-
-            const objects = await client.multiGetObjects({
-                ids: objectIds,
-                options: { showContent: true }
-            });
-
-            return objects.map(obj => {
-                const fields = (obj.data?.content as any)?.fields;
-                if (!fields) return null;
-                return {
-                    id: obj.data!.objectId,
-                    name: fields.name,
-                    description: fields.description,
-                    imageUrl: fields.image_url,
-                    price: Number(fields.price),
-                    stock: Number(fields.stock),
-                    shopId: fields.shop_id,
-                    creator: fields.creator,
-                    status: 'RETAIL'
-                };
-            }).filter(Boolean);
+            const res = await fetch(`/api/seller/products?wallet=${account.address}`);
+            if (!res.ok) {
+                console.error('Failed to fetch seller products');
+                return [];
+            }
+            return await res.json();
         },
         enabled: !!account?.address
     });
