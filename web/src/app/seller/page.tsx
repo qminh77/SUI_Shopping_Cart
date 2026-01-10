@@ -127,11 +127,69 @@ export default function SellerPage() {
             });
 
             const result = await signAndExecute({ transaction: tx });
-            await client.waitForTransaction({ digest: result.digest });
+
+            // Wait for transaction to complete and get full details
+            const fullResponse = await client.waitForTransaction({
+                digest: result.digest,
+                options: {
+                    showEffects: true,
+                    showObjectChanges: true,
+                    showEvents: true
+                }
+            });
+
+            // Extract product ID from transaction result
+            let productId: string | null = null;
+
+            // Try to get product ID from objectChanges
+            if ((fullResponse as any).objectChanges) {
+                const created = (fullResponse as any).objectChanges.find(
+                    (obj: any) => obj.type === 'created' && obj.objectType?.includes('::product::Product')
+                );
+                if (created) {
+                    productId = created.objectId;
+                }
+            }
+
+            // If not found in objectChanges, try events
+            if (!productId && (fullResponse as any).events) {
+                const productCreatedEvent = (fullResponse as any).events.find(
+                    (event: any) => event.type.includes('::ProductCreated')
+                );
+                if (productCreatedEvent?.parsedJson?.product_id) {
+                    productId = productCreatedEvent.parsedJson.product_id;
+                }
+            }
+
+            // Sync to Supabase
+            if (productId) {
+                try {
+                    const syncResponse = await fetch('/api/products/sync', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            productId,
+                            categoryId: null // Can add category selection later
+                        }),
+                    });
+
+                    if (!syncResponse.ok) {
+                        console.error('Failed to sync product to Supabase');
+                        toast.warning('Product created on blockchain but not synced to database');
+                    } else {
+                        console.log('Product synced to database successfully');
+                    }
+                } catch (syncError) {
+                    console.error('Error syncing to Supabase:', syncError);
+                }
+            }
 
             toast.success('Product created successfully!');
             setProductFormData({ name: '', description: '', imageUrl: '', price: '', stock: '100' });
             queryClient.invalidateQueries({ queryKey: ['my-retail-products'] });
+            queryClient.invalidateQueries({ queryKey: ['products', 'with-category'] });
         } catch (error) {
             console.error('Create product error:', error);
             toast.error('Failed to create product');

@@ -83,6 +83,7 @@ export function useProducts(shopId?: string) {
             stock,
             kioskId,
             kioskCapId,
+            categoryId,
         }: {
             shopId: string;
             name: string;
@@ -92,6 +93,7 @@ export function useProducts(shopId?: string) {
             stock: number;
             kioskId?: string;
             kioskCapId?: string;
+            categoryId?: string;
         }) => {
             if (!account?.address) throw new Error('Wallet not connected');
 
@@ -119,9 +121,10 @@ export function useProducts(shopId?: string) {
 
             // Manually fetch full response to ensure we have effects and objectChanges
             // (dapp-kit hook might not return them by default, and types prevent passing options)
+            let fullResponse: any = result;
             if (!result.effects || !(result as any).objectChanges) {
                 try {
-                    const fullResponse = await client.waitForTransaction({
+                    fullResponse = await client.waitForTransaction({
                         digest: result.digest,
                         options: {
                             showEffects: true,
@@ -129,18 +132,69 @@ export function useProducts(shopId?: string) {
                             showEvents: true
                         }
                     });
-                    return fullResponse;
                 } catch (e) {
                     console.warn('Failed to fetch full transaction details, returning partial result', e);
-                    return result;
                 }
             }
 
-            return result;
+            // Extract product ID from transaction result
+            let productId: string | null = null;
+
+            // Try to get product ID from objectChanges
+            if ((fullResponse as any).objectChanges) {
+                const created = (fullResponse as any).objectChanges.find(
+                    (obj: any) => obj.type === 'created' && obj.objectType?.includes('::product::Product')
+                );
+                if (created) {
+                    productId = created.objectId;
+                }
+            }
+
+            // If not found in objectChanges, try events
+            if (!productId && (fullResponse as any).events) {
+                const productCreatedEvent = (fullResponse as any).events.find(
+                    (event: any) => event.type.includes('::ProductCreated')
+                );
+                if (productCreatedEvent?.parsedJson?.product_id) {
+                    productId = productCreatedEvent.parsedJson.product_id;
+                }
+            }
+
+            // Sync to Supabase if we have the product ID
+            if (productId) {
+                try {
+                    const syncResponse = await fetch('/api/products/sync', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            productId,
+                            categoryId
+                        }),
+                    });
+
+                    if (!syncResponse.ok) {
+                        const errorData = await syncResponse.json();
+                        console.error('Failed to sync product to Supabase:', errorData);
+                        toast.error('Product created on blockchain but failed to sync to database');
+                    } else {
+                        console.log('Product synced to Supabase successfully');
+                    }
+                } catch (syncError) {
+                    console.error('Error syncing to Supabase:', syncError);
+                    toast.error('Product created on blockchain but failed to sync to database');
+                }
+            } else {
+                console.warn('Could not extract product ID from transaction result');
+            }
+
+            return fullResponse;
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['userProducts'] });
             queryClient.invalidateQueries({ queryKey: ['allProducts'] });
+            queryClient.invalidateQueries({ queryKey: ['products', 'with-category'] });
         }
     });
 
