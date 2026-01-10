@@ -6,7 +6,10 @@ export const PACKAGE_ID = process.env.NEXT_PUBLIC_PACKAGE_ID!;
 export const MARKETPLACE_ID = process.env.NEXT_PUBLIC_MARKETPLACE_ID!;
 export const TRANSFER_POLICY_ID = process.env.NEXT_PUBLIC_TRANSFER_POLICY_ID!;
 
-// Type definitions
+// ============================================================================
+// EXISTING TYPES
+// ============================================================================
+
 export interface Product {
     id: string;
     shopId: string;
@@ -19,6 +22,11 @@ export interface Product {
     listed: boolean;
     createdAt: number;
     kioskId?: string; // ID of the Kiosk holding this product
+    // New fields for integration with Supabase
+    categoryId?: string;
+    categoryName?: string;
+    categorySlug?: string;
+    categoryIcon?: string;
 }
 
 export interface Shop {
@@ -41,6 +49,121 @@ export interface Receipt {
     purchaseDate: number;
     transactionDigest: string;
 }
+
+// ============================================================================
+// NEW TYPES FOR CATEGORIES, SEARCH, AND ADDRESSES
+// ============================================================================
+
+/**
+ * Category type matching Supabase schema
+ */
+export interface Category {
+    id: string;
+    name: string;
+    slug: string;
+    description?: string;
+    parent_id?: string;
+    icon?: string;
+    image_url?: string;
+    display_order: number;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+/**
+ * Category with hierarchical structure and counts
+ */
+export interface CategoryTree extends Category {
+    children: CategoryTree[];
+    product_count: number;
+    subcategory_count: number;
+}
+
+/**
+ * Simplified category for UI dropdowns/menus
+ */
+export interface CategoryOption {
+    value: string;
+    label: string;
+    icon?: string;
+    count?: number;
+}
+
+/**
+ * Search and filter parameters
+ */
+export interface SearchParams {
+    query?: string;
+    categoryId?: string;
+    minPrice?: number; // in MIST
+    maxPrice?: number; // in MIST
+    sortBy?: 'newest' | 'price_asc' | 'price_desc' | 'name';
+    inStockOnly?: boolean;
+    limit?: number;
+    offset?: number;
+}
+
+/**
+ * Search result with metadata
+ */
+export interface SearchResult {
+    products: Product[];
+    total: number;
+    hasMore: boolean;
+    filters: SearchParams;
+}
+
+/**
+ * Buyer delivery address matching Supabase schema
+ */
+export interface Address {
+    id: string;
+    buyer_wallet: string;
+    full_name: string;
+    phone: string;
+    address_line1: string;
+    address_line2?: string;
+    city: string;
+    state_province?: string;
+    postal_code?: string;
+    country: string;
+    label?: string; // "Home", "Office", etc.
+    is_default: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+/**
+ * Input type for creating/updating addresses
+ */
+export interface AddressInput {
+    full_name: string;
+    phone: string;
+    address_line1: string;
+    address_line2?: string;
+    city: string;
+    state_province?: string;
+    postal_code?: string;
+    country?: string;
+    label?: string;
+    is_default?: boolean;
+}
+
+/**
+ * Formatted address for display
+ */
+export interface FormattedAddress {
+    id: string;
+    oneLine: string;
+    multiLine: string;
+    label?: string;
+    isDefault: boolean;
+}
+
+// ============================================================================
+// PARSING FUNCTIONS (Keep existing ones)
+// ============================================================================
 
 /**
  * Parse a Product object from blockchain response
@@ -116,6 +239,10 @@ export function parseReceipt(obj: SuiObjectResponse): Receipt | null {
         transactionDigest: fields.transaction_digest,
     };
 }
+
+// ============================================================================
+// HELPER FUNCTIONS (Keep all existing ones)
+// ============================================================================
 
 /**
  * Get user's shop if they own one
@@ -536,4 +663,69 @@ export function formatAddress(address: string, length: number = 8): string {
     if (!address) return '';
     if (address.length <= length * 2) return address;
     return `${address.slice(0, length)}...${address.slice(-length)}`;
+}
+
+// ============================================================================
+// NEW HELPER FUNCTIONS FOR ADDRESSES
+// ============================================================================
+
+/**
+ * Format address for single-line display
+ */
+export function formatAddressOneLine(address: Address): string {
+    const parts = [
+        address.address_line1,
+        address.city,
+        address.country
+    ].filter(Boolean);
+    return parts.join(', ');
+}
+
+/**
+ * Format address for multi-line display (shipping label)
+ */
+export function formatAddressMultiLine(address: Address): string {
+    const lines = [
+        address.full_name,
+        address.phone,
+        address.address_line1,
+        address.address_line2,
+        [address.city, address.state_province].filter(Boolean).join(', '),
+        address.postal_code,
+        address.country
+    ].filter(Boolean);
+
+    return lines.join('\n');
+}
+
+/**
+ * Convert Address to FormattedAddress for UI display
+ */
+export function toFormattedAddress(address: Address): FormattedAddress {
+    return {
+        id: address.id,
+        oneLine: formatAddressOneLine(address),
+        multiLine: formatAddressMultiLine(address),
+        label: address.label,
+        isDefault: address.is_default
+    };
+}
+
+/**
+ * Validate phone number format (basic validation)
+ */
+export function validatePhone(phone: string): boolean {
+    // Allow digits, spaces, dashes, plus, parentheses
+    // Minimum 10 characters
+    const phoneRegex = /^[0-9\s\-\+\(\)]{10,}$/;
+    return phoneRegex.test(phone);
+}
+
+/**
+ * Validate postal code (basic validation)
+ */
+export function validatePostalCode(postalCode: string): boolean {
+    // Allow alphanumeric, spaces, and dashes
+    const postalRegex = /^[A-Za-z0-9\s\-]{3,10}$/;
+    return postalRegex.test(postalCode);
 }
