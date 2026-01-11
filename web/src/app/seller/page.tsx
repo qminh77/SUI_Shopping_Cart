@@ -103,19 +103,24 @@ export default function SellerPage() {
 
     const handleCreateProduct = async () => {
         if (!userShop || !account) return;
+
+        // ✨ MANDATORY: Double-check shop is synced to blockchain
+        console.log('[ProductCreate] Verifying shop blockchain sync for:', userShop.owner_wallet);
+        const freshOnChainShop = await getUserShop(client, userShop.owner_wallet);
+
+        if (!freshOnChainShop) {
+            toast.error('❌ Shop chưa đồng bộ lên blockchain. Vui lòng đồng bộ trước khi tạo sản phẩm.', {
+                duration: 6000
+            });
+            console.error('[ProductCreate] Blocked: No on-chain shop found for wallet:', userShop.owner_wallet);
+            return;
+        }
+
         setIsCreating(true);
 
         try {
-            // STEP 1: Get the on-chain shop object
-            console.log('[ProductCreate] Fetching on-chain shop for wallet:', userShop.owner_wallet);
-            const onChainShop = await getUserShop(client, userShop.owner_wallet);
-
-            if (!onChainShop) {
-                toast.error('Shop not found on blockchain. Please contact support or recreate your shop.');
-                console.error('[ProductCreate] No on-chain shop found for wallet:', userShop.owner_wallet);
-                setIsCreating(false);
-                return;
-            }
+            console.log('[ProductCreate] Shop verified on blockchain. Using shop ID:', freshOnChainShop.id);
+            const onChainShop = freshOnChainShop;
 
             console.log('[ProductCreate] Using on-chain shop ID:', onChainShop.id);
 
@@ -411,34 +416,37 @@ export default function SellerPage() {
                         </h1>
                         <p className="text-muted-foreground">Quản lý sản phẩm và đơn hàng</p>
                     </div>
-                    <Badge variant={isMissingOnChain ? "destructive" : "default"}>
-                        {isMissingOnChain ? 'Chưa đồng bộ blockchain' : 'Shop đang hoạt động'}
+                    <Badge variant={isMissingOnChain ? "destructive" : "default"} className="text-sm">
+                        {isMissingOnChain ? '❌ Chưa thể bán hàng' : '✅ Đang hoạt động'}
                     </Badge>
                 </div>
 
-                {/* Sync Warning Alert */}
+                {/* ✨ MANDATORY SYNC BLOCKER */}
                 {isMissingOnChain && (
-                    <Card className="border-yellow-500/50 bg-yellow-50/10 dark:bg-yellow-950/10">
+                    <Card className="border-destructive/50 bg-destructive/10">
                         <CardContent className="pt-6">
                             <div className="flex items-start gap-4">
-                                <div className="h-12 w-12 rounded-full bg-yellow-500/20 flex items-center justify-center flex-shrink-0">
-                                    <AlertCircle className="h-6 w-6 text-yellow-500" />
+                                <div className="h-12 w-12 rounded-full bg-destructive/20 flex items-center justify-center flex-shrink-0">
+                                    <AlertCircle className="h-6 w-6 text-destructive" />
                                 </div>
                                 <div className="flex-1">
-                                    <h3 className="font-semibold text-lg mb-1 text-yellow-700 dark:text-yellow-400">
-                                        Shop chưa đồng bộ lên Blockchain
+                                    <h3 className="font-bold text-lg mb-1 text-destructive">
+                                        ⚠️ Bắt buộc đồng bộ Blockchain
                                     </h3>
-                                    <p className="text-sm text-muted-foreground mb-4">
-                                        Shop của bạn đã được lưu trong database nhưng chưa được tạo trên SUI Blockchain.
-                                        Bạn cần đồng bộ shop lên blockchain để có thể tạo và bán sản phẩm.
+                                    <p className="text-sm mb-2">
+                                        Shop của bạn phải được tạo trên SUI Blockchain trước khi có thể bán sản phẩm.
+                                    </p>
+                                    <p className="text-sm font-semibold mb-4">
+                                        🚫 Bạn không thể tạo sản phẩm cho đến khi hoàn thành đồng bộ.
                                     </p>
                                     <Button
                                         onClick={handleSyncShop}
                                         disabled={isSyncing}
-                                        className="bg-yellow-600 hover:bg-yellow-700 text-white"
+                                        size="lg"
+                                        className="bg-destructive hover:bg-destructive/90 text-white shadow-lg"
                                     >
                                         {isSyncing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                        {isSyncing ? 'Đang đồng bộ...' : 'Đồng bộ lên Blockchain'}
+                                        {isSyncing ? 'Đang đồng bộ...' : '🚀 Đồng bộ lên Blockchain ngay'}
                                     </Button>
                                 </div>
                             </div>
@@ -504,6 +512,7 @@ export default function SellerPage() {
                                     value={productFormData.name}
                                     onChange={e => setProductFormData({ ...productFormData, name: e.target.value })}
                                     placeholder="VD: iPhone 15 Pro"
+                                    disabled={isMissingOnChain}
                                 />
                             </div>
 
@@ -516,6 +525,7 @@ export default function SellerPage() {
                                     value={productFormData.price}
                                     onChange={e => setProductFormData({ ...productFormData, price: e.target.value })}
                                     placeholder="0.00"
+                                    disabled={isMissingOnChain}
                                 />
                             </div>
 
@@ -526,6 +536,7 @@ export default function SellerPage() {
                                     type="number"
                                     value={productFormData.stock}
                                     onChange={e => setProductFormData({ ...productFormData, stock: e.target.value })}
+                                    disabled={isMissingOnChain}
                                 />
                             </div>
 
@@ -536,6 +547,7 @@ export default function SellerPage() {
                                     value={productFormData.imageUrl}
                                     onChange={e => setProductFormData({ ...productFormData, imageUrl: e.target.value })}
                                     placeholder="https://..."
+                                    disabled={isMissingOnChain}
                                 />
                             </div>
 
@@ -547,15 +559,18 @@ export default function SellerPage() {
                                     onChange={e => setProductFormData({ ...productFormData, description: e.target.value })}
                                     placeholder="Mô tả sản phẩm..."
                                     rows={3}
+                                    disabled={isMissingOnChain}
                                 />
                             </div>
 
                             <Button
                                 className="w-full"
                                 onClick={handleCreateProduct}
-                                disabled={isCreating || !productFormData.name || !productFormData.price}
+                                disabled={isCreating || !productFormData.name || !productFormData.price || isMissingOnChain}
                             >
-                                {isCreating ? (
+                                {isMissingOnChain ? (
+                                    '🔒 Đồng bộ blockchain để tạo sản phẩm'
+                                ) : isCreating ? (
                                     <>
                                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                                         Đang tạo...
