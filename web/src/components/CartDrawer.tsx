@@ -6,11 +6,13 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useCart } from '@/contexts/CartContext';
 import { useCurrentAccount } from '@mysten/dapp-kit';
 import { useCheckout } from '@/hooks/useCheckout';
-import { mistToSui } from '@/lib/sui-utils';
+import { mistToSui, Product } from '@/lib/sui-utils';
+import { validateCartStock } from '@/lib/cart-utils';
 import { ShoppingCart, X, Trash2, Plus, Minus, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import { toast } from 'sonner';
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 
 export function CartDrawer() {
     const {
@@ -31,7 +33,9 @@ export function CartDrawer() {
     const account = useCurrentAccount();
     // Use the new Unified Checkout Hook
     const { checkout, isProcessing } = useCheckout();
+    const queryClient = useQueryClient();
     const [open, setOpen] = useState(false);
+    const [isValidating, setIsValidating] = useState(false);
 
     // Selected items stats
     const selectedItemsList = getSelectedItems();
@@ -50,6 +54,53 @@ export function CartDrawer() {
         }
 
         try {
+            setIsValidating(true);
+
+            // ✨ PHASE 2: Validate stock before checkout
+            console.log('[CartDrawer] Validating stock for', selectedItemsList.length, 'items');
+
+            // Fetch fresh product data from server
+            const freshProducts = await queryClient.fetchQuery<Product[]>({
+                queryKey: ['products', 'with-category', 50],
+            });
+
+            // Validate cart against fresh stock
+            const validation = validateCartStock(selectedItemsList, freshProducts);
+
+            if (!validation.valid) {
+                console.warn('[CartDrawer] Stock validation failed');
+
+                // Handle out-of-stock items
+                if (validation.outOfStock.length > 0) {
+                    for (const item of validation.outOfStock) {
+                        removeFromCart(item.id);
+                        toast.error(`"${item.name}" is out of stock and has been removed from cart`, {
+                            duration: 5000
+                        });
+                    }
+                }
+
+                // Handle insufficient stock
+                if (validation.insufficientStock.length > 0) {
+                    for (const issue of validation.insufficientStock) {
+                        updateQuantity(issue.product.id, issue.available);
+                        toast.warning(
+                            `"${issue.product.name}": Only ${issue.available} available. Quantity updated from ${issue.requested} to ${issue.available}`,
+                            { duration: 5000 }
+                        );
+                    }
+                }
+
+                toast.error('Some items were out of stock. Please review your cart and try again.', {
+                    duration: 6000
+                });
+
+                setIsValidating(false);
+                return; // Don't proceed with checkout
+            }
+
+            console.log('[CartDrawer] Stock validation passed ✓');
+
             // Hardcoded shipping address for MVP (In real app, ask via Form/Dialog before checkout)
             const shippingStart = {
                 fullName: 'Buyer Name',
@@ -58,17 +109,30 @@ export function CartDrawer() {
                 city: 'Sui City'
             };
 
-            // Start checkout directly
-            await checkout({
+            // Stock OK - proceed with checkout
+            const checkoutResult = await checkout({
                 items: selectedItemsList,
                 shippingAddress: shippingStart
             });
 
-            // Remove only the purchased (selected) items on success
-            removeSelectedItems();
-            setOpen(false);
+            // ✨ PHASE 3: Only clear cart on full success
+            if (checkoutResult.blockchainSuccess && checkoutResult.dbSuccess) {
+                // Full success - safe to clear cart
+                removeSelectedItems();
+                setOpen(false);
+            } else if (checkoutResult.blockchainSuccess && !checkoutResult.dbSuccess) {
+                // Partial success - keep cart for user reference
+                console.warn('[CartDrawer] Keeping cart items - DB save failed');
+                // Don't close drawer, let user see their items
+            } else {
+                // Complete failure - keep cart
+                console.error('[CartDrawer] Checkout failed completely');
+            }
         } catch (error) {
             // Error is handled in hook (toast)
+            console.error('[CartDrawer] Checkout error:', error);
+        } finally {
+            setIsValidating(false);
         }
     };
 
@@ -245,11 +309,16 @@ export function CartDrawer() {
 
                             <Button
                                 onClick={handleCheckout}
-                                disabled={!account || isProcessing || selectedItemsList.length === 0}
+                                disabled={!account || isProcessing || isValidating || selectedItemsList.length === 0}
                                 className="w-full h-12 text-base font-semibold shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
                                 size="lg"
                             >
-                                {isProcessing ? (
+                                {isValidating ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Validating Stock...
+                                    </>
+                                ) : isProcessing ? (
                                     <>
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                         Processing Order...

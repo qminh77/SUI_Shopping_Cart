@@ -165,16 +165,39 @@ export function useCheckout() {
 
             console.log('[useCheckout] Cache invalidation complete - UI should update now');
 
-            return { result };
+            // ✨ PHASE 3: Return success status for error recovery
+            return {
+                result,
+                blockchainSuccess: true,
+                dbSuccess: true,
+                digest: result.digest
+            };
         },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['retailProducts'] });
-            // We can also invalidate my-retail-products for seller view update if self-buying (unlikely but safe)
-            queryClient.invalidateQueries({ queryKey: ['my-retail-products'] });
-            toast.success('Purchase successful!');
+        onSuccess: (data) => {
+            // ✨ PHASE 3: Conditional success based on stage completion
+            if (data.blockchainSuccess && data.dbSuccess) {
+                // Full success - invalidate caches
+                queryClient.invalidateQueries({ queryKey: ['retailProducts'] });
+                queryClient.invalidateQueries({ queryKey: ['my-retail-products'] });
+
+                toast.success('Purchase successful! Your order has been placed.', {
+                    duration: 5000
+                });
+            } else if (data.blockchainSuccess && !data.dbSuccess) {
+                // Partial success - blockchain OK but DB failed
+                toast.warning(
+                    `⚠️ Purchase completed on blockchain but order history sync failed.\n\n` +
+                    `Transaction: ${data.digest.slice(0, 10)}...\n` +
+                    `Your payment is confirmed. Please contact support if order doesn't appear.`,
+                    { duration: 15000 }
+                );
+                console.error('[Checkout] Partial success - DB save failed but blockchain succeeded');
+            } else {
+                toast.error('Purchase failed. Please try again.');
+            }
         },
         onError: (error) => {
-            console.error('Checkout error:', error);
+            console.error('[Checkout] Complete failure:', error);
             toast.error('Checkout failed. Please try again.');
         }
     });
