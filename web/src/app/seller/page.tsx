@@ -41,6 +41,15 @@ export default function SellerPage() {
 
     const isMissingOnChain = userShop?.status === 'ACTIVE' && !onChainShop && !isCheckingChain;
 
+    // Debug logging
+    console.log('[SellerPage] State:', {
+        hasUserShop: !!userShop,
+        shopStatus: userShop?.status,
+        hasOnChainShop: !!onChainShop,
+        isCheckingChain,
+        isMissingOnChain
+    });
+
     const [productFormData, setProductFormData] = useState({
         name: '',
         description: '',
@@ -55,6 +64,7 @@ export default function SellerPage() {
     // Handle sync shop to blockchain
     const handleSyncShop = async () => {
         if (!userShop) return;
+        console.log('[SellerPage] Starting shop sync for:', userShop.shop_name);
         setIsSyncing(true);
         try {
             await syncChainShop.mutateAsync({
@@ -63,8 +73,10 @@ export default function SellerPage() {
             });
             queryClient.invalidateQueries({ queryKey: ['checkChainShop'] });
             toast.success('Shop đã đồng bộ lên blockchain thành công!');
+            console.log('[SellerPage] Sync completed successfully');
         } catch (error) {
-            console.error('Sync shop error:', error);
+            console.error('[SellerPage] Sync shop error:', error);
+            toast.error('Đồng bộ thất bại. Vui lòng thử lại.');
         } finally {
             setIsSyncing(false);
         }
