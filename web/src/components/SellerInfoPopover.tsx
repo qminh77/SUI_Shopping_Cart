@@ -1,13 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { ShieldCheck, Copy, ExternalLink, Store, Check } from 'lucide-react';
 import { toast } from 'sonner';
-import { useSuiClient } from '@mysten/dapp-kit';
-import { getUserShop } from '@/lib/sui-utils';
 import { cn } from '@/lib/utils';
 
 interface SellerInfoPopoverProps {
@@ -20,16 +19,20 @@ export function SellerInfoPopover({ sellerAddress, className }: SellerInfoPopove
     const [shopName, setShopName] = useState<string | null>(null);
     const [shopDescription, setShopDescription] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
-    const suiClient = useSuiClient();
 
     useEffect(() => {
         const fetchShopInfo = async () => {
             setLoading(true);
             try {
-                const shop = await getUserShop(suiClient, sellerAddress);
-                if (shop) {
-                    setShopName(shop.name);
-                    setShopDescription(shop.description);
+                // Fetch shop from database API
+                const response = await fetch(`/api/shops/${sellerAddress}`);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.shop) {
+                        setShopName(data.shop.shop_name);
+                        setShopDescription(data.shop.shop_description);
+                    }
                 }
             } catch (error) {
                 console.error('Error fetching shop info:', error);
@@ -39,7 +42,7 @@ export function SellerInfoPopover({ sellerAddress, className }: SellerInfoPopove
         };
 
         fetchShopInfo();
-    }, [sellerAddress, suiClient]);
+    }, [sellerAddress]);
 
     const handleCopy = async () => {
         try {
@@ -94,7 +97,7 @@ export function SellerInfoPopover({ sellerAddress, className }: SellerInfoPopove
                             </div>
                         </div>
                     ) : shopName ? (
-                        <div className="bg-blue-500/10 border border-blue-500/20 p-4 space-y-2">
+                        <div className="bg-blue-500/10 border border-blue-500/20 p-4 space-y-3">
                             <div className="flex items-center gap-2">
                                 <Store className="w-4 h-4 text-blue-400" />
                                 <span className="text-xs uppercase text-blue-400 font-bold tracking-wider">
@@ -109,6 +112,18 @@ export function SellerInfoPopover({ sellerAddress, className }: SellerInfoPopove
                                     {shopDescription}
                                 </p>
                             )}
+                            {/* Visit Shop Button */}
+                            <Button
+                                asChild
+                                variant="outline"
+                                size="sm"
+                                className="w-full border-blue-500/30 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 rounded-none uppercase font-bold tracking-wider transition-all"
+                            >
+                                <Link href={`/shops/${sellerAddress}`}>
+                                    <Store className="w-3.5 h-3.5 mr-2" />
+                                    Visit Shop
+                                </Link>
+                            </Button>
                         </div>
                     ) : (
                         <div className="bg-white/5 border border-white/5 p-4">
