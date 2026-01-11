@@ -2,7 +2,7 @@ import { useCurrentAccount, useSuiClient, useSignAndExecuteTransaction } from '@
 import { Transaction } from '@mysten/sui/transactions';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { PACKAGE_ID, MARKETPLACE_ID } from '@/lib/sui-utils';
+import { PACKAGE_ID, MARKETPLACE_ID, getUserShop } from '@/lib/sui-utils';
 
 export type ShopStatus = 'PENDING' | 'ACTIVE' | 'SUSPENDED';
 
@@ -118,8 +118,21 @@ export function useShop() {
                     if (shopObject) {
                         onChainShopId = shopObject.objectId;
                         console.log('[useShop] Found on-chain Shop ID:', onChainShopId);
+                    }
+                }
+
+                // ✨ Fallback: If ID not found in transaction changes, try fetching from account
+                if (!onChainShopId) {
+                    console.log('[useShop] Shop ID not found in events, trying fallback fetch via getUserShop...');
+                    // Short delay to allow indexer to catch up (though read-after-write on same node usually works)
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+
+                    const fallbackShop = await getUserShop(client, account.address);
+                    if (fallbackShop) {
+                        onChainShopId = fallbackShop.id;
+                        console.log('[useShop] Found on-chain Shop ID via fallback:', onChainShopId);
                     } else {
-                        console.warn('[useShop] Could not find Shop object in transaction changes');
+                        console.warn('[useShop] Could not find Shop object via fallback either');
                     }
                 }
 
@@ -212,10 +225,42 @@ export function useShop() {
 
             const result = await signAndExecute({ transaction: tx });
             console.log('[useShop] On-chain shop synced:', result.digest);
+
+            // ✨ Wait for transaction to complete
+            console.log('[useShop] Waiting for transaction confirmation...');
+            await client.waitForTransaction({ digest: result.digest });
+
+            // ✨ Fetch the new Shop ID to update database
+            console.log('[useShop] Fetching new shop ID...');
+            const onChainShop = await getUserShop(client, account.address);
+
+            if (onChainShop) {
+                console.log('[useShop] Updating database with new Shop ID:', onChainShop.id);
+                // Update Supabase with the new ID
+                const res = await fetch('/api/shops/me', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        wallet: account.address,
+                        on_chain_shop_id: onChainShop.id
+                    })
+                });
+
+                if (!res.ok) {
+                    console.error('[useShop] Failed to update DB after sync');
+                } else {
+                    console.log('[useShop] Database updated successfully');
+                }
+            } else {
+                console.warn('[useShop] Could not find newly created shop on-chain');
+            }
+
             return result;
         },
         onSuccess: () => {
             toast.success('Shop registered on-chain successfully!');
+            queryClient.invalidateQueries({ queryKey: ['shop', account?.address] });
+            queryClient.invalidateQueries({ queryKey: ['checkChainShop'] });
         },
         onError: (err: any) => {
             console.error('[useShop] Sync error:', err);
