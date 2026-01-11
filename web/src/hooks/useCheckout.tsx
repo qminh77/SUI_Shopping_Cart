@@ -110,6 +110,33 @@ export function useCheckout() {
                 toast.error('Purchase successful, but order history might be incomplete.');
             }
 
+            // Sync product stock from blockchain to database
+            // This ensures the UI displays updated stock after purchase
+            const syncPromises = params.items.map(async (item) => {
+                try {
+                    const syncResponse = await fetch('/api/products/sync', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ productId: item.id })
+                    });
+
+                    if (!syncResponse.ok) {
+                        console.error(`Failed to sync product ${item.id} stock`);
+                    } else {
+                        console.log(`Product ${item.id} stock synced successfully`);
+                    }
+                } catch (syncError) {
+                    console.error(`Error syncing product ${item.id}:`, syncError);
+                }
+            });
+
+            try {
+                await Promise.all(syncPromises);
+            } catch (syncError) {
+                console.error('Some products failed to sync:', syncError);
+                // Don't show error to user - this is a background operation
+            }
+
             return { result };
         },
         onSuccess: () => {
