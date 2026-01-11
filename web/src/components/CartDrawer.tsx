@@ -8,11 +8,17 @@ import { useCurrentAccount } from '@mysten/dapp-kit';
 import { useCheckout } from '@/hooks/useCheckout';
 import { mistToSui, Product } from '@/lib/sui-utils';
 import { validateCartStock } from '@/lib/cart-utils';
-import { ShoppingCart, X, Trash2, Plus, Minus, Loader2 } from 'lucide-react';
+import { MapPin, ShoppingCart, X, Trash2, Plus, Minus, Loader2, ChevronRight, PlusCircle } from 'lucide-react';
 import Image from 'next/image';
 import { toast } from 'sonner';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useAddresses } from '@/hooks/useAddresses';
+import { Address } from '@/lib/sui-utils';
+import { AddressCard } from '@/components/addresses/AddressCard';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import Link from 'next/link';
 
 export function CartDrawer() {
     const {
@@ -37,6 +43,25 @@ export function CartDrawer() {
     const [open, setOpen] = useState(false);
     const [isValidating, setIsValidating] = useState(false);
 
+    // ✨ Address Management
+    const { addresses, isLoading: isLoadingAddresses } = useAddresses();
+    const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+    const [isAddressDialogOpen, setIsAddressDialogOpen] = useState(false);
+
+    // Auto-select default address
+    useEffect(() => {
+        if (addresses.length > 0 && !selectedAddressId) {
+            const defaultAddr = addresses.find(a => a.is_default);
+            if (defaultAddr) {
+                setSelectedAddressId(defaultAddr.id);
+            } else {
+                setSelectedAddressId(addresses[0].id);
+            }
+        }
+    }, [addresses, selectedAddressId]);
+
+    const selectedAddress = addresses.find(a => a.id === selectedAddressId);
+
     // Selected items stats
     const selectedItemsList = getSelectedItems();
     const selectedTotal = selectedItemsList.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -50,6 +75,11 @@ export function CartDrawer() {
 
         if (selectedItemsList.length === 0) {
             toast.error('Please select items to purchase');
+            return;
+        }
+
+        if (!selectedAddress) {
+            toast.error('Please select a shipping address');
             return;
         }
 
@@ -101,12 +131,12 @@ export function CartDrawer() {
 
             console.log('[CartDrawer] Stock validation passed ✓');
 
-            // Hardcoded shipping address for MVP (In real app, ask via Form/Dialog before checkout)
+            // ✨ Use real selected address
             const shippingStart = {
-                fullName: 'Buyer Name',
-                phone: '0123456789',
-                address: '123 Blockchain Street',
-                city: 'Sui City'
+                fullName: selectedAddress.full_name,
+                phone: selectedAddress.phone,
+                address: `${selectedAddress.address_line1}${selectedAddress.address_line2 ? `, ${selectedAddress.address_line2}` : ''}`,
+                city: `${selectedAddress.city}, ${selectedAddress.country}`
             };
 
             // Stock OK - proceed with checkout
@@ -190,7 +220,139 @@ export function CartDrawer() {
                     </SheetTitle>
                 </SheetHeader>
 
+
+
                 <div className="flex-1 overflow-y-auto py-6 -mr-6 pr-6">
+                    {/* ✨ Shipping Address Section */}
+                    {items.length > 0 && (
+                        <div className="mb-6">
+                            <h3 className="text-sm font-medium text-muted-foreground mb-3 uppercase tracking-wider">
+                                Shipping Address
+                            </h3>
+
+                            {!account ? (
+                                <div className="p-4 rounded-lg border bg-muted/50 text-center text-sm text-muted-foreground">
+                                    Connect wallet to manage addresses
+                                </div>
+                            ) : isLoadingAddresses ? (
+                                <div className="flex justify-center p-4">
+                                    <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                                </div>
+                            ) : addresses.length === 0 ? (
+                                <div className="p-4 rounded-lg border border-dashed text-center space-y-3">
+                                    <MapPin className="w-8 h-8 text-muted-foreground mx-auto opacity-50" />
+                                    <div className="space-y-1">
+                                        <p className="font-medium text-sm">No addresses found</p>
+                                        <p className="text-xs text-muted-foreground">Add an address to proceed with checkout</p>
+                                    </div>
+                                    <Link href="/profile/addresses" onClick={() => setOpen(false)}>
+                                        <Button variant="outline" size="sm" className="w-full">
+                                            <PlusCircle className="w-3 h-3 mr-2" />
+                                            Add New Address
+                                        </Button>
+                                    </Link>
+                                </div>
+                            ) : selectedAddress ? (
+                                <div className="space-y-3">
+                                    <div className="p-4 rounded-xl border bg-card/50 hover:bg-accent/50 transition-colors group relative">
+                                        <div className="flex items-start gap-3">
+                                            <div className="bg-primary/10 p-2 rounded-full shrink-0">
+                                                <MapPin className="w-4 h-4 text-primary" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <span className="font-semibold text-sm truncate">
+                                                        {selectedAddress.full_name}
+                                                    </span>
+                                                    <span className="text-muted-foreground text-xs border-l pl-2">
+                                                        {selectedAddress.phone}
+                                                    </span>
+                                                    {selectedAddress.is_default && (
+                                                        <Badge variant="secondary" className="text-[10px] h-4 px-1">Default</Badge>
+                                                    )}
+                                                </div>
+                                                <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+                                                    {selectedAddress.address_line1}
+                                                    {selectedAddress.address_line2 && `, ${selectedAddress.address_line2}`}
+                                                    <br />
+                                                    {selectedAddress.city}, {selectedAddress.country}
+                                                </p>
+                                            </div>
+
+                                            <Dialog open={isAddressDialogOpen} onOpenChange={setIsAddressDialogOpen}>
+                                                <DialogTrigger asChild>
+                                                    <Button variant="ghost" size="sm" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        Change
+                                                    </Button>
+                                                </DialogTrigger>
+                                                <DialogContent className="max-w-md">
+                                                    <DialogHeader>
+                                                        <DialogTitle>Select Shipping Address</DialogTitle>
+                                                    </DialogHeader>
+                                                    <ScrollArea className="h-[400px] pr-4">
+                                                        <div className="space-y-3 pt-2">
+                                                            {addresses.map((addr) => (
+                                                                <div
+                                                                    key={addr.id}
+                                                                    onClick={() => {
+                                                                        setSelectedAddressId(addr.id);
+                                                                        setIsAddressDialogOpen(false);
+                                                                    }}
+                                                                    className={`cursor-pointer border rounded-xl p-3 transition-all ${selectedAddressId === addr.id
+                                                                        ? 'border-primary ring-1 ring-primary bg-primary/5'
+                                                                        : 'hover:border-primary/50 hover:bg-secondary/50'
+                                                                        }`}
+                                                                >
+                                                                    <div className="flex items-start gap-3">
+                                                                        <div className={`mt-0.5 w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${selectedAddressId === addr.id
+                                                                            ? 'border-primary'
+                                                                            : 'border-muted-foreground'
+                                                                            }`}>
+                                                                            {selectedAddressId === addr.id && (
+                                                                                <div className="w-2 h-2 rounded-full bg-primary" />
+                                                                            )}
+                                                                        </div>
+                                                                        <div className="flex-1">
+                                                                            <div className="flex items-center gap-2 mb-1">
+                                                                                <span className="font-medium text-sm">{addr.full_name}</span>
+                                                                                <span className="text-xs text-muted-foreground">{addr.phone}</span>
+                                                                                {addr.is_default && (
+                                                                                    <Badge variant="secondary" className="text-[10px]">Default</Badge>
+                                                                                )}
+                                                                            </div>
+                                                                            <p className="text-xs text-muted-foreground leading-relaxed">
+                                                                                {addr.address_line1}, {addr.city}, {addr.country}
+                                                                            </p>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </ScrollArea>
+                                                    <div className="pt-4 mt-2 border-t">
+                                                        <Link href="/profile/addresses" onClick={() => {
+                                                            setIsAddressDialogOpen(false);
+                                                            setOpen(false);
+                                                        }}>
+                                                            <Button className="w-full" variant="outline">
+                                                                <PlusCircle className="w-4 h-4 mr-2" />
+                                                                Manage / Add New Address
+                                                            </Button>
+                                                        </Link>
+                                                    </div>
+                                                </DialogContent>
+                                            </Dialog>
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <Button variant="outline" className="w-full" onClick={() => setIsAddressDialogOpen(true)}>
+                                    Select Address
+                                </Button>
+                            )}
+                        </div>
+                    )}
+
                     {items.length === 0 ? (
                         <div className="h-full flex flex-col items-center justify-center text-center space-y-4">
                             <div className="w-20 h-20 rounded-full bg-secondary/20 flex items-center justify-center">
@@ -309,7 +471,13 @@ export function CartDrawer() {
 
                             <Button
                                 onClick={handleCheckout}
-                                disabled={!account || isProcessing || isValidating || selectedItemsList.length === 0}
+                                disabled={
+                                    !account ||
+                                    isProcessing ||
+                                    isValidating ||
+                                    selectedItemsList.length === 0 ||
+                                    !selectedAddress
+                                }
                                 className="w-full h-12 text-base font-semibold shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
                                 size="lg"
                             >
@@ -327,6 +495,8 @@ export function CartDrawer() {
                                     'Connect Wallet to Checkout'
                                 ) : selectedItemsList.length === 0 ? (
                                     'Select Items to Buy'
+                                ) : !selectedAddress ? (
+                                    'Add Shipping Address'
                                 ) : (
                                     `Checkout (${selectedCount})`
                                 )}
@@ -339,6 +509,6 @@ export function CartDrawer() {
                     </div>
                 )}
             </SheetContent>
-        </Sheet>
+        </Sheet >
     );
 }
