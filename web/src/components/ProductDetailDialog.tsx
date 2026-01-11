@@ -16,9 +16,10 @@ import { Separator } from "@/components/ui/separator";
 import { Product, mistToSui } from '@/lib/sui-utils';
 import { useCart } from '@/contexts/CartContext';
 import { useCurrentAccount } from '@mysten/dapp-kit';
-import { ShoppingCart, Clock, Package } from 'lucide-react';
+import { ShoppingCart, Clock, Package, Store } from 'lucide-react';
 import { toast } from "sonner";
 import Image from "next/image";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { SellerInfoPopover } from './SellerInfoPopover';
 
@@ -223,24 +224,39 @@ export function ProductDetailDialog({ product, open, onOpenChange }: ProductDeta
 
                         {/* Sticky Footer */}
                         <div className="p-6 border-t border-white/10 bg-black/80 backdrop-blur-xl z-20 mt-auto">
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-3">
+                                {/* Primary Action - Purchase Now */}
                                 <Button
                                     onClick={handleBuyNow}
                                     disabled={!account || isBuying || product.stock <= 0}
-                                    className="w-full bg-blue-600 hover:bg-blue-500 text-white rounded-none uppercase font-bold tracking-widest h-14 cut-corner-bottom-right shadow-[0_0_20px_rgba(37,99,235,0.2)] hover:shadow-[0_0_30px_rgba(37,99,235,0.4)] transition-all duration-300"
+                                    className="w-full bg-blue-600 hover:bg-blue-500 text-white rounded-none uppercase font-bold tracking-widest h-12 cut-corner-bottom-right shadow-[0_0_20px_rgba(37,99,235,0.2)] hover:shadow-[0_0_30px_rgba(37,99,235,0.4)] transition-all duration-300"
                                 >
                                     {isBuying ? 'Processing...' : !account ? 'Connect Wallet' : product.stock <= 0 ? 'Out of Stock' : 'Purchase Now'}
                                 </Button>
 
-                                <Button
-                                    onClick={handleAddToCart}
-                                    disabled={isInCart || product.stock <= 0}
-                                    variant="outline"
-                                    className="w-full border-white/10 hover:bg-white/5 text-white rounded-none uppercase font-bold tracking-widest h-14 hover:text-blue-400 hover:border-blue-400/30 transition-all duration-300"
-                                >
-                                    <ShoppingCart className="w-4 h-4 mr-2" />
-                                    {isInCart ? 'In Cart' : 'Add to Cart'}
-                                </Button>
+                                {/* Secondary Actions */}
+                                <div className="grid grid-cols-2 gap-3">
+                                    <Button
+                                        onClick={handleAddToCart}
+                                        disabled={isInCart || product.stock <= 0}
+                                        variant="outline"
+                                        className="w-full border-white/10 hover:bg-white/5 text-white rounded-none uppercase font-bold tracking-widest h-11 hover:text-blue-400 hover:border-blue-400/30 transition-all duration-300"
+                                    >
+                                        <ShoppingCart className="w-4 h-4 mr-2" />
+                                        {isInCart ? 'In Cart' : 'Add'}
+                                    </Button>
+
+                                    <Button
+                                        asChild
+                                        variant="outline"
+                                        className="w-full border-white/10 hover:bg-white/5 text-white rounded-none uppercase font-bold tracking-widest h-11 hover:text-green-400 hover:border-green-400/30 transition-all duration-300"
+                                    >
+                                        <Link href={`/shops/${product.creator}`}>
+                                            <Store className="w-4 h-4 mr-2" />
+                                            Shop
+                                        </Link>
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                     </div>
