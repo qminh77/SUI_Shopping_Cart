@@ -11,7 +11,7 @@ import { useSignAndExecuteTransaction } from '@mysten/dapp-kit';
 import { mistToSui, PACKAGE_ID, getUserShop, suiToMist } from '@/lib/sui-utils';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
-import { Package, ShoppingBag, Loader2, Store, TrendingUp, DollarSign } from 'lucide-react';
+import { Package, ShoppingBag, Loader2, Store, TrendingUp, DollarSign, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
