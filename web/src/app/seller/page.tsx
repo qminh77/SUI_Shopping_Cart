@@ -27,7 +27,7 @@ export default function SellerPage() {
     const queryClient = useQueryClient();
     const { mutateAsync: signAndExecute } = useSignAndExecuteTransaction();
 
-    const { shop: userShop, isLoading: isLoadingShop } = useShop();
+    const { shop: userShop, isLoading: isLoadingShop, syncChainShop } = useShop();
 
     // Check if shop exists on-chain
     const { data: onChainShop, isLoading: isCheckingChain } = useQuery({
@@ -50,6 +50,25 @@ export default function SellerPage() {
     });
 
     const [isCreating, setIsCreating] = useState(false);
+    const [isSyncing, setIsSyncing] = useState(false);
+
+    // Handle sync shop to blockchain
+    const handleSyncShop = async () => {
+        if (!userShop) return;
+        setIsSyncing(true);
+        try {
+            await syncChainShop.mutateAsync({
+                name: userShop.shop_name,
+                description: userShop.shop_description
+            });
+            queryClient.invalidateQueries({ queryKey: ['checkChainShop'] });
+            toast.success('Shop đã đồng bộ lên blockchain thành công!');
+        } catch (error) {
+            console.error('Sync shop error:', error);
+        } finally {
+            setIsSyncing(false);
+        }
+    };
 
     // Fetch products
     const { data: myProducts, isLoading: isLoadingProducts } = useQuery({
@@ -396,6 +415,36 @@ export default function SellerPage() {
                         {isMissingOnChain ? 'Chưa đồng bộ blockchain' : 'Shop đang hoạt động'}
                     </Badge>
                 </div>
+
+                {/* Sync Warning Alert */}
+                {isMissingOnChain && (
+                    <Card className="border-yellow-500/50 bg-yellow-50/10 dark:bg-yellow-950/10">
+                        <CardContent className="pt-6">
+                            <div className="flex items-start gap-4">
+                                <div className="h-12 w-12 rounded-full bg-yellow-500/20 flex items-center justify-center flex-shrink-0">
+                                    <AlertCircle className="h-6 w-6 text-yellow-500" />
+                                </div>
+                                <div className="flex-1">
+                                    <h3 className="font-semibold text-lg mb-1 text-yellow-700 dark:text-yellow-400">
+                                        Shop chưa đồng bộ lên Blockchain
+                                    </h3>
+                                    <p className="text-sm text-muted-foreground mb-4">
+                                        Shop của bạn đã được lưu trong database nhưng chưa được tạo trên SUI Blockchain.
+                                        Bạn cần đồng bộ shop lên blockchain để có thể tạo và bán sản phẩm.
+                                    </p>
+                                    <Button
+                                        onClick={handleSyncShop}
+                                        disabled={isSyncing}
+                                        className="bg-yellow-600 hover:bg-yellow-700 text-white"
+                                    >
+                                        {isSyncing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                        {isSyncing ? 'Đang đồng bộ...' : 'Đồng bộ lên Blockchain'}
+                                    </Button>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
 
                 {/* Stats */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
