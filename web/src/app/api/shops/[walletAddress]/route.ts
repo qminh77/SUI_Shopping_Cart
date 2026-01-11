@@ -37,26 +37,34 @@ export async function GET(
         // Initialize Supabase client
         const supabase = await createSupabaseServerClient();
 
+        console.log(`[API /api/shops/${walletAddress}] Fetching shop for wallet:`, walletAddress);
+
         // Fetch shop from database by owner_wallet
+        // Use maybeSingle to avoid throwing error when not found
         const { data: shop, error } = await supabase
             .from('shops')
             .select('*')
             .eq('owner_wallet', walletAddress)
-            .single();
+            .maybeSingle();
 
         if (error) {
-            // If shop not found in database, return 404
-            if (error.code === 'PGRST116') {
-                return NextResponse.json(
-                    { error: 'Shop not found' },
-                    { status: 404 }
-                );
-            }
-
-            console.error('Supabase error:', error);
+            console.error('[API /api/shops] Supabase error:', error);
             return NextResponse.json(
                 { error: 'Failed to fetch shop data', details: error.message },
                 { status: 500 }
+            );
+        }
+
+        // If shop not found in database, return 404 with helpful message
+        if (!shop) {
+            console.log(`[API /api/shops] Shop not found for wallet: ${walletAddress}`);
+            return NextResponse.json(
+                {
+                    error: 'Shop not found',
+                    message: 'This seller has not registered a shop yet. They may be selling as an individual.',
+                    wallet: walletAddress
+                },
+                { status: 404 }
             );
         }
 
