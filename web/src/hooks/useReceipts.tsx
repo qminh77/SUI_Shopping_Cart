@@ -17,7 +17,10 @@ export function useReceipts(ownerAddress?: string) {
                 filter: {
                     StructType: `${PACKAGE_ID}::receipt::Receipt`,
                 },
-                options: { showContent: true },
+                options: {
+                    showContent: true,
+                    showPreviousTransaction: true
+                },
             });
 
             return objects.data

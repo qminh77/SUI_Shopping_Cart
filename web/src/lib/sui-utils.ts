@@ -236,7 +236,7 @@ export function parseReceipt(obj: SuiObjectResponse): Receipt | null {
         pricePaid: Number(fields.price_paid),
         totalPaid: Number(fields.total_paid || fields.price_paid),
         purchaseDate: Number(fields.purchase_date),
-        transactionDigest: fields.transaction_digest,
+        transactionDigest: obj.data.previousTransaction || fields.transaction_digest,
     };
 }
 
