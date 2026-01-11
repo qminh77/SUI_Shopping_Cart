@@ -1,4 +1,4 @@
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetFooter } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -8,7 +8,7 @@ import { useCurrentAccount } from '@mysten/dapp-kit';
 import { useCheckout } from '@/hooks/useCheckout';
 import { mistToSui, Product } from '@/lib/sui-utils';
 import { validateCartStock } from '@/lib/cart-utils';
-import { MapPin, ShoppingCart, X, Trash2, Plus, Minus, Loader2, ChevronRight, PlusCircle } from 'lucide-react';
+import { MapPin, ShoppingCart, X, Trash2, Plus, Minus, Loader2, ChevronRight, PlusCircle, ArrowRight, Package } from 'lucide-react';
 import Image from 'next/image';
 import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
@@ -19,6 +19,7 @@ import { AddressCard } from '@/components/addresses/AddressCard';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
 export function CartDrawer() {
     const {
@@ -37,7 +38,6 @@ export function CartDrawer() {
     } = useCart();
 
     const account = useCurrentAccount();
-    // Use the new Unified Checkout Hook
     const { checkout, isProcessing } = useCheckout();
     const queryClient = useQueryClient();
     const [open, setOpen] = useState(false);
@@ -86,21 +86,17 @@ export function CartDrawer() {
         try {
             setIsValidating(true);
 
-            // ✨ PHASE 2: Validate stock before checkout
             console.log('[CartDrawer] Validating stock for', selectedItemsList.length, 'items');
 
-            // Fetch fresh product data from server
             const freshProducts = await queryClient.fetchQuery<Product[]>({
                 queryKey: ['products', 'with-category', 50],
             });
 
-            // Validate cart against fresh stock
             const validation = validateCartStock(selectedItemsList, freshProducts);
 
             if (!validation.valid) {
                 console.warn('[CartDrawer] Stock validation failed');
 
-                // Handle out-of-stock items
                 if (validation.outOfStock.length > 0) {
                     for (const item of validation.outOfStock) {
                         removeFromCart(item.id);
@@ -110,7 +106,6 @@ export function CartDrawer() {
                     }
                 }
 
-                // Handle insufficient stock
                 if (validation.insufficientStock.length > 0) {
                     for (const issue of validation.insufficientStock) {
                         updateQuantity(issue.product.id, issue.available);
@@ -126,12 +121,11 @@ export function CartDrawer() {
                 });
 
                 setIsValidating(false);
-                return; // Don't proceed with checkout
+                return;
             }
 
             console.log('[CartDrawer] Stock validation passed ✓');
 
-            // ✨ Use real selected address
             const shippingStart = {
                 fullName: selectedAddress.full_name,
                 phone: selectedAddress.phone,
@@ -139,27 +133,20 @@ export function CartDrawer() {
                 city: `${selectedAddress.city}, ${selectedAddress.country}`
             };
 
-            // Stock OK - proceed with checkout
             const checkoutResult = await checkout({
                 items: selectedItemsList,
                 shippingAddress: shippingStart
             });
 
-            // ✨ PHASE 3: Only clear cart on full success
             if (checkoutResult.blockchainSuccess && checkoutResult.dbSuccess) {
-                // Full success - safe to clear cart
                 removeSelectedItems();
                 setOpen(false);
             } else if (checkoutResult.blockchainSuccess && !checkoutResult.dbSuccess) {
-                // Partial success - keep cart for user reference
                 console.warn('[CartDrawer] Keeping cart items - DB save failed');
-                // Don't close drawer, let user see their items
             } else {
-                // Complete failure - keep cart
                 console.error('[CartDrawer] Checkout failed completely');
             }
         } catch (error) {
-            // Error is handled in hook (toast)
             console.error('[CartDrawer] Checkout error:', error);
         } finally {
             setIsValidating(false);
@@ -169,10 +156,8 @@ export function CartDrawer() {
     return (
         <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
-                <Button variant="outline" size="sm" className="relative h-9 w-9 p-0 rounded-full border-0 hover:bg-transparent">
-                    <div className="p-2 rounded-xl bg-secondary/50 hover:bg-secondary transition-colors duration-200">
-                        <ShoppingCart className="h-5 w-5 text-foreground" />
-                    </div>
+                <Button variant="outline" size="sm" className="relative h-10 w-10 p-0 rounded-full border-input bg-background hover:bg-accent hover:text-accent-foreground">
+                    <ShoppingCart className="h-5 w-5" />
                     {getTotalItems() > 0 && (
                         <Badge
                             variant="destructive"
@@ -184,94 +169,96 @@ export function CartDrawer() {
                 </Button>
             </SheetTrigger>
 
-            <SheetContent className="w-full sm:max-w-lg flex flex-col h-full">
-                <SheetHeader className="pb-4 border-b">
+            <SheetContent className="w-full sm:max-w-xl flex flex-col p-0 gap-0">
+                <SheetHeader className="px-6 py-4 border-b bg-background/80 backdrop-blur-md sticky top-0 z-10">
                     <SheetTitle className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-xl">
-                            <ShoppingCart className="h-5 w-5" />
-                            My Cart
-                            <Badge variant="secondary" className="ml-2">
+                        <div className="flex items-center gap-2">
+                            <span className="text-xl font-bold tracking-tight">Shopping Cart</span>
+                            <Badge variant="secondary" className="rounded-full px-3 font-normal">
                                 {getTotalItems()} items
                             </Badge>
                         </div>
-
-                        <div className="flex gap-2">
-                            {items.length > 0 && (
-                                <>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={selectedItems.size === items.length ? deselectAll : selectAll}
-                                        className="text-xs"
-                                    >
-                                        {selectedItems.size === items.length ? 'Deselect All' : 'Select All'}
-                                    </Button>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={clearCart}
-                                        className="text-muted-foreground hover:text-destructive text-xs"
-                                    >
-                                        Clear All
-                                    </Button>
-                                </>
-                            )}
-                        </div>
+                        {items.length > 0 && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={clearCart}
+                                className="text-muted-foreground hover:text-destructive text-xs h-8 px-2"
+                            >
+                                <Trash2 className="w-3 h-3 mr-1.5" />
+                                Clear
+                            </Button>
+                        )}
                     </SheetTitle>
                 </SheetHeader>
 
-
-
-                <div className="flex-1 overflow-y-auto py-6 -mr-6 pr-6">
-                    {/* ✨ Shipping Address Section */}
-                    {items.length > 0 && (
-                        <div className="mb-6">
-                            <h3 className="text-sm font-medium text-muted-foreground mb-3 uppercase tracking-wider">
-                                Shipping Address
-                            </h3>
-
-                            {!account ? (
-                                <div className="p-4 rounded-lg border bg-muted/50 text-center text-sm text-muted-foreground">
-                                    Connect wallet to manage addresses
+                <div className="flex-1 overflow-y-auto px-6 py-6 scrollbar-none">
+                    {items.length === 0 ? (
+                        <div className="h-full flex flex-col items-center justify-center text-center space-y-6 animate-in fade-in-50 duration-500">
+                            <div className="relative">
+                                <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full" />
+                                <div className="w-32 h-32 rounded-full bg-secondary/30 flex items-center justify-center relative">
+                                    <ShoppingCart className="w-12 h-12 text-muted-foreground/50" />
                                 </div>
-                            ) : isLoadingAddresses ? (
-                                <div className="flex justify-center p-4">
-                                    <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-                                </div>
-                            ) : addresses.length === 0 ? (
-                                <div className="p-4 rounded-lg border border-dashed text-center space-y-3">
-                                    <MapPin className="w-8 h-8 text-muted-foreground mx-auto opacity-50" />
-                                    <div className="space-y-1">
-                                        <p className="font-medium text-sm">No addresses found</p>
-                                        <p className="text-xs text-muted-foreground">Add an address to proceed with checkout</p>
+                            </div>
+                            <div className="space-y-2 max-w-xs mx-auto">
+                                <h3 className="font-semibold text-xl">Your cart is empty</h3>
+                                <p className="text-sm text-muted-foreground">
+                                    Looks like you haven't added anything to your cart yet.
+                                </p>
+                            </div>
+                            <Button
+                                onClick={() => setOpen(false)}
+                                className="min-w-[140px]"
+                            >
+                                Start Shopping
+                            </Button>
+                        </div>
+                    ) : (
+                        <div className="space-y-8 pb-32">
+                            {/* Address Section */}
+                            <div className="space-y-3">
+                                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                                    <MapPin className="w-3 h-3" /> Shipping Address
+                                </h3>
+
+                                {!account ? (
+                                    <div className="p-4 rounded-xl border-dashed border bg-muted/30 text-center text-sm text-muted-foreground hover:bg-muted/50 transition-colors">
+                                        Connect wallet to set shipping address
                                     </div>
-                                    <Link href="/profile/addresses" onClick={() => setOpen(false)}>
-                                        <Button variant="outline" size="sm" className="w-full">
-                                            <PlusCircle className="w-3 h-3 mr-2" />
-                                            Add New Address
-                                        </Button>
-                                    </Link>
-                                </div>
-                            ) : selectedAddress ? (
-                                <div className="space-y-3">
-                                    <div className="p-4 rounded-xl border bg-card/50 hover:bg-accent/50 transition-colors group relative">
-                                        <div className="flex items-start gap-3">
-                                            <div className="bg-primary/10 p-2 rounded-full shrink-0">
-                                                <MapPin className="w-4 h-4 text-primary" />
+                                ) : isLoadingAddresses ? (
+                                    <div className="flex justify-center p-6 rounded-xl border bg-card/50">
+                                        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                                    </div>
+                                ) : addresses.length === 0 ? (
+                                    <div className="p-6 rounded-xl border border-dashed text-center space-y-3 bg-card/50">
+                                        <div className="space-y-1">
+                                            <p className="font-medium text-sm">No addresses found</p>
+                                            <p className="text-xs text-muted-foreground">Add an address to proceed with checkout</p>
+                                        </div>
+                                        <Link href="/profile/addresses" onClick={() => setOpen(false)}>
+                                            <Button variant="outline" size="sm" className="w-full">
+                                                <PlusCircle className="w-3 h-3 mr-2" />
+                                                Add New Address
+                                            </Button>
+                                        </Link>
+                                    </div>
+                                ) : selectedAddress ? (
+                                    <div className="group relative rounded-xl border bg-card p-4 transition-all hover:shadow-md hover:border-primary/20">
+                                        <div className="flex items-start gap-4">
+                                            <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                                                <MapPin className="h-4 w-4" />
                                             </div>
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <span className="font-semibold text-sm truncate">
-                                                        {selectedAddress.full_name}
-                                                    </span>
-                                                    <span className="text-muted-foreground text-xs border-l pl-2">
-                                                        {selectedAddress.phone}
-                                                    </span>
+                                            <div className="flex-1 space-y-1">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-semibold text-sm">{selectedAddress.full_name}</span>
+                                                    <Separator orientation="vertical" className="h-3" />
+                                                    <span className="text-xs text-muted-foreground">{selectedAddress.phone}</span>
                                                     {selectedAddress.is_default && (
-                                                        <Badge variant="secondary" className="text-[10px] h-4 px-1">Default</Badge>
+                                                        <Badge variant="secondary" className="text-[10px] h-4 px-1 ml-auto">Default</Badge>
                                                     )}
                                                 </div>
-                                                <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+                                                <p className="text-sm text-muted-foreground leading-relaxed pr-10">
                                                     {selectedAddress.address_line1}
                                                     {selectedAddress.address_line2 && `, ${selectedAddress.address_line2}`}
                                                     <br />
@@ -281,7 +268,11 @@ export function CartDrawer() {
 
                                             <Dialog open={isAddressDialogOpen} onOpenChange={setIsAddressDialogOpen}>
                                                 <DialogTrigger asChild>
-                                                    <Button variant="ghost" size="sm" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="absolute right-3 top-3 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    >
                                                         Change
                                                     </Button>
                                                 </DialogTrigger>
@@ -289,7 +280,7 @@ export function CartDrawer() {
                                                     <DialogHeader>
                                                         <DialogTitle>Select Shipping Address</DialogTitle>
                                                     </DialogHeader>
-                                                    <ScrollArea className="h-[400px] pr-4">
+                                                    <ScrollArea className="h-[400px] -mr-4 pr-4">
                                                         <div className="space-y-3 pt-2">
                                                             {addresses.map((addr) => (
                                                                 <div
@@ -298,16 +289,16 @@ export function CartDrawer() {
                                                                         setSelectedAddressId(addr.id);
                                                                         setIsAddressDialogOpen(false);
                                                                     }}
-                                                                    className={`cursor-pointer border rounded-xl p-3 transition-all ${selectedAddressId === addr.id
-                                                                        ? 'border-primary ring-1 ring-primary bg-primary/5'
-                                                                        : 'hover:border-primary/50 hover:bg-secondary/50'
-                                                                        }`}
+                                                                    className={cn(
+                                                                        "cursor-pointer border rounded-xl p-4 transition-all hover:bg-muted/50",
+                                                                        selectedAddressId === addr.id && "border-primary bg-primary/5 ring-1 ring-primary"
+                                                                    )}
                                                                 >
                                                                     <div className="flex items-start gap-3">
-                                                                        <div className={`mt-0.5 w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${selectedAddressId === addr.id
-                                                                            ? 'border-primary'
-                                                                            : 'border-muted-foreground'
-                                                                            }`}>
+                                                                        <div className={cn(
+                                                                            "mt-1 w-4 h-4 rounded-full border flex items-center justify-center shrink-0",
+                                                                            selectedAddressId === addr.id ? "border-primary" : "border-muted-foreground"
+                                                                        )}>
                                                                             {selectedAddressId === addr.id && (
                                                                                 <div className="w-2 h-2 rounded-full bg-primary" />
                                                                             )}
@@ -329,14 +320,14 @@ export function CartDrawer() {
                                                             ))}
                                                         </div>
                                                     </ScrollArea>
-                                                    <div className="pt-4 mt-2 border-t">
+                                                    <div className="pt-4 border-t mt-2">
                                                         <Link href="/profile/addresses" onClick={() => {
                                                             setIsAddressDialogOpen(false);
                                                             setOpen(false);
                                                         }}>
                                                             <Button className="w-full" variant="outline">
                                                                 <PlusCircle className="w-4 h-4 mr-2" />
-                                                                Manage / Add New Address
+                                                                Add New Address
                                                             </Button>
                                                         </Link>
                                                     </div>
@@ -344,128 +335,117 @@ export function CartDrawer() {
                                             </Dialog>
                                         </div>
                                     </div>
+                                ) : (
+                                    <Button variant="outline" className="w-full h-auto py-4 border-dashed" onClick={() => setIsAddressDialogOpen(true)}>
+                                        <PlusCircle className="w-4 h-4 mr-2" />
+                                        Select Shipping Address
+                                    </Button>
+                                )}
+                            </div>
+
+                            {/* Cart Items */}
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                                        <Package className="w-3 h-3" /> Items ({items.length})
+                                    </h3>
+                                    {items.length > 0 && (
+                                        <Button
+                                            variant="link"
+                                            size="sm"
+                                            onClick={selectedItems.size === items.length ? deselectAll : selectAll}
+                                            className="h-auto p-0 text-xs text-primary"
+                                        >
+                                            {selectedItems.size === items.length ? 'Deselect All' : 'Select All'}
+                                        </Button>
+                                    )}
                                 </div>
-                            ) : (
-                                <Button variant="outline" className="w-full" onClick={() => setIsAddressDialogOpen(true)}>
-                                    Select Address
-                                </Button>
-                            )}
-                        </div>
-                    )}
 
-                    {items.length === 0 ? (
-                        <div className="h-full flex flex-col items-center justify-center text-center space-y-4">
-                            <div className="w-20 h-20 rounded-full bg-secondary/20 flex items-center justify-center">
-                                <ShoppingCart className="h-10 w-10 text-muted-foreground/50" />
-                            </div>
-                            <div className="space-y-1">
-                                <h3 className="font-semibold text-lg">Your cart is empty</h3>
-                                <p className="text-sm text-muted-foreground max-w-[200px] mx-auto">
-                                    Looks like you haven't added any items yet.
-                                </p>
-                            </div>
-                            <Button
-                                variant="secondary"
-                                onClick={() => setOpen(false)}
-                                className="mt-4"
-                            >
-                                Continue Shopping
-                            </Button>
-                        </div>
-                    ) : (
-                        <div className="space-y-4">
-                            {items.map((item) => (
-                                <div key={item.id} className="flex gap-4 p-4 border rounded-xl bg-card hover:border-primary/20 transition-colors group">
-                                    {/* Checkbox */}
-                                    <div className="flex items-center">
-                                        <Checkbox
-                                            checked={selectedItems.has(item.id)}
-                                            onCheckedChange={() => toggleSelection(item.id)}
-                                        />
-                                    </div>
-
-                                    {/* Thumbnail */}
-                                    <div className="relative w-24 h-24 rounded-lg overflow-hidden bg-secondary/20 flex-shrink-0 border">
-                                        <Image
-                                            src={item.imageUrl}
-                                            alt={item.name}
-                                            fill
-                                            className="object-cover group-hover:scale-105 transition-transform duration-300"
-                                        />
-                                    </div>
-
-                                    {/* Info */}
-                                    <div className="flex-1 flex flex-col justify-between min-w-0 py-0.5">
-                                        <div className="space-y-1">
-                                            <div className="flex justify-between items-start gap-2">
-                                                <h4 className="font-semibold text-base line-clamp-1">
-                                                    {item.name}
-                                                </h4>
-                                                <button
-                                                    onClick={() => removeFromCart(item.id)}
-                                                    className="text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
-                                                >
-                                                    <X className="h-4 w-4" />
-                                                </button>
-                                            </div>
-                                            <p className="text-sm text-muted-foreground line-clamp-1">
-                                                {item.description}
-                                            </p>
+                                {items.map((item) => (
+                                    <div key={item.id} className="group relative flex gap-4 p-3 rounded-2xl border bg-card hover:border-primary/30 transition-all hover:shadow-sm">
+                                        <div className="flex items-center">
+                                            <Checkbox
+                                                checked={selectedItems.has(item.id)}
+                                                onCheckedChange={() => toggleSelection(item.id)}
+                                                className="h-5 w-5 rounded-md border-muted-foreground/30 data-[state=checked]:border-primary data-[state=checked]:bg-primary"
+                                            />
                                         </div>
 
-                                        <div className="flex items-end justify-between mt-2">
-                                            <div className="flex flex-col gap-1">
-                                                <p className="text-xs text-muted-foreground font-medium">
-                                                    {mistToSui(item.price)} SUI / unit
+                                        <div className="relative aspect-square h-20 w-20 flex-shrink-0 overflow-hidden rounded-xl border bg-secondary/20">
+                                            <Image
+                                                src={item.imageUrl}
+                                                alt={item.name}
+                                                fill
+                                                className="object-cover transition-transform duration-500 group-hover:scale-105"
+                                            />
+                                        </div>
+
+                                        <div className="flex flex-1 flex-col justify-between py-1 min-w-0">
+                                            <div className="space-y-1">
+                                                <div className="flex justify-between gap-2">
+                                                    <h4 className="font-medium text-sm leading-snug line-clamp-2" title={item.name}>
+                                                        {item.name}
+                                                    </h4>
+                                                    <button
+                                                        onClick={() => removeFromCart(item.id)}
+                                                        className="text-muted-foreground/50 hover:text-destructive transition-colors -mt-1 -mr-1 p-1"
+                                                    >
+                                                        <X className="h-4 w-4" />
+                                                    </button>
+                                                </div>
+                                                <p className="text-xs text-muted-foreground">
+                                                    Unit Price: {mistToSui(item.price)} SUI
                                                 </p>
-                                                <p className="font-bold text-lg text-primary">
+                                            </div>
+
+                                            <div className="flex items-center justify-between pt-2">
+                                                <p className="font-bold text-primary">
                                                     {mistToSui(item.price * item.quantity)} SUI
                                                 </p>
-                                            </div>
 
-                                            {/* Quantity Control */}
-                                            <div className="flex items-center gap-1 bg-secondary/30 rounded-lg p-1">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-7 w-7 rounded-md hover:bg-background shadow-sm"
-                                                    onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                                                    disabled={item.quantity <= 1}
-                                                >
-                                                    <Minus className="h-3 w-3" />
-                                                </Button>
-                                                <span className="w-8 text-center text-sm font-semibold tabular-nums">
-                                                    {item.quantity}
-                                                </span>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-7 w-7 rounded-md hover:bg-background shadow-sm"
-                                                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                                                    disabled={item.quantity >= item.stock}
-                                                >
-                                                    <Plus className="h-3 w-3" />
-                                                </Button>
+                                                <div className="flex items-center gap-1 bg-secondary/50 rounded-lg p-0.5 border">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-6 w-6 rounded-md hover:bg-background"
+                                                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                                                        disabled={item.quantity <= 1}
+                                                    >
+                                                        <Minus className="h-3 w-3" />
+                                                    </Button>
+                                                    <span className="w-8 text-center text-xs font-semibold tabular-nums">
+                                                        {item.quantity}
+                                                    </span>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-6 w-6 rounded-md hover:bg-background"
+                                                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                                        disabled={item.quantity >= item.stock}
+                                                    >
+                                                        <Plus className="h-3 w-3" />
+                                                    </Button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
                         </div>
                     )}
                 </div>
 
                 {items.length > 0 && (
-                    <div className="pt-6 mt-auto border-t bg-background">
+                    <div className="border-t bg-background/90 p-6 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 sticky bottom-0 z-10 shadow-[0_-5px_20px_-10px_rgba(0,0,0,0.1)]">
                         <div className="space-y-4">
                             <div className="space-y-2">
-                                <div className="flex items-center justify-between text-muted-foreground">
-                                    <span>Selected Subtotal ({selectedCount} items)</span>
+                                <div className="flex items-center justify-between text-muted-foreground text-sm">
+                                    <span>Subtotal ({selectedCount} items)</span>
                                     <span>{mistToSui(selectedTotal)} SUI</span>
                                 </div>
-                                <div className="flex items-center justify-between text-xl font-bold">
-                                    <span>Total</span>
-                                    <span className="text-primary">{mistToSui(selectedTotal)} SUI</span>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-lg font-bold">Total</span>
+                                    <span className="text-2xl font-bold text-primary">{mistToSui(selectedTotal)} SUI</span>
                                 </div>
                             </div>
 
@@ -478,37 +458,35 @@ export function CartDrawer() {
                                     selectedItemsList.length === 0 ||
                                     !selectedAddress
                                 }
-                                className="w-full h-12 text-base font-semibold shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
+                                className="w-full h-12 text-base font-semibold shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all rounded-xl"
                                 size="lg"
                             >
                                 {isValidating ? (
                                     <>
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Validating Stock...
+                                        Validating...
                                     </>
                                 ) : isProcessing ? (
                                     <>
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Processing Order...
+                                        Processing...
                                     </>
                                 ) : !account ? (
                                     'Connect Wallet to Checkout'
                                 ) : selectedItemsList.length === 0 ? (
-                                    'Select Items to Buy'
+                                    'Select Items to Checkout'
                                 ) : !selectedAddress ? (
-                                    'Add Shipping Address'
+                                    'Select Shipping Address'
                                 ) : (
-                                    `Checkout (${selectedCount})`
+                                    <span className="flex items-center">
+                                        Checkout Now <ArrowRight className="ml-2 h-4 w-4" />
+                                    </span>
                                 )}
                             </Button>
-
-                            <p className="text-[10px] text-center text-muted-foreground/60">
-                                Secure checkout powered by Sui Smart Contracts
-                            </p>
                         </div>
                     </div>
                 )}
             </SheetContent>
-        </Sheet >
+        </Sheet>
     );
 }

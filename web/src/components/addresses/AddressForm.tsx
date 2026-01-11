@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Address, AddressInput } from '@/lib/sui-utils';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,9 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Loader2 } from 'lucide-react';
+import { Loader2, RefreshCw } from 'lucide-react';
+import { useProvinces, Province, District, Ward } from '@/hooks/useProvinces';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface AddressFormProps {
     address?: Address;
@@ -29,6 +31,7 @@ export function AddressForm({ address, onSubmit, onCancel, isSubmitting = false 
             full_name: address.full_name,
             phone: address.phone,
             address_line1: address.address_line1,
+            // We'll set these via effect matching later if possible, or just keep string
             address_line2: address.address_line2 || '',
             city: address.city,
             state_province: address.state_province || '',
@@ -44,194 +47,287 @@ export function AddressForm({ address, onSubmit, onCancel, isSubmitting = false 
 
     const [isDefault, setIsDefault] = useState(address?.is_default || false);
 
+    // API Hooks
+    const {
+        provinces, districts, wards,
+        getDistricts, getWards,
+        resetDistricts, resetWards,
+        version, setVersion,
+        source, setSource
+    } = useProvinces();
+
+    // Local state for selected codes to drive the API fetching
+    const [selectedProvinceCode, setSelectedProvinceCode] = useState<number | null>(null);
+    const [selectedDistrictCode, setSelectedDistrictCode] = useState<number | null>(null);
+    const [selectedWardCode, setSelectedWardCode] = useState<number | null>(null);
+
+    // Initial Data Matching (Auto-fill selects if editing)
+    useEffect(() => {
+        if (address && provinces.length > 0) {
+            // Match Province (City)
+            const matchedProv = provinces.find(p => p.name === address.city || address.city.includes(p.name));
+            if (matchedProv) {
+                setSelectedProvinceCode(matchedProv.code);
+                getDistricts(matchedProv.code);
+            }
+        }
+    }, [address, provinces]);
+
+    useEffect(() => {
+        if (address && selectedProvinceCode && districts.length > 0) {
+            // Match District (State/Province)
+            const matchedDist = districts.find(d => d.name === address.state_province || (address.state_province && address.state_province.includes(d.name)));
+            if (matchedDist) {
+                setSelectedDistrictCode(matchedDist.code);
+                getWards(matchedDist.code);
+            }
+        }
+    }, [address, districts, selectedProvinceCode]);
+
+    useEffect(() => {
+        if (address && selectedDistrictCode && wards.length > 0) {
+            // Match Ward (Address Line 2)
+            const matchedWard = wards.find(w => w.name === address.address_line2 || (address.address_line2 && address.address_line2.includes(w.name)));
+            if (matchedWard) {
+                setSelectedWardCode(matchedWard.code);
+            }
+        }
+    }, [address, wards, selectedDistrictCode]);
+
+
     const onFormSubmit = async (data: AddressInput) => {
         await onSubmit({ ...data, is_default: isDefault });
     };
 
+    const handleProvinceChange = (value: string) => {
+        // Value is code string
+        const code = Number(value);
+        const prov = provinces.find(p => p.code === code);
+
+        setSelectedProvinceCode(code);
+        setValue('city', prov?.name || '');
+
+        // Reset children
+        setSelectedDistrictCode(null);
+        setSelectedWardCode(null);
+        setValue('state_province', '');
+        setValue('address_line2', '');
+
+        resetDistricts();
+        resetWards();
+        getDistricts(code);
+    };
+
+    const handleDistrictChange = (value: string) => {
+        const code = Number(value);
+        const dist = districts.find(d => d.code === code);
+
+        setSelectedDistrictCode(code);
+        setValue('state_province', dist?.name || '');
+
+        // Reset child
+        setSelectedWardCode(null);
+        setValue('address_line2', '');
+
+        resetWards();
+        getWards(code);
+    };
+
+    const handleWardChange = (value: string) => {
+        const code = Number(value);
+        const ward = wards.find(w => w.code === code);
+
+        setSelectedWardCode(code);
+        setValue('address_line2', ward?.name || '');
+    };
+
     return (
-        <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
-            {/* Full Name */}
-            <div>
-                <Label htmlFor="full_name" className="text-white">
-                    Full Name <span className="text-red-400">*</span>
-                </Label>
-                <Input
-                    id="full_name"
-                    {...register('full_name', {
-                        required: 'Full name is required',
-                        minLength: { value: 2, message: 'Name must be at least 2 characters' }
-                    })}
-                    placeholder="John Doe"
-                    className="mt-1.5 bg-black/40 border-white/20 text-white"
-                />
-                {errors.full_name && (
-                    <p className="text-red-400 text-xs mt-1">{errors.full_name.message}</p>
-                )}
+        <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-5">
+            {/* Version Toggle */}
+            <div className="flex flex-col sm:flex-row gap-4 p-4 rounded-lg border border-primary/20 bg-primary/5">
+                <div className="flex-1">
+                    <Label className="mb-2 block text-xs font-semibold uppercase text-muted-foreground">
+                        Data Source API
+                    </Label>
+                    <div className="flex items-center gap-2">
+                        <span className={`text-xs ${source === 'api' ? 'font-bold text-primary' : ''}`}>Official API</span>
+                        {/* Hidden toggle if needed, or simplified as just version for now since user prioritized V1/V2 */}
+                    </div>
+                </div>
+
+                <div className="flex-1">
+                    <Label className="mb-2 block text-xs font-semibold uppercase text-muted-foreground">
+                        Administrative Division
+                    </Label>
+                    <Tabs
+                        defaultValue={version}
+                        onValueChange={(v) => {
+                            setVersion(v as 'v1' | 'v2');
+                            // Reset selections on version change
+                            setSelectedProvinceCode(null);
+                            setSelectedDistrictCode(null);
+                            setSelectedWardCode(null);
+                        }}
+                        className="w-full"
+                    >
+                        <TabsList className="w-full grid grid-cols-2 h-8">
+                            <TabsTrigger value="v1" className="text-xs">
+                                Pre-Merger (V1)
+                            </TabsTrigger>
+                            <TabsTrigger value="v2" className="text-xs">
+                                Post-Merger (V2)
+                            </TabsTrigger>
+                        </TabsList>
+                    </Tabs>
+                    <p className="text-[10px] text-muted-foreground mt-1 text-right">
+                        Use V2 for latest 2025 updates
+                    </p>
+                </div>
             </div>
 
-            {/* Phone */}
-            <div>
-                <Label htmlFor="phone" className="text-white">
-                    Phone Number <span className="text-red-400">*</span>
-                </Label>
-                <Input
-                    id="phone"
-                    {...register('phone', {
-                        required: 'Phone number is required',
-                        pattern: {
-                            value: /^[0-9\s\-\+\(\)]{10,}$/,
-                            message: 'Invalid phone number format'
-                        }
-                    })}
-                    placeholder="+84 123 456 789"
-                    className="mt-1.5 bg-black/40 border-white/20 text-white"
-                />
-                {errors.phone && (
-                    <p className="text-red-400 text-xs mt-1">{errors.phone.message}</p>
-                )}
+            {/* Full Name & Phone */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <Label htmlFor="full_name">Full Name <span className="text-red-400">*</span></Label>
+                    <Input
+                        id="full_name"
+                        {...register('full_name', { required: 'Required', minLength: 2 })}
+                        placeholder="Nguyen Van A"
+                        className="mt-1.5"
+                    />
+                    {errors.full_name && <p className="text-destructive text-xs mt-1">{errors.full_name.message}</p>}
+                </div>
+                <div>
+                    <Label htmlFor="phone">Phone <span className="text-red-400">*</span></Label>
+                    <Input
+                        id="phone"
+                        {...register('phone', { required: 'Required', pattern: /^[0-9\s\-\+\(\)]{10,}$/ })}
+                        placeholder="0912 345 678"
+                        className="mt-1.5"
+                    />
+                    {errors.phone && <p className="text-destructive text-xs mt-1">{errors.phone.message}</p>}
+                </div>
             </div>
 
-            {/* Address Line 1 */}
+            {/* Address Selection Area */}
+            <div className="space-y-4 pt-2">
+                <Label>Address Details <span className="text-red-400">*</span></Label>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Province / City */}
+                    <div>
+                        <Select
+                            onValueChange={handleProvinceChange}
+                            value={selectedProvinceCode?.toString()}
+                            disabled={provinces.length === 0}
+                        >
+                            <SelectTrigger className="w-full mt-1.5">
+                                <SelectValue placeholder="Select Province/City" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {provinces.map((p) => (
+                                    <SelectItem key={p.code} value={p.code.toString()}>
+                                        {p.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <input type="hidden" {...register('city', { required: 'Province is required' })} />
+                        {errors.city && <p className="text-destructive text-xs mt-1">{errors.city.message}</p>}
+                    </div>
+
+                    {/* District */}
+                    <div>
+                        <Select
+                            onValueChange={handleDistrictChange}
+                            value={selectedDistrictCode?.toString()}
+                            disabled={!selectedProvinceCode}
+                        >
+                            <SelectTrigger className="w-full mt-1.5">
+                                <SelectValue placeholder="Select District" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {districts.map((d) => (
+                                    <SelectItem key={d.code} value={d.code.toString()}>
+                                        {d.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <input type="hidden" {...register('state_province', { required: 'District is required' })} />
+                    </div>
+
+                    {/* Ward (mapped to address_line2) */}
+                    <div>
+                        <Select
+                            onValueChange={handleWardChange}
+                            value={selectedWardCode?.toString()}
+                            disabled={!selectedDistrictCode}
+                        >
+                            <SelectTrigger className="w-full mt-1.5">
+                                <SelectValue placeholder="Select Ward" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {wards.map((w) => (
+                                    <SelectItem key={w.code} value={w.code.toString()}>
+                                        {w.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <input type="hidden" {...register('address_line2', { required: 'Ward is required' })} />
+                    </div>
+                </div>
+            </div>
+
+            {/* Specific Address Line 1 */}
             <div>
-                <Label htmlFor="address_line1" className="text-white">
-                    Address Line 1 <span className="text-red-400">*</span>
-                </Label>
+                <Label htmlFor="address_line1">Street Address <span className="text-red-400">*</span></Label>
                 <Input
                     id="address_line1"
-                    {...register('address_line1', {
-                        required: 'Address is required',
-                        minLength: { value: 5, message: 'Address must be at least 5 characters' }
-                    })}
-                    placeholder="123 Main Street"
-                    className="mt-1.5 bg-black/40 border-white/20 text-white"
+                    {...register('address_line1', { required: 'Street address is required', minLength: 5 })}
+                    placeholder="No. 123, Le Loi Street"
+                    className="mt-1.5"
                 />
-                {errors.address_line1 && (
-                    <p className="text-red-400 text-xs mt-1">{errors.address_line1.message}</p>
-                )}
+                {errors.address_line1 && <p className="text-destructive text-xs mt-1">{errors.address_line1.message}</p>}
             </div>
 
-            {/* Address Line 2 */}
-            <div>
-                <Label htmlFor="address_line2" className="text-white">
-                    Address Line 2 (Optional)
-                </Label>
-                <Input
-                    id="address_line2"
-                    {...register('address_line2')}
-                    placeholder="Apartment, suite, etc."
-                    className="mt-1.5 bg-black/40 border-white/20 text-white"
-                />
-            </div>
-
-            {/* City and State/Province */}
+            {/* Extra Info */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <Label htmlFor="city" className="text-white">
-                        City <span className="text-red-400">*</span>
-                    </Label>
+                    <Label htmlFor="label">Label (Optional)</Label>
                     <Input
-                        id="city"
-                        {...register('city', {
-                            required: 'City is required',
-                            minLength: { value: 2, message: 'City must be at least 2 characters' }
-                        })}
-                        placeholder="Ho Chi Minh City"
-                        className="mt-1.5 bg-black/40 border-white/20 text-white"
-                    />
-                    {errors.city && (
-                        <p className="text-red-400 text-xs mt-1">{errors.city.message}</p>
-                    )}
-                </div>
-
-                <div>
-                    <Label htmlFor="state_province" className="text-white">
-                        State/Province (Optional)
-                    </Label>
-                    <Input
-                        id="state_province"
-                        {...register('state_province')}
-                        placeholder="District 1"
-                        className="mt-1.5 bg-black/40 border-white/20 text-white"
+                        id="label"
+                        {...register('label')}
+                        placeholder="Home, Office..."
+                        className="mt-1.5"
                     />
                 </div>
-            </div>
-
-            {/* Postal Code and Country */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <Label htmlFor="postal_code" className="text-white">
-                        Postal Code (Optional)
-                    </Label>
-                    <Input
-                        id="postal_code"
-                        {...register('postal_code', {
-                            pattern: {
-                                value: /^[A-Za-z0-9\s\-]{3,10}$/,
-                                message: 'Invalid postal code format'
-                            }
-                        })}
-                        placeholder="700000"
-                        className="mt-1.5 bg-black/40 border-white/20 text-white"
-                    />
-                    {errors.postal_code && (
-                        <p className="text-red-400 text-xs mt-1">{errors.postal_code.message}</p>
-                    )}
-                </div>
-
-                <div>
-                    <Label htmlFor="country" className="text-white">
-                        Country <span className="text-red-400">*</span>
-                    </Label>
-                    <Select
-                        defaultValue={watch('country') || 'Vietnam'}
-                        onValueChange={(value) => setValue('country', value)}
-                    >
-                        <SelectTrigger className="mt-1.5 bg-black/40 border-white/20 text-white">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="bg-black/95 backdrop-blur-md border-white/20">
-                            <SelectItem value="Vietnam">Vietnam</SelectItem>
-                            <SelectItem value="USA">United States</SelectItem>
-                            <SelectItem value="UK">United Kingdom</SelectItem>
-                            <SelectItem value="Singapore">Singapore</SelectItem>
-                            <SelectItem value="Thailand">Thailand</SelectItem>
-                        </SelectContent>
-                    </Select>
+                <div className="flex items-end pb-3">
+                    <div className="flex items-center space-x-2">
+                        <Checkbox
+                            id="is_default"
+                            checked={isDefault}
+                            onCheckedChange={(checked) => setIsDefault(!!checked)}
+                        />
+                        <Label htmlFor="is_default" className="cursor-pointer font-normal">
+                            Set as default address
+                        </Label>
+                    </div>
                 </div>
             </div>
 
-            {/* Label */}
-            <div>
-                <Label htmlFor="label" className="text-white">
-                    Label (Optional)
-                </Label>
-                <Input
-                    id="label"
-                    {...register('label')}
-                    placeholder="Home, Office, etc."
-                    className="mt-1.5 bg-black/40 border-white/20 text-white"
-                />
-            </div>
+            {/* Hint for matching names matches */}
+            <p className="text-[10px] text-muted-foreground border-t pt-2 mt-2">
+                * Selected administrative units are auto-saved to your address book.
+            </p>
 
-            {/* Set as Default */}
-            <div className="flex items-center space-x-2 pt-2">
-                <Checkbox
-                    id="is_default"
-                    checked={isDefault}
-                    onCheckedChange={(checked) => setIsDefault(!!checked)}
-                    className="border-white/20 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
-                />
-                <Label htmlFor="is_default" className="text-white cursor-pointer">
-                    Set as default address
-                </Label>
-            </div>
-
-            {/* Action Buttons */}
+            {/* Buttons */}
             <div className="flex items-center gap-3 pt-4">
                 <Button
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex-1 bg-blue-500 hover:bg-blue-600 text-white"
+                    className="flex-1"
                 >
                     {isSubmitting ? (
                         <>
@@ -247,7 +343,7 @@ export function AddressForm({ address, onSubmit, onCancel, isSubmitting = false 
                     variant="outline"
                     onClick={onCancel}
                     disabled={isSubmitting}
-                    className="flex-1 border-white/20 text-white hover:bg-white/10"
+                    className="flex-1"
                 >
                     Cancel
                 </Button>
