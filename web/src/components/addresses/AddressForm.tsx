@@ -172,10 +172,10 @@ export function AddressForm({ address, onSubmit, onCancel, isSubmitting = false 
                     >
                         <TabsList className="w-full grid grid-cols-2 h-8">
                             <TabsTrigger value="v1" className="text-xs">
-                                Pre-Merger (V1)
+                                Trước sáp nhập tỉnh thành 07/2025
                             </TabsTrigger>
                             <TabsTrigger value="v2" className="text-xs">
-                                Post-Merger (V2)
+                                Sau sáp nhập tỉnh thành 07/2025
                             </TabsTrigger>
                         </TabsList>
                     </Tabs>
