@@ -146,8 +146,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
         return items.reduce((total, item) => total + item.quantity, 0);
     };
 
-    const getTotalPrice = () => {
-        return items.reduce((total, item) => total + (item.price * item.quantity), 0);
+    const getTotalPrice = (): number => {
+        return items.reduce((total, item) => {
+            // Safely convert bigint to number if needed
+            const price = typeof item.price === 'bigint' ? Number(item.price) : item.price;
+            const itemTotal = price * item.quantity;
+
+            // Validate safe integer range to prevent overflow
+            if (!Number.isSafeInteger(itemTotal)) {
+                console.warn(`[Cart] Price overflow detected for product ${item.id}. Price: ${price}, Quantity: ${item.quantity}`);
+            }
+
+            return total + itemTotal;
+        }, 0);
     };
 
     return (
