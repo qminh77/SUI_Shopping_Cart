@@ -25,8 +25,10 @@ export function useSearch(initialParams: SearchParams = {}) {
     const { data: searchResult, isLoading, error, refetch } = useQuery<SearchResult>({
         queryKey: ['search', params],
         queryFn: () => searchProducts(params),
-        staleTime: 2 * 60 * 1000, // 2 minutes
-        gcTime: 5 * 60 * 1000,
+        staleTime: 30 * 1000,        // 30 seconds (faster stock updates)
+        gcTime: 2 * 60 * 1000,       // 2 minutes
+        refetchOnWindowFocus: true,  // Auto-refresh when tab becomes active
+        refetchOnMount: true,        // Fresh data on component mount
     });
 
     // Search suggestions
@@ -147,8 +149,9 @@ export function useProductsByCategory(categoryId: string | null, includeSubcateg
         queryKey: ['products', 'category', categoryId, includeSubcategories],
         queryFn: () => categoryId ? getProductsByCategory(categoryId, includeSubcategories) : Promise.resolve([]),
         enabled: !!categoryId,
-        staleTime: 2 * 60 * 1000,
-        gcTime: 5 * 60 * 1000,
+        staleTime: 30 * 1000,        // 30 seconds
+        gcTime: 2 * 60 * 1000,       // 2 minutes
+        refetchOnWindowFocus: true,  // Auto-refresh on tab switch
     });
 }
 
@@ -159,7 +162,9 @@ export function useProductsWithCategory(limit: number = 50) {
     return useQuery<Product[]>({
         queryKey: ['products', 'with-category', limit],
         queryFn: () => getProductsWithCategory(limit),
-        staleTime: 2 * 60 * 1000,
-        gcTime: 5 * 60 * 1000,
+        staleTime: 30 * 1000,          // 30 seconds
+        gcTime: 2 * 60 * 1000,         // 2 minutes
+        refetchOnWindowFocus: true,    // Auto-refresh on tab switch
+        refetchInterval: 60 * 1000,    // Poll every 60s when page active (real-time sync)
     });
 }

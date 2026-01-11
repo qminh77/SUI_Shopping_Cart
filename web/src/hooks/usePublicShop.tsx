@@ -63,7 +63,10 @@ export function usePublicShop(walletAddress: string) {
             return await getShopProducts(client, walletAddress);
         },
         enabled: !!walletAddress,
-        staleTime: 2 * 60 * 1000, // Cache for 2 minutes
+        staleTime: 30 * 1000,          // 30 seconds (faster stock updates)
+        gcTime: 2 * 60 * 1000,         // 2 minutes
+        refetchOnWindowFocus: true,    // Auto-refresh when switching back to tab
+        refetchInterval: 60 * 1000,    // Poll every 60s for real-time sync
     });
 
     return {

@@ -132,10 +132,38 @@ export function useCheckout() {
 
             try {
                 await Promise.all(syncPromises);
+                console.log('[useCheckout] Product stock sync completed');
             } catch (syncError) {
                 console.error('Some products failed to sync:', syncError);
                 // Don't show error to user - this is a background operation
             }
+
+            // ✨ NEW: Invalidate React Query cache for immediate UI updates
+            console.log('[useCheckout] Invalidating product queries for fresh data...');
+
+            // Invalidate all product-related queries
+            await queryClient.invalidateQueries({
+                queryKey: ['products'],
+                refetchType: 'active'
+            });
+
+            await queryClient.invalidateQueries({
+                queryKey: ['search'],
+                refetchType: 'active'
+            });
+
+            await queryClient.invalidateQueries({
+                queryKey: ['publicShopProducts'],
+                refetchType: 'active'
+            });
+
+            // Refetch active product queries immediately for instant UI update
+            await queryClient.refetchQueries({
+                queryKey: ['products', 'with-category'],
+                type: 'active'
+            });
+
+            console.log('[useCheckout] Cache invalidation complete - UI should update now');
 
             return { result };
         },
