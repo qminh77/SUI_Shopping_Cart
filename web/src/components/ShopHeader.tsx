@@ -4,6 +4,7 @@ import { Store, Mail, Phone, MapPin, Calendar, ExternalLink, Facebook, Instagram
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Separator } from '@/components/ui/separator';
 import {
     Accordion,
@@ -39,6 +40,7 @@ interface ShopHeaderProps {
 }
 
 export function ShopHeader({ shop, productCount }: ShopHeaderProps) {
+    const { t } = useLanguage();
     const isActive = shop.status === 'ACTIVE';
 
     return (
@@ -90,12 +92,12 @@ export function ShopHeader({ shop, productCount }: ShopHeaderProps) {
                                     <div className="flex items-center gap-2">
                                         <Store className="w-4 h-4 text-muted-foreground" />
                                         <span className="font-semibold">{productCount}</span>
-                                        <span className="text-muted-foreground">Products</span>
+                                        <span className="text-muted-foreground">{t('shop.products')}</span>
                                     </div>
                                     <Separator orientation="vertical" className="h-5" />
                                     <div className="flex items-center gap-2">
                                         <Calendar className="w-4 h-4 text-muted-foreground" />
-                                        <span className="text-muted-foreground">Since {shop.established_year}</span>
+                                        <span className="text-muted-foreground">{t('shop.since', { year: shop.established_year })}</span>
                                     </div>
                                     <Separator orientation="vertical" className="h-5" />
                                     <div className="flex items-center gap-2">

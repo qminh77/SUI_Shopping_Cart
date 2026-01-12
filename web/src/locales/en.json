@@ -113,7 +113,28 @@
             "priceAsc": "Price: Low to High",
             "priceDesc": "Price: High to Low",
             "name": "Name: A to Z"
-        }
+        },
+        "showingResultsCount": "Showing {count} results",
+        "products": "Products",
+        "since": "Since {year}",
+        "noProducts": "No products found",
+        "tryAdjusting": "Try adjusting your filters",
+        "search": "Search",
+        "searchPlaceholder": "Search products...",
+        "activeFilters": "Active Filters",
+        "creator": "Creator Address",
+        "creatorDesc": "Filter by specific creator wallet address",
+        "minPrice": "Min Price",
+        "maxPrice": "Max Price",
+        "sortBy": "Sort By",
+        "nameAsc": "Name (A-Z)",
+        "nameDesc": "Name (Z-A)",
+        "priceLowHigh": "Price (Low to High)",
+        "priceHighLow": "Price (High to Low)",
+        "showingResults": "Showing results",
+        "results": "results",
+        "allProducts": "All Products",
+        "categories": "Categories"
     },
     "product": {
         "addToCart": "Add to Cart",
@@ -139,30 +160,14 @@
     },
     "toast": {
         "addedToCart": "Added to cart!",
-        "alreadyInCart": "Product already in cart"
-    },
-    "cart": {
-        "title": "Shopping Cart",
-        "empty": "Your cart is empty",
-        "startShopping": "Start Shopping",
-        "subtotal": "Subtotal",
-        "checkout": "Checkout",
-        "remove": "Remove",
-        "continueShopping": "Continue Shopping",
-        "items": "items",
-        "total": "Total"
-    },
-    "checkout": {
-        "title": "Checkout",
-        "shippingAddress": "Shipping Address",
-        "selectAddress": "Select Address",
-        "paymentMethod": "Payment Method",
-        "placeOrder": "Place Order",
-        "orderSummary": "Order Summary",
-        "shipping": "Shipping",
-        "free": "Free",
-        "processing": "Processing...",
-        "successMessage": "Order placed successfully!"
+        "alreadyInCart": "Product already in cart",
+        "connectWallet": "Please connect your wallet",
+        "selectItems": "Please select items to purchase",
+        "selectAddress": "Please select a shipping address",
+        "stockCheckSkipped": "Unable to verify stock. Proceeding with checkout...",
+        "outOfStockRemoved": "{name} is out of stock and has been removed from cart",
+        "quantityAdjusted": "{name}: Only {available} available. Quantity updated from {requested} to {available}",
+        "stockValidationFailed": "Some items were out of stock. Please review your cart and try again."
     },
     "profile": {
         "orders": {
@@ -242,6 +247,39 @@
         "status": "Status",
         "total": "Total",
         "actions": "Actions"
+    },
+    "cart": {
+        "title": "Shopping Cart",
+        "items": "Items",
+        "remove": "Remove",
+        "empty": "Your cart is empty",
+        "emptyMessage": "Looks like you haven't added anything to your cart yet.",
+        "startShopping": "Start Shopping",
+        "subtotal": "Subtotal",
+        "total": "Total",
+        "checkout": "Checkout",
+        "unitPrice": "Unit Price: {price} SUI",
+        "selectAll": "Select All",
+        "deselectAll": "Deselect All",
+        "selectItems": "Select Items to Checkout",
+        "validating": "Validating...",
+        "continueShopping": "Continue Shopping"
+    },
+    "checkout": {
+        "title": "Checkout",
+        "shippingAddress": "Shipping Address",
+        "paymentMethod": "Payment Method",
+        "placeOrder": "Place Order",
+        "processing": "Processing...",
+        "success": "Order placed successfully!",
+        "selectAddress": "Select Address",
+        "noAddresses": "No addresses found",
+        "addAddressToProceed": "Add an address to proceed with checkout",
+        "changeAddress": "Change",
+        "selectShipping": "Select Shipping Address",
+        "orderSummary": "Order Summary",
+        "shipping": "Shipping",
+        "free": "Free"
     },
     "seller": {
         "dashboard": {

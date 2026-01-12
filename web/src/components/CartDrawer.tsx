@@ -71,17 +71,17 @@ export function CartDrawer() {
 
     const handleCheckout = async () => {
         if (!account) {
-            toast.error('Please connect your wallet');
+            toast.error(t('toast.connectWallet'));
             return;
         }
 
         if (selectedItemsList.length === 0) {
-            toast.error('Please select items to purchase');
+            toast.error(t('toast.selectItems'));
             return;
         }
 
         if (!selectedAddress) {
-            toast.error('Please select a shipping address');
+            toast.error(t('toast.selectAddress'));
             return;
         }
 
@@ -103,7 +103,7 @@ export function CartDrawer() {
                 }
             } catch (queryError) {
                 console.error('[CartDrawer] Failed to fetch products for validation:', queryError);
-                toast.warning('Unable to verify stock. Proceeding with checkout...', {
+                toast.warning(t('toast.stockCheckSkipped'), {
                     duration: 3000
                 });
                 // Proceed without validation rather than blocking checkout
@@ -117,7 +117,7 @@ export function CartDrawer() {
                 if (validation.outOfStock.length > 0) {
                     for (const item of validation.outOfStock) {
                         removeFromCart(item.id);
-                        toast.error(`"${item.name}" is out of stock and has been removed from cart`, {
+                        toast.error(t('toast.outOfStockRemoved', { name: item.name }), {
                             duration: 5000
                         });
                     }
@@ -127,13 +127,17 @@ export function CartDrawer() {
                     for (const issue of validation.insufficientStock) {
                         updateQuantity(issue.product.id, issue.available);
                         toast.warning(
-                            `"${issue.product.name}": Only ${issue.available} available. Quantity updated from ${issue.requested} to ${issue.available}`,
+                            t('toast.quantityAdjusted', {
+                                name: issue.product.name,
+                                available: issue.available,
+                                requested: issue.requested
+                            }),
                             { duration: 5000 }
                         );
                     }
                 }
 
-                toast.error('Some items were out of stock. Please review your cart and try again.', {
+                toast.error(t('toast.stockValidationFailed'), {
                     duration: 6000
                 });
 
@@ -224,7 +228,7 @@ export function CartDrawer() {
                             <div className="space-y-2 max-w-xs mx-auto">
                                 <h3 className="font-semibold text-xl">{t('cart.empty')}</h3>
                                 <p className="text-sm text-muted-foreground">
-                                    Looks like you haven't added anything to your cart yet.
+                                    {t('cart.emptyMessage')}
                                 </p>
                             </div>
                             <Button
@@ -253,8 +257,8 @@ export function CartDrawer() {
                                 ) : addresses.length === 0 ? (
                                     <div className="p-6 rounded-xl border border-dashed text-center space-y-3 bg-card/50">
                                         <div className="space-y-1">
-                                            <p className="font-medium text-sm">No addresses found</p>
-                                            <p className="text-xs text-muted-foreground">Add an address to proceed with checkout</p>
+                                            <p className="font-medium text-sm">{t('checkout.noAddresses')}</p>
+                                            <p className="text-xs text-muted-foreground">{t('checkout.addAddressToProceed')}</p>
                                         </div>
                                         <Link href="/profile/addresses" onClick={() => setOpen(false)}>
                                             <Button variant="outline" size="sm" className="w-full">
@@ -293,7 +297,7 @@ export function CartDrawer() {
                                                         size="sm"
                                                         className="absolute right-3 top-3 opacity-0 group-hover:opacity-100 transition-opacity"
                                                     >
-                                                        Change
+                                                        {t('checkout.changeAddress')}
                                                     </Button>
                                                 </DialogTrigger>
                                                 <DialogContent className="max-w-md">
@@ -358,7 +362,7 @@ export function CartDrawer() {
                                 ) : (
                                     <Button variant="outline" className="w-full h-auto py-4 border-dashed" onClick={() => setIsAddressDialogOpen(true)}>
                                         <PlusCircle className="w-4 h-4 mr-2" />
-                                        Select Shipping Address
+                                        {t('checkout.selectShipping')}
                                     </Button>
                                 )}
                             </div>
@@ -376,7 +380,7 @@ export function CartDrawer() {
                                             onClick={selectedItems.size === items.length ? deselectAll : selectAll}
                                             className="h-auto p-0 text-xs text-primary"
                                         >
-                                            {selectedItems.size === items.length ? 'Deselect All' : 'Select All'}
+                                            {selectedItems.size === items.length ? t('cart.deselectAll') : t('cart.selectAll')}
                                         </Button>
                                     )}
                                 </div>
@@ -414,7 +418,7 @@ export function CartDrawer() {
                                                     </button>
                                                 </div>
                                                 <p className="text-xs text-muted-foreground">
-                                                    Unit Price: {mistToSui(item.price)} SUI
+                                                    {t('cart.unitPrice', { price: mistToSui(item.price) })}
                                                 </p>
                                             </div>
 
@@ -484,7 +488,7 @@ export function CartDrawer() {
                                 {isValidating ? (
                                     <>
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Validating...
+                                        {t('cart.validating')}
                                     </>
                                 ) : isProcessing ? (
                                     <>
@@ -494,7 +498,7 @@ export function CartDrawer() {
                                 ) : !account ? (
                                     t('nav.connectWallet')
                                 ) : selectedItemsList.length === 0 ? (
-                                    'Select Items to Checkout'
+                                    t('cart.selectItems')
                                 ) : !selectedAddress ? (
                                     t('checkout.selectAddress')
                                 ) : (

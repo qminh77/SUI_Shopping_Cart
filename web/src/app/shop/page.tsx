@@ -139,7 +139,7 @@ export default function ShopPage() {
                         {/* Results Meta */}
                         <div className="flex justify-between items-center mb-8 border-b border-border/50 pb-4">
                             <p className="text-sm font-medium text-muted-foreground">
-                                {t('shop.showingResults')} <span className="text-foreground font-bold">{products.length}</span> {t('shop.results')}
+                                {t('shop.showingResultsCount', { count: products.length })}
                             </p>
                         </div>
 

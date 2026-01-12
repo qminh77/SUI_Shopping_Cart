@@ -113,7 +113,28 @@
             "priceAsc": "Giá: Thấp đến Cao",
             "priceDesc": "Giá: Cao đến Thấp",
             "name": "Tên: A đến Z"
-        }
+        },
+        "showingResultsCount": "Hiển thị {count} kết quả",
+        "products": "Sản phẩm",
+        "since": "Thành lập {year}",
+        "noProducts": "Không tìm thấy sản phẩm nào",
+        "tryAdjusting": "Thử điều chỉnh bộ lọc của bạn",
+        "search": "Tìm kiếm",
+        "searchPlaceholder": "Tìm sản phẩm...",
+        "activeFilters": "Bộ lọc đang dùng",
+        "creator": "Địa chỉ người tạo",
+        "creatorDesc": "Lọc theo địa chỉ ví cụ thể",
+        "minPrice": "Giá thấp nhất",
+        "maxPrice": "Giá cao nhất",
+        "sortBy": "Sắp xếp theo",
+        "nameAsc": "Tên (A-Z)",
+        "nameDesc": "Tên (Z-A)",
+        "priceLowHigh": "Giá (Thấp đến Cao)",
+        "priceHighLow": "Giá (Cao đến Thấp)",
+        "showingResults": "Hiển thị kết quả",
+        "results": "kết quả",
+        "allProducts": "Tất cả sản phẩm",
+        "categories": "Danh mục"
     },
     "product": {
         "addToCart": "Thêm vào giỏ",
@@ -139,30 +160,14 @@
     },
     "toast": {
         "addedToCart": "Đã thêm vào giỏ hàng!",
-        "alreadyInCart": "Sản phẩm đã có trong giỏ hàng"
-    },
-    "cart": {
-        "title": "Giỏ hàng",
-        "empty": "Giỏ hàng của bạn đang trống",
-        "startShopping": "Bắt đầu mua sắm",
-        "subtotal": "Tạm tính",
-        "checkout": "Thanh toán",
-        "remove": "Xóa",
-        "continueShopping": "Tiếp tục mua sắm",
-        "items": "sản phẩm",
-        "total": "Tổng cộng"
-    },
-    "checkout": {
-        "title": "Thanh toán",
-        "shippingAddress": "Địa chỉ giao hàng",
-        "selectAddress": "Chọn địa chỉ",
-        "paymentMethod": "Phương thức thanh toán",
-        "placeOrder": "Đặt hàng",
-        "orderSummary": "Tóm tắt đơn hàng",
-        "shipping": "Vận chuyển",
-        "free": "Miễn phí",
-        "processing": "Đang xử lý...",
-        "successMessage": "Đặt hàng thành công!"
+        "alreadyInCart": "Sản phẩm đã có trong giỏ hàng",
+        "connectWallet": "Vui lòng kết nối ví của bạn",
+        "selectItems": "Vui lòng chọn sản phẩm để thanh toán",
+        "selectAddress": "Vui lòng chọn địa chỉ giao hàng",
+        "stockCheckSkipped": "Không thể kiểm tra tồn kho. Đang tiếp tục thanh toán...",
+        "outOfStockRemoved": "{name} đã hết hàng và bị xóa khỏi giỏ hàng",
+        "quantityAdjusted": "{name}: Chỉ còn {available} sản phẩm. Đã cập nhật số lượng từ {requested} xuống {available}",
+        "stockValidationFailed": "Một số sản phẩm đã hết hàng. Vui lòng kiểm tra lại giỏ hàng."
     },
     "profile": {
         "orders": {
@@ -242,6 +247,39 @@
         "status": "Trạng thái",
         "total": "Tổng tiền",
         "actions": "Thao tác"
+    },
+    "cart": {
+        "title": "Giỏ hàng",
+        "items": "Món",
+        "remove": "Xóa",
+        "empty": "Giỏ hàng trống",
+        "emptyMessage": "Có vẻ như bạn chưa thêm gì vào giỏ hàng.",
+        "startShopping": "Bắt đầu mua sắm",
+        "subtotal": "Tạm tính",
+        "total": "Tổng cộng",
+        "checkout": "Thanh toán",
+        "unitPrice": "Đơn giá: {price} SUI",
+        "selectAll": "Chọn tất cả",
+        "deselectAll": "Bỏ chọn tất cả",
+        "selectItems": "Chọn sản phẩm để thanh toán",
+        "validating": "Đang kiểm tra...",
+        "continueShopping": "Tiếp tục mua sắm"
+    },
+    "checkout": {
+        "title": "Thanh toán",
+        "shippingAddress": "Địa chỉ giao hàng",
+        "paymentMethod": "Phương thức thanh toán",
+        "placeOrder": "Đặt hàng",
+        "processing": "Đang xử lý...",
+        "success": "Đặt hàng thành công!",
+        "selectAddress": "Chọn địa chỉ",
+        "noAddresses": "Không tìm thấy địa chỉ",
+        "addAddressToProceed": "Thêm địa chỉ để tiếp tục thanh toán",
+        "changeAddress": "Thay đổi",
+        "selectShipping": "Chọn địa chỉ giao hàng",
+        "orderSummary": "Tóm tắt đơn hàng",
+        "shipping": "Vận chuyển",
+        "free": "Miễn phí"
     },
     "seller": {
         "dashboard": {
