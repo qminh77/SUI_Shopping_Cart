@@ -25,6 +25,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { useShop } from '@/hooks/useShop'
 import { Loader2, Store } from 'lucide-react'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 const shopFormSchema = z.object({
     shop_name: z.string().min(3, 'At least 3 characters').max(80),
@@ -49,6 +50,7 @@ type ShopFormValues = z.infer<typeof shopFormSchema>
 
 export default function CreateShopForm() {
     const { createShop } = useShop()
+    const { t } = useLanguage()
 
     const form = useForm<ShopFormValues>({
         resolver: zodResolver(shopFormSchema) as any,
@@ -99,17 +101,17 @@ export default function CreateShopForm() {
                                 <Store className="h-8 w-8 text-primary" />
                             </div>
                         </div>
-                        <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Register Your Shop</h1>
+                        <h1 className="text-3xl md:text-4xl font-bold tracking-tight">{t('seller.register.title')}</h1>
                         <p className="text-muted-foreground max-w-2xl mx-auto">
-                            Fill in the details below to start selling on the marketplace
+                            {t('seller.register.subtitle')}
                         </p>
                     </div>
 
                     {/* Basic Information */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Basic Information</CardTitle>
-                            <CardDescription>Required information about your shop</CardDescription>
+                            <CardTitle>{t('seller.register.basicInfo')}</CardTitle>
+                            <CardDescription>{t('seller.register.basicInfoDesc')}</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <FormField
@@ -117,7 +119,7 @@ export default function CreateShopForm() {
                                 name="shop_name"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Shop Name</FormLabel>
+                                        <FormLabel>{t('seller.register.shopName')}</FormLabel>
                                         <FormControl>
                                             <Input placeholder="My Awesome Store" {...field} />
                                         </FormControl>
@@ -130,10 +132,10 @@ export default function CreateShopForm() {
                                 name="shop_description"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Description</FormLabel>
+                                        <FormLabel>{t('seller.register.description')}</FormLabel>
                                         <FormControl>
                                             <Textarea
-                                                placeholder="Tell us about your shop..."
+                                                placeholder={t('seller.register.description') + "..."}
                                                 rows={4}
                                                 {...field}
                                             />
@@ -148,7 +150,7 @@ export default function CreateShopForm() {
                                     name="business_type"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Business Type</FormLabel>
+                                            <FormLabel>{t('seller.register.businessType')}</FormLabel>
                                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                                                 <FormControl>
                                                     <SelectTrigger>
@@ -156,8 +158,8 @@ export default function CreateShopForm() {
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
-                                                    <SelectItem value="PERSONAL">Personal (Individual)</SelectItem>
-                                                    <SelectItem value="BUSINESS">Business (Enterprise)</SelectItem>
+                                                    <SelectItem value="PERSONAL">{t('seller.register.personal')}</SelectItem>
+                                                    <SelectItem value="BUSINESS">{t('seller.register.business')}</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                             <FormMessage />
@@ -169,7 +171,7 @@ export default function CreateShopForm() {
                                     name="established_year"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Established Year</FormLabel>
+                                            <FormLabel>{t('seller.register.establishedYear')}</FormLabel>
                                             <FormControl>
                                                 <Input type="number" {...field} />
                                             </FormControl>
@@ -184,8 +186,8 @@ export default function CreateShopForm() {
                     {/* Contact Information */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Contact Information</CardTitle>
-                            <CardDescription>How customers can reach you</CardDescription>
+                            <CardTitle>{t('seller.register.contactInfo')}</CardTitle>
+                            <CardDescription>{t('seller.register.contactInfoDesc')}</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -194,7 +196,7 @@ export default function CreateShopForm() {
                                     name="contact_email"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Contact Email</FormLabel>
+                                            <FormLabel>{t('seller.register.email')}</FormLabel>
                                             <FormControl>
                                                 <Input type="email" placeholder="contact@shop.com" {...field} />
                                             </FormControl>
@@ -207,7 +209,7 @@ export default function CreateShopForm() {
                                     name="contact_phone"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Phone Number</FormLabel>
+                                            <FormLabel>{t('seller.register.phone')}</FormLabel>
                                             <FormControl>
                                                 <Input placeholder="0901234567" {...field} />
                                             </FormControl>
@@ -223,7 +225,7 @@ export default function CreateShopForm() {
                                     name="address_city"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>City/Province</FormLabel>
+                                            <FormLabel>{t('seller.register.city')}</FormLabel>
                                             <FormControl>
                                                 <Input placeholder="Ho Chi Minh City" {...field} />
                                             </FormControl>
@@ -236,7 +238,7 @@ export default function CreateShopForm() {
                                     name="address_detail"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Detailed Address</FormLabel>
+                                            <FormLabel>{t('seller.register.address')}</FormLabel>
                                             <FormControl>
                                                 <Input placeholder="123 Street Name, District 1" {...field} />
                                             </FormControl>
@@ -251,8 +253,8 @@ export default function CreateShopForm() {
                     {/* Legal Information */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Legal Information</CardTitle>
-                            <CardDescription>Tax and business registration details</CardDescription>
+                            <CardTitle>{t('seller.register.legalInfo')}</CardTitle>
+                            <CardDescription>{t('seller.register.legalInfoDesc')}</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <FormField
@@ -261,7 +263,7 @@ export default function CreateShopForm() {
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>
-                                            Tax Code {businessType === 'BUSINESS' && <span className="text-destructive">*</span>}
+                                            {t('seller.register.taxCode')} {businessType === 'BUSINESS' && <span className="text-destructive">*</span>}
                                         </FormLabel>
                                         <FormControl>
                                             <Input placeholder="Tax ID" {...field} />
@@ -277,8 +279,8 @@ export default function CreateShopForm() {
                     {/* Branding & Socials */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Branding & Social Media</CardTitle>
-                            <CardDescription>Optional - Help customers find you online</CardDescription>
+                            <CardTitle>{t('seller.register.branding')}</CardTitle>
+                            <CardDescription>{t('seller.register.brandingDesc')}</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <FormField
@@ -286,7 +288,7 @@ export default function CreateShopForm() {
                                 name="website"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Website URL</FormLabel>
+                                        <FormLabel>{t('seller.register.website')}</FormLabel>
                                         <FormControl>
                                             <Input placeholder="https://myshop.com" {...field} />
                                         </FormControl>
@@ -328,8 +330,8 @@ export default function CreateShopForm() {
                     {/* Policies */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Shop Policies</CardTitle>
-                            <CardDescription>Optional - Set clear expectations with customers</CardDescription>
+                            <CardTitle>{t('seller.register.policies')}</CardTitle>
+                            <CardDescription>{t('seller.register.policiesDesc')}</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <FormField
@@ -337,7 +339,7 @@ export default function CreateShopForm() {
                                 name="return_policy"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Return Policy</FormLabel>
+                                        <FormLabel>{t('seller.register.returnPolicy')}</FormLabel>
                                         <FormControl>
                                             <Textarea placeholder="30 days return..." rows={3} {...field} />
                                         </FormControl>
@@ -356,7 +358,7 @@ export default function CreateShopForm() {
                         disabled={createShop.isPending}
                     >
                         {createShop.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Submit Registration
+                        {t('seller.register.submit')}
                     </Button>
                 </form>
             </Form>

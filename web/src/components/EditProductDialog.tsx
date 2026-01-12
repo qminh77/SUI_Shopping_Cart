@@ -19,6 +19,7 @@ import { toast } from 'sonner';
 import { useSignAndExecuteTransaction } from '@mysten/dapp-kit';
 import { Transaction } from '@mysten/sui/transactions';
 import { useSuiClient } from '@mysten/dapp-kit';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface EditProductDialogProps {
     open: boolean;
@@ -33,6 +34,7 @@ export function EditProductDialog({
     product,
     onSuccess,
 }: EditProductDialogProps) {
+    const { t } = useLanguage();
     const client = useSuiClient();
     const { mutateAsync: signAndExecute } = useSignAndExecuteTransaction();
 
@@ -133,7 +135,7 @@ export function EditProductDialog({
 
             if (!res.ok) throw new Error('Failed to update database');
 
-            toast.success('Cập nhật sản phẩm thành công!');
+            toast.success(t('seller.products.form.update') + ' ' + t('common.success'));
             onSuccess();
             onOpenChange(false);
 
@@ -149,11 +151,11 @@ export function EditProductDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[425px] bg-card">
                 <DialogHeader>
-                    <DialogTitle>Chỉnh Sửa Sản Phẩm</DialogTitle>
+                    <DialogTitle>{t('seller.products.edit')}</DialogTitle>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                     <div className="space-y-2">
-                        <Label htmlFor="edit-name">Tên sản phẩm</Label>
+                        <Label htmlFor="edit-name">{t('seller.products.form.name')}</Label>
                         <Input
                             id="edit-name"
                             value={formData.name}
@@ -163,7 +165,7 @@ export function EditProductDialog({
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="edit-price">Giá (SUI)</Label>
+                            <Label htmlFor="edit-price">{t('seller.products.form.price')}</Label>
                             <Input
                                 id="edit-price"
                                 type="number"
@@ -173,7 +175,7 @@ export function EditProductDialog({
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="edit-stock">Số lượng</Label>
+                            <Label htmlFor="edit-stock">{t('seller.products.form.stock')}</Label>
                             <Input
                                 id="edit-stock"
                                 type="number"
@@ -184,7 +186,7 @@ export function EditProductDialog({
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="edit-image">URL hình ảnh</Label>
+                        <Label htmlFor="edit-image">{t('seller.products.form.image')}</Label>
                         <Input
                             id="edit-image"
                             value={formData.imageUrl}
@@ -193,7 +195,7 @@ export function EditProductDialog({
                     </div>
 
                     <div className="space-y-2">
-                        <Label>Danh mục</Label>
+                        <Label>{t('seller.products.form.category')}</Label>
                         <CategorySelector
                             value={formData.categoryId}
                             onChange={(val) => setFormData({ ...formData, categoryId: val })}
@@ -201,7 +203,7 @@ export function EditProductDialog({
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="edit-desc">Mô tả</Label>
+                        <Label htmlFor="edit-desc">{t('seller.products.form.description')}</Label>
                         <Textarea
                             id="edit-desc"
                             value={formData.description}
@@ -212,16 +214,16 @@ export function EditProductDialog({
                 </div>
                 <DialogFooter>
                     <Button variant="outline" onClick={() => onOpenChange(false)}>
-                        Hủy
+                        {t('common.cancel')}
                     </Button>
                     <Button onClick={handleSubmit} disabled={isLoading}>
                         {isLoading ? (
                             <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Đang lưu...
+                                {t('seller.products.form.saving')}
                             </>
                         ) : (
-                            'Lưu Thay Đổi'
+                            t('seller.products.form.update')
                         )}
                     </Button>
                 </DialogFooter>

@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/popover";
 import { Label } from '@/components/ui/label';
 import { useTopLevelCategories, useSubcategories, useCategoryById } from '@/hooks/useCategories';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface CategorySelectorProps {
     value: string | null;
@@ -27,6 +28,7 @@ interface CategorySelectorProps {
 }
 
 export function CategorySelector({ value, onChange, disabled, className }: CategorySelectorProps) {
+    const { t } = useLanguage();
     // Determine if the current value is a top-level or subcategory
     // We need to fetch the category details if value is provided to know its parent
     const { data: selectedCategory, isLoading: isLoadingSelected } = useCategoryById(value);
@@ -83,7 +85,7 @@ export function CategorySelector({ value, onChange, disabled, className }: Categ
     return (
         <div className={cn("grid gap-4 sm:grid-cols-2", className)}>
             <div className="space-y-2">
-                <Label>Danh mục chính</Label>
+                <Label>{t('categories.main')}</Label>
                 <Popover open={openParent} onOpenChange={setOpenParent}>
                     <PopoverTrigger asChild>
                         <Button
@@ -99,7 +101,7 @@ export function CategorySelector({ value, onChange, disabled, className }: Categ
                                     {selectedParent.name}
                                 </span>
                             ) : (
-                                "Chọn danh mục..."
+                                t('categories.select')
                             )}
                             {isLoadingTop ? (
                                 <Loader2 className="ml-2 h-4 w-4 animate-spin opacity-50" />
@@ -110,9 +112,9 @@ export function CategorySelector({ value, onChange, disabled, className }: Categ
                     </PopoverTrigger>
                     <PopoverContent className="w-[300px] p-0" align="start">
                         <Command>
-                            <CommandInput placeholder="Tìm danh mục..." />
+                            <CommandInput placeholder={t('categories.search')} />
                             <CommandList>
-                                <CommandEmpty>Không tìm thấy danh mục.</CommandEmpty>
+                                <CommandEmpty>{t('categories.notFound')}</CommandEmpty>
                                 <CommandGroup>
                                     {topLevelCategories?.map((category) => (
                                         <CommandItem
@@ -140,7 +142,7 @@ export function CategorySelector({ value, onChange, disabled, className }: Categ
             {/* Only show subcategory selector if there are subcategories available OR if we are loading them */}
             {(isLoadingSubs || (subElements && subElements.length > 0)) && (
                 <div className="space-y-2">
-                    <Label>Danh mục con</Label>
+                    <Label>{t('categories.sub')}</Label>
                     <Popover open={openChild} onOpenChange={setOpenChild}>
                         <PopoverTrigger asChild>
                             <Button
@@ -156,7 +158,7 @@ export function CategorySelector({ value, onChange, disabled, className }: Categ
                                         {selectedChild.name}
                                     </span>
                                 ) : (
-                                    "Chọn chi tiết..."
+                                    t('categories.selectSub')
                                 )}
                                 {isLoadingSubs ? (
                                     <Loader2 className="ml-2 h-4 w-4 animate-spin opacity-50" />
@@ -167,9 +169,9 @@ export function CategorySelector({ value, onChange, disabled, className }: Categ
                         </PopoverTrigger>
                         <PopoverContent className="w-[300px] p-0" align="start">
                             <Command>
-                                <CommandInput placeholder="Tìm danh mục con..." />
+                                <CommandInput placeholder={t('categories.search')} />
                                 <CommandList>
-                                    <CommandEmpty>Không tìm thấy danh mục.</CommandEmpty>
+                                    <CommandEmpty>{t('categories.notFound')}</CommandEmpty>
                                     <CommandGroup>
                                         {subElements?.map((category) => (
                                             <CommandItem

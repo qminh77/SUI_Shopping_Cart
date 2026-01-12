@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Wallet, LogOut, ChevronDown, Check, Loader2 } from 'lucide-react'
 import { useState, useEffect } from 'react'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 interface WalletConnectButtonProps {
     className?: string
@@ -23,6 +24,7 @@ export function WalletConnectButton({ className }: WalletConnectButtonProps) {
     const { mutate: disconnect } = useDisconnectWallet()
     const wallets = useWallets()
     const [isOpen, setIsOpen] = useState(false)
+    const { t } = useLanguage()
 
     // Safety check for hydration
     const [isMounted, setIsMounted] = useState(false)
@@ -43,7 +45,7 @@ export function WalletConnectButton({ className }: WalletConnectButtonProps) {
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56 bg-background/95 backdrop-blur-md border-primary/20">
-                    <DropdownMenuLabel className="text-xs text-muted-foreground uppercase tracking-wider">Connected Wallet</DropdownMenuLabel>
+                    <DropdownMenuLabel className="text-xs text-muted-foreground uppercase tracking-wider">{t('nav.connectedWallet')}</DropdownMenuLabel>
                     <div className="px-2 py-1.5 text-xs font-mono break-all bg-secondary/50 rounded-sm mb-2 mx-1">
                         {account.address}
                     </div>
@@ -53,7 +55,7 @@ export function WalletConnectButton({ className }: WalletConnectButtonProps) {
                         onClick={() => disconnect()}
                     >
                         <LogOut className="mr-2 h-4 w-4" />
-                        Disconnect
+                        {t('nav.logOut')}
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
@@ -65,7 +67,7 @@ export function WalletConnectButton({ className }: WalletConnectButtonProps) {
             <DropdownMenuTrigger asChild>
                 <Button className={`gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 ${className}`}>
                     <Wallet className="h-4 w-4" />
-                    Connect Wallet
+                    {t('nav.connectWallet')}
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-64 bg-background/95 backdrop-blur-md border-primary/20 p-2">

@@ -5,6 +5,7 @@ import { Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface SearchBarProps {
     onSearch?: (query: string) => void;
@@ -15,11 +16,14 @@ interface SearchBarProps {
 
 export function SearchBar({
     onSearch,
-    placeholder = 'Search products...',
+    placeholder,
     defaultValue = '',
     className
 }: SearchBarProps) {
+    const { t } = useLanguage();
     const [query, setQuery] = useState(defaultValue);
+
+    const resolvedPlaceholder = placeholder || t('search.placeholder');
 
     const handleSearch = (value: string) => {
         setQuery(value);
@@ -36,7 +40,7 @@ export function SearchBar({
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
                 type="text"
-                placeholder={placeholder}
+                placeholder={resolvedPlaceholder}
                 value={query}
                 onChange={(e) => handleSearch(e.target.value)}
                 className="pl-10 pr-10 h-11 bg-background"
@@ -49,7 +53,7 @@ export function SearchBar({
                     onClick={handleClear}
                 >
                     <X className="h-4 w-4" />
-                    <span className="sr-only">Clear search</span>
+                    <span className="sr-only">{t('search.clear')}</span>
                 </Button>
             )}
         </div>

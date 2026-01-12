@@ -8,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { ShieldCheck, Copy, ExternalLink, Store, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface SellerInfoPopoverProps {
     sellerAddress: string;
@@ -15,6 +16,7 @@ interface SellerInfoPopoverProps {
 }
 
 export function SellerInfoPopover({ sellerAddress, className }: SellerInfoPopoverProps) {
+    const { t } = useLanguage();
     const [copied, setCopied] = useState(false);
     const [shopName, setShopName] = useState<string | null>(null);
     const [shopDescription, setShopDescription] = useState<string | null>(null);
@@ -48,10 +50,10 @@ export function SellerInfoPopover({ sellerAddress, className }: SellerInfoPopove
         try {
             await navigator.clipboard.writeText(sellerAddress);
             setCopied(true);
-            toast.success('Address copied to clipboard');
+            toast.success(t('sellerPopover.copied'));
             setTimeout(() => setCopied(false), 2000);
         } catch (error) {
-            toast.error('Failed to copy address');
+            toast.error(t('sellerPopover.copyFail'));
         }
     };
 
@@ -82,7 +84,7 @@ export function SellerInfoPopover({ sellerAddress, className }: SellerInfoPopove
                     <div className="flex items-center gap-2">
                         <ShieldCheck className="w-5 h-5 text-blue-500" />
                         <h3 className="text-sm font-bold uppercase tracking-wider text-white">
-                            Seller Information
+                            {t('sellerPopover.title')}
                         </h3>
                     </div>
 
@@ -93,7 +95,7 @@ export function SellerInfoPopover({ sellerAddress, className }: SellerInfoPopove
                         <div className="bg-white/5 border border-white/5 p-4">
                             <div className="flex items-center gap-2 text-neutral-500 text-xs">
                                 <Store className="w-4 h-4 animate-pulse" />
-                                <span>Loading shop information...</span>
+                                <span>{t('sellerPopover.loading')}</span>
                             </div>
                         </div>
                     ) : shopName ? (
@@ -101,7 +103,7 @@ export function SellerInfoPopover({ sellerAddress, className }: SellerInfoPopove
                             <div className="flex items-center gap-2">
                                 <Store className="w-4 h-4 text-blue-400" />
                                 <span className="text-xs uppercase text-blue-400 font-bold tracking-wider">
-                                    Verified Shop Owner
+                                    {t('sellerPopover.verified')}
                                 </span>
                             </div>
                             <h4 className="text-base font-bold text-white">
@@ -121,7 +123,7 @@ export function SellerInfoPopover({ sellerAddress, className }: SellerInfoPopove
                             >
                                 <Link href={`/shops/${sellerAddress}`}>
                                     <Store className="w-3.5 h-3.5 mr-2" />
-                                    Visit Shop
+                                    {t('sellerPopover.visit')}
                                 </Link>
                             </Button>
                         </div>
@@ -129,7 +131,7 @@ export function SellerInfoPopover({ sellerAddress, className }: SellerInfoPopove
                         <div className="bg-white/5 border border-white/5 p-4">
                             <div className="flex items-center gap-2 text-neutral-500 text-xs">
                                 <Store className="w-4 h-4" />
-                                <span>Individual seller (no shop)</span>
+                                <span>{t('sellerPopover.individual')}</span>
                             </div>
                         </div>
                     )}
@@ -137,7 +139,7 @@ export function SellerInfoPopover({ sellerAddress, className }: SellerInfoPopove
                     {/* Wallet Address */}
                     <div className="space-y-2">
                         <span className="text-[10px] uppercase text-neutral-500 tracking-wider">
-                            Wallet Address
+                            {t('sellerPopover.address')}
                         </span>
                         <div className="bg-white/5 border border-white/5 p-3 flex items-center justify-between gap-2">
                             <code className="text-xs font-mono text-blue-300 break-all flex-1">
@@ -167,7 +169,7 @@ export function SellerInfoPopover({ sellerAddress, className }: SellerInfoPopove
                         className="w-full border-white/10 hover:bg-white/5 text-white rounded-none uppercase font-bold tracking-wider h-10 hover:text-blue-400 hover:border-blue-400/30 transition-all"
                     >
                         <ExternalLink className="w-4 h-4 mr-2" />
-                        View on Sui Explorer
+                        {t('sellerPopover.explorer')}
                     </Button>
                 </div>
             </PopoverContent>

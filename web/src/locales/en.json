@@ -1,0 +1,403 @@
+{
+    "common": {
+        "save": "Save",
+        "cancel": "Cancel",
+        "loading": "Loading...",
+        "search": "Search",
+        "back": "Back",
+        "next": "Next",
+        "confirm": "Confirm",
+        "delete": "Delete",
+        "edit": "Edit",
+        "view": "View",
+        "close": "Close",
+        "error": "Error",
+        "success": "Success"
+    },
+    "nav": {
+        "shop": "Shop",
+        "sellerHub": "Seller Hub",
+        "myOrders": "My Orders",
+        "myAddresses": "My Addresses",
+        "receipts": "Receipts",
+        "adminPanel": "Admin Panel",
+        "menu": "MENU",
+        "connectWallet": "Connect Wallet",
+        "connectedWallet": "Connected Wallet",
+        "logOut": "Log Out",
+        "myAccount": "My Account",
+        "sellerDashboard": "Seller Dashboard"
+    },
+    "footer": {
+        "description": "Decentralized marketplace on Sui blockchain. Buy and sell verifiable digital assets with instant settlement.",
+        "shop": "Shop",
+        "allProducts": "All Products",
+        "categories": "Categories",
+        "becomeSeller": "Become a Seller",
+        "account": "Account",
+        "connect": "Connect",
+        "rightsReserved": "© 2026 SUI Shop. All rights reserved.",
+        "privacyPolicy": "Privacy Policy",
+        "termsOfService": "Terms of Service"
+    },
+    "home": {
+        "title": "Welcome to SUI Shop",
+        "hero": {
+            "badge": "Web3 Marketplace",
+            "titleDiscover": "Discover",
+            "titleAssets": "Amazing Assets",
+            "description": "Browse our curated collection of verified digital assets secured on the Sui network."
+        }
+    },
+    "terms": {
+        "title": "Terms of Service",
+        "lastUpdated": "Last updated: January 10, 2026",
+        "sections": {
+            "acceptance": {
+                "title": "1. Acceptance of Terms",
+                "content": "By accessing and using this marketplace, you accept and agree to be bound by the terms and provision of this agreement."
+            },
+            "useOfService": {
+                "title": "2. Use of Service",
+                "content": "You agree to use this service only for lawful purposes and in accordance with these Terms of Service."
+            },
+            "seller": {
+                "title": "3. Seller Responsibilities",
+                "content": "If you register as a seller, you agree to:",
+                "list": [
+                    "Provide accurate and complete shop information",
+                    "List only legitimate products for sale",
+                    "Honor all sales and deliver products as described",
+                    "Comply with all applicable laws and regulations"
+                ]
+            },
+            "buyer": {
+                "title": "4. Buyer Responsibilities",
+                "content": "As a buyer, you agree to:",
+                "list": [
+                    "Make purchases in good faith",
+                    "Pay for items you purchase",
+                    "Provide accurate shipping information"
+                ]
+            },
+            "blockchain": {
+                "title": "5. Blockchain Transactions",
+                "content": "All transactions are executed on the SUI blockchain and are irreversible. Once a transaction is confirmed, it cannot be undone."
+            },
+            "liability": {
+                "title": "6. Limitation of Liability",
+                "content": "This platform facilitates peer-to-peer transactions. We are not responsible for disputes between buyers and sellers, product quality, or delivery issues."
+            },
+            "modifications": {
+                "title": "7. Modifications to Terms",
+                "content": "We reserve the right to modify these terms at any time. Continued use of the service constitutes acceptance of modified terms."
+            },
+            "contact": {
+                "title": "8. Contact",
+                "content": "For questions about these Terms of Service, please contact our support team."
+            }
+        }
+    },
+    "shop": {
+        "filters": "Filters",
+        "priceRange": "Price Range",
+        "categories": "Categories",
+        "minPrice": "Min",
+        "maxPrice": "Max",
+        "apply": "Apply",
+        "clearAll": "Clear All",
+        "searchPlaceholder": "Search products...",
+        "sortBy": "Sort by",
+        "newest": "Newest",
+        "oldest": "Oldest",
+        "priceLowHigh": "Price: Low to High",
+        "priceHighLow": "Price: High to Low",
+        "noProducts": "No products found",
+        "tryAdjusting": "Try adjusting your search or filters",
+        "showingResults": "Showing",
+        "results": "results",
+        "activeFilters": "Active filters",
+        "creator": "Creator Address (optional)",
+        "creatorDesc": "Filter by specific creator address",
+        "search": "Search",
+        "allProducts": "All Products"
+    },
+    "product": {
+        "addToCart": "Add to Cart",
+        "buyNow": "Buy Now",
+        "outOfStock": "Out of Stock",
+        "inStock": "In Stock",
+        "description": "Description",
+        "seller": "Seller",
+        "price": "Price",
+        "quantity": "Quantity",
+        "reviews": "Reviews",
+        "added": "Added",
+        "addedToCart": "Added to cart",
+        "viewCart": "View Cart",
+        "lowStock": "Low Stock",
+        "availability": "Availability",
+        "dateListed": "Date Listed",
+        "purchaseNow": "Purchase Now",
+        "inCart": "In Cart",
+        "available": "available",
+        "purchaseSuccess": "Purchase successful!",
+        "purchaseFailed": "Purchase failed"
+    },
+    "toast": {
+        "addedToCart": "Added to cart!",
+        "alreadyInCart": "Product already in cart"
+    },
+    "cart": {
+        "title": "Shopping Cart",
+        "empty": "Your cart is empty",
+        "startShopping": "Start Shopping",
+        "subtotal": "Subtotal",
+        "checkout": "Checkout",
+        "remove": "Remove",
+        "continueShopping": "Continue Shopping",
+        "items": "items",
+        "total": "Total"
+    },
+    "checkout": {
+        "title": "Checkout",
+        "shippingAddress": "Shipping Address",
+        "selectAddress": "Select Address",
+        "paymentMethod": "Payment Method",
+        "placeOrder": "Place Order",
+        "orderSummary": "Order Summary",
+        "shipping": "Shipping",
+        "free": "Free",
+        "processing": "Processing...",
+        "successMessage": "Order placed successfully!"
+    },
+    "profile": {
+        "orders": {
+            "title": "My Orders",
+            "subtitle": "Manage and track your shipments",
+            "searchPlaceholder": "Search by product name or Order ID...",
+            "tabs": {
+                "all": "All",
+                "paid": "Paid",
+                "shipping": "Shipping",
+                "delivered": "Delivered",
+                "cancelled": "Cancelled"
+            },
+            "status": {
+                "paid": "Paid",
+                "shipping": "Shipping",
+                "delivered": "Delivered",
+                "cancelled": "Cancelled"
+            },
+            "noOrders": "No orders found",
+            "noOrdersDesc": "You haven't placed any orders with this status.",
+            "shopNow": "Shop Now",
+            "shop": "Shop",
+            "orderId": "Order ID",
+            "date": "Date",
+            "total": "Total Payment",
+            "connectWallet": "Please connect wallet",
+            "connectWalletDesc": "You need to connect your SUI wallet to view order history.",
+            "connectGuide": "Click Connect Wallet button in the top right corner"
+        },
+        "addresses": {
+            "title": "Delivery Addresses",
+            "subtitle": "Manage your shipping addresses",
+            "add": "Add Address",
+            "edit": "Edit Address",
+            "delete": "Delete Address",
+            "noAddresses": "No addresses yet",
+            "noAddressesDesc": "Add your first delivery address to get started",
+            "deleteTitle": "Delete Address?",
+            "deleteDesc": "This action cannot be undone. This address will be permanently deleted.",
+            "default": "Default",
+            "setAsDefault": "Set as Default",
+            "form": {
+                "fullName": "Full Name",
+                "phone": "Phone",
+                "province": "Province/City",
+                "district": "District",
+                "ward": "Ward",
+                "street": "Street Address",
+                "label": "Label (Optional)",
+                "setDefault": "Set as default address",
+                "selectProvince": "Select Province/City",
+                "selectDistrict": "Select District",
+                "selectWard": "Select Ward",
+                "required": "Required",
+                "saving": "Saving...",
+                "update": "Update Address",
+                "create": "Create Address",
+                "dataSource": "Data Source API",
+                "officialApi": "Official API",
+                "adminDivision": "Administrative Division",
+                "v1": "Pre-merger (07/2025)",
+                "v2": "Post-merger (07/2025)",
+                "v2Hint": "Use V2 for latest 2025 updates",
+                "autoSaveHint": "* Selected administrative units are auto-saved to your address book.",
+                "fullNamePlaceholder": "Nguyen Van A",
+                "phonePlaceholder": "0912 345 678",
+                "streetPlaceholder": "No. 123, Le Loi Street",
+                "labelPlaceholder": "Home, Office..."
+            },
+            "connectWallet": "Not connected wallet",
+            "connectWalletDesc": "Please connect your wallet to manage shipping addresses",
+            "goToShop": "Go to Shop"
+        },
+        "orderId": "Order ID",
+        "date": "Date",
+        "status": "Status",
+        "total": "Total",
+        "actions": "Actions"
+    },
+    "seller": {
+        "dashboard": {
+            "title": "Seller Dashboard",
+            "subtitle": "Manage products and orders",
+            "active": "Active",
+            "pending": "Pending",
+            "inactive": "Inactive",
+            "syncRequired": "Blockchain Sync Required",
+            "syncDesc": "Your shop must be created on SUI Blockchain before you can sell products.",
+            "cantCreate": "You cannot create products until sync is complete.",
+            "syncButton": "Sync to Blockchain Now",
+            "syncing": "Syncing..."
+        },
+        "stats": {
+            "shopName": "Shop Name",
+            "products": "Products",
+            "totalProducts": "Total Products",
+            "revenue": "Revenue",
+            "totalRevenue": "Total Revenue"
+        },
+        "products": {
+            "add": "Add Product",
+            "addDesc": "Add new product to inventory",
+            "edit": "Edit Product",
+            "delete": "Delete Product",
+            "deleteTitle": "Are you sure you want to delete?",
+            "deleteDesc": "This action cannot be undone. Product will be removed from your shop.",
+            "form": {
+                "name": "Product Name",
+                "price": "Price (SUI)",
+                "stock": "Stock",
+                "image": "Image URL",
+                "description": "Description",
+                "category": "Category",
+                "create": "Create Product",
+                "update": "Save Changes",
+                "creating": "Creating...",
+                "saving": "Saving...",
+                "syncLock": "Sync blockchain to create product"
+            },
+            "list": {
+                "title": "Inventory",
+                "empty": "No products yet"
+            }
+        },
+        "register": {
+            "title": "Register Your Shop",
+            "subtitle": "Fill in the details below to start selling on the marketplace",
+            "basicInfo": "Basic Information",
+            "basicInfoDesc": "Required information about your shop",
+            "shopName": "Shop Name",
+            "description": "Description",
+            "businessType": "Business Type",
+            "personal": "Personal (Individual)",
+            "business": "Business (Enterprise)",
+            "establishedYear": "Established Year",
+            "contactInfo": "Contact Information",
+            "contactInfoDesc": "How customers can reach you",
+            "email": "Contact Email",
+            "phone": "Phone Number",
+            "city": "City/Province",
+            "address": "Detailed Address",
+            "legalInfo": "Legal Information",
+            "legalInfoDesc": "Tax and business registration details",
+            "taxCode": "Tax Code",
+            "branding": "Branding & Social Media",
+            "brandingDesc": "Optional - Help customers find you online",
+            "website": "Website URL",
+            "policies": "Shop Policies",
+            "policiesDesc": "Optional - Set clear expectations with customers",
+            "returnPolicy": "Return Policy",
+            "submit": "Submit Registration"
+        },
+        "pending": {
+            "title": "Application Pending Approval",
+            "desc": "Your shop application is being reviewed by administrators. Please wait patiently while we verify your information.",
+            "infoTitle": "Registered Shop Information",
+            "infoDesc": "Information you submitted",
+            "adminNote": "Note from Administrator",
+            "process": "Approval Process",
+            "time": "Average review time: 1-3 business days",
+            "verify": "Administrators will verify your shop information",
+            "notify": "You will be notified when shop is approved"
+        }
+    },
+    "categories": {
+        "main": "Main Category",
+        "sub": "Sub Category",
+        "select": "Select category...",
+        "selectSub": "Select sub-category...",
+        "search": "Search category...",
+        "notFound": "Category not found."
+    },
+    "sellerPopover": {
+        "title": "Seller Information",
+        "loading": "Loading shop information...",
+        "verified": "Verified Shop Owner",
+        "visit": "Visit Shop",
+        "individual": "Individual seller (no shop)",
+        "address": "Wallet Address",
+        "explorer": "View on Sui Explorer",
+        "copied": "Address copied to clipboard",
+        "copyFail": "Failed to copy address"
+    },
+    "search": {
+        "placeholder": "Search products...",
+        "clear": "Clear search"
+    },
+    "breadcrumb": {
+        "shop": "Shop",
+        "product": "product",
+        "products": "products"
+    }
+},
+"privacy": {
+    "title": "Privacy Policy",
+    "lastUpdated": "Last updated: January 10, 2026",
+    "sections": {
+        "collection": {
+            "title": "1. Information We Collect",
+            "content": "We collect information that you provide directly to us, including:",
+            "list": [
+                "Wallet addresses when you connect to our platform",
+                "Transaction data on the SUI blockchain",
+                "Shop information when you register as a seller"
+            ]
+        },
+        "usage": {
+            "title": "2. How We Use Your Information",
+            "content": "We use the information we collect to:",
+            "list": [
+                "Provide, maintain, and improve our services",
+                "Process transactions and send related information",
+                "Send you technical notices and support messages"
+            ]
+        },
+        "security": {
+            "title": "3. Data Security",
+            "content": "We implement appropriate security measures to protect your personal information. However, no method of transmission over the Internet is 100% secure."
+        },
+        "blockchain": {
+            "title": "4. Blockchain Data",
+            "content": "Transactions on the SUI blockchain are public and permanent. Your wallet address and transaction history are publicly visible on the blockchain."
+        },
+        "contact": {
+            "title": "5. Contact Us",
+            "content": "If you have any questions about this Privacy Policy, please contact us through our support channels."
+        }
+    }
+}
+}

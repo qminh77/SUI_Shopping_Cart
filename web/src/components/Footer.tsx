@@ -6,7 +6,10 @@ import { Github, Twitter, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 
+import { useLanguage } from '@/contexts/LanguageContext';
+
 export function Footer() {
+    const { t } = useLanguage();
     return (
         <footer className="border-t border-border bg-card mt-auto">
             <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -23,49 +26,49 @@ export function Footer() {
                                 />
                             </div>
                             <span className="text-base font-bold text-muted-foreground border-l border-border pl-3">
-                                Shop
+                                {t('footer.shop')}
                             </span>
                         </Link>
                         <p className="text-sm text-muted-foreground">
-                            Decentralized marketplace on Sui blockchain. Buy and sell verifiable digital assets with instant settlement.
+                            {t('footer.description')}
                         </p>
                     </div>
 
                     {/* Shop Column */}
                     <div className="space-y-4">
-                        <h4 className="text-sm font-bold uppercase tracking-wider">Shop</h4>
+                        <h4 className="text-sm font-bold uppercase tracking-wider">{t('footer.shop')}</h4>
                         <nav className="flex flex-col space-y-2 text-sm">
                             <Link href="/shop" className="text-muted-foreground hover:text-foreground transition-colors">
-                                All Products
+                                {t('footer.allProducts')}
                             </Link>
                             <Link href="/shop" className="text-muted-foreground hover:text-foreground transition-colors">
-                                Categories
+                                {t('footer.categories')}
                             </Link>
                             <Link href="/seller" className="text-muted-foreground hover:text-foreground transition-colors">
-                                Become a Seller
+                                {t('footer.becomeSeller')}
                             </Link>
                         </nav>
                     </div>
 
                     {/* Account Column */}
                     <div className="space-y-4">
-                        <h4 className="text-sm font-bold uppercase tracking-wider">Account</h4>
+                        <h4 className="text-sm font-bold uppercase tracking-wider">{t('footer.account')}</h4>
                         <nav className="flex flex-col space-y-2 text-sm">
                             <Link href="/profile/orders" className="text-muted-foreground hover:text-foreground transition-colors">
-                                My Orders
+                                {t('nav.myOrders')}
                             </Link>
                             <Link href="/profile/addresses" className="text-muted-foreground hover:text-foreground transition-colors">
-                                My Addresses
+                                {t('nav.myAddresses')}
                             </Link>
                             <Link href="/receipts" className="text-muted-foreground hover:text-foreground transition-colors">
-                                Receipts
+                                {t('nav.receipts')}
                             </Link>
                         </nav>
                     </div>
 
                     {/* Connect Column */}
                     <div className="space-y-4">
-                        <h4 className="text-sm font-bold uppercase tracking-wider">Connect</h4>
+                        <h4 className="text-sm font-bold uppercase tracking-wider">{t('footer.connect')}</h4>
                         <div className="flex space-x-2">
                             <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground">
                                 <Github className="h-4 w-4" />
@@ -86,13 +89,13 @@ export function Footer() {
                 <Separator className="my-8" />
 
                 <div className="flex flex-col md:flex-row justify-between items-center text-sm text-muted-foreground">
-                    <p>© 2026 SUI Shop. All rights reserved.</p>
+                    <p>{t('footer.rightsReserved')}</p>
                     <div className="flex space-x-4 mt-4 md:mt-0">
                         <Link href="/privacy" className="hover:text-foreground transition-colors">
-                            Privacy Policy
+                            {t('footer.privacyPolicy')}
                         </Link>
                         <Link href="/terms" className="hover:text-foreground transition-colors">
-                            Terms of Service
+                            {t('footer.termsOfService')}
                         </Link>
                     </div>
                 </div>

@@ -16,23 +16,26 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
 
+import { useLanguage } from '@/contexts/LanguageContext';
+
 // Map status to badge variant and label
-const getStatusConfig = (status: string) => {
+const getStatusConfig = (status: string, t: any) => {
     switch (status) {
         case 'PAID':
-            return { variant: 'default' as const, label: 'Đã thanh toán', icon: CheckCircle, color: 'text-primary' };
+            return { variant: 'default' as const, label: t('profile.orders.status.paid'), icon: CheckCircle, color: 'text-primary' };
         case 'SHIPPING':
-            return { variant: 'secondary' as const, label: 'Đang giao', icon: Truck, color: 'text-blue-500' };
+            return { variant: 'secondary' as const, label: t('profile.orders.status.shipping'), icon: Truck, color: 'text-blue-500' };
         case 'DELIVERED':
-            return { variant: 'default' as const, label: 'Đã giao', icon: CheckCircle, color: 'text-green-500' };
+            return { variant: 'default' as const, label: t('profile.orders.status.delivered'), icon: CheckCircle, color: 'text-green-500' };
         case 'CANCELLED':
-            return { variant: 'destructive' as const, label: 'Đã hủy', icon: XCircle, color: 'text-destructive' };
+            return { variant: 'destructive' as const, label: t('profile.orders.status.cancelled'), icon: XCircle, color: 'text-destructive' };
         default:
             return { variant: 'outline' as const, label: status, icon: Package, color: 'text-muted-foreground' };
     }
 };
 
 export default function OrderHistoryPage() {
+    const { t } = useLanguage();
     const account = useCurrentAccount();
     const [orders, setOrders] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -116,13 +119,13 @@ export default function OrderHistoryPage() {
                     <div className="w-16 h-16 bg-muted/30 rounded-full flex items-center justify-center mb-4">
                         <Package className="w-8 h-8 text-muted-foreground/50" />
                     </div>
-                    <h3 className="text-lg font-semibold mb-1">Không có đơn hàng nào</h3>
+                    <h3 className="text-lg font-semibold mb-1">{t('profile.orders.noOrders')}</h3>
                     <p className="text-muted-foreground text-sm max-w-sm mx-auto">
-                        Bạn chưa có đơn hàng nào trong trạng thái này.
+                        {t('profile.orders.noOrdersDesc')}
                     </p>
                     {status === 'ALL' && (
                         <Button className="mt-6" asChild>
-                            <Link href="/shop">Khám phá sản phẩm</Link>
+                            <Link href="/shop">{t('profile.orders.shopNow')}</Link>
                         </Button>
                     )}
                 </div>
@@ -132,7 +135,7 @@ export default function OrderHistoryPage() {
         return (
             <div className="space-y-4 animate-in fade-in-50 duration-500">
                 {filtered.map((order) => {
-                    const statusConfig = getStatusConfig(order.status);
+                    const statusConfig = getStatusConfig(order.status, t);
                     const StatusIcon = statusConfig.icon;
 
                     return (
@@ -148,7 +151,7 @@ export default function OrderHistoryPage() {
                                         </div>
                                         <Separator orientation="vertical" className="h-8" />
                                         <div className="flex flex-col">
-                                            <span className="text-xs font-semibold uppercase text-muted-foreground">Order ID</span>
+                                            <span className="text-xs font-semibold uppercase text-muted-foreground">{t('profile.orders.orderId')}</span>
                                             <span className="font-mono text-sm">#{order.id.slice(0, 8)}</span>
                                         </div>
                                     </div>
@@ -195,10 +198,10 @@ export default function OrderHistoryPage() {
 
                                 <div className="flex flex-col sm:flex-row justify-between sm:items-end gap-4">
                                     <div className="text-xs text-muted-foreground">
-                                        Ngày đặt: {new Date(order.created_at).toLocaleString('vi-VN')}
+                                        {t('profile.orders.date')}: {new Date(order.created_at).toLocaleString(typeof window !== 'undefined' ? window.navigator.language : 'en-US')}
                                     </div>
                                     <div className="flex items-center justify-between sm:justify-end gap-3 flex-1">
-                                        <span className="text-base font-medium">Tổng thanh toán:</span>
+                                        <span className="text-base font-medium">{t('profile.orders.total')}:</span>
                                         <span className="text-xl font-bold text-primary">
                                             {mistToSui(order.total_price)} SUI
                                         </span>
@@ -227,13 +230,13 @@ export default function OrderHistoryPage() {
                         <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-6">
                             <ShoppingBag className="w-10 h-10 text-muted-foreground" />
                         </div>
-                        <h2 className="text-2xl font-bold mb-2">Vui lòng kết nối ví</h2>
+                        <h2 className="text-2xl font-bold mb-2">{t('profile.orders.connectWallet')}</h2>
                         <p className="text-muted-foreground mb-8">
-                            Bạn cần kết nối ví SUI của mình để xem lịch sử đơn hàng.
+                            {t('profile.orders.connectWalletDesc')}
                         </p>
                         {/* Connect Button is in Navigation, maybe guide user there */}
                         <div className="p-3 bg-secondary/50 rounded-lg text-sm text-muted-foreground">
-                            Nhấn nút <b>Connect Wallet</b> ở góc trên bên phải
+                            {t('profile.orders.connectGuide')}
                         </div>
                     </Card>
                 </main>
@@ -252,10 +255,10 @@ export default function OrderHistoryPage() {
                     <div>
                         <h1 className="text-3xl font-bold tracking-tight mb-1 flex items-center gap-3">
                             <Package className="w-7 h-7 text-primary hidden md:block" />
-                            Đơn Mua Của Tôi
+                            {t('profile.orders.title')}
                         </h1>
                         <p className="text-muted-foreground">
-                            Quản lý và theo dõi quá trình vận chuyển
+                            {t('profile.orders.subtitle')}
                         </p>
                     </div>
                 </div>
@@ -265,7 +268,7 @@ export default function OrderHistoryPage() {
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input
-                            placeholder="Tìm kiếm theo Tên sản phẩm hoặc Mã đơn hàng..."
+                            placeholder={t('profile.orders.searchPlaceholder')}
                             className="pl-9 bg-card"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
@@ -276,11 +279,11 @@ export default function OrderHistoryPage() {
                 {/* Tabs */}
                 <Tabs defaultValue="ALL" className="w-full space-y-6">
                     <TabsList className="w-full flex h-auto p-1 bg-muted/30 border rounded-xl overflow-x-auto scrollbar-none justify-start sm:justify-between">
-                        <TabsTrigger value="ALL" className="flex-1 min-w-[80px]">Tất cả</TabsTrigger>
-                        <TabsTrigger value="PAID" className="flex-1 min-w-[80px]">Đã thanh toán</TabsTrigger>
-                        <TabsTrigger value="SHIPPING" className="flex-1 min-w-[80px]">Đang giao</TabsTrigger>
-                        <TabsTrigger value="DELIVERED" className="flex-1 min-w-[80px]">Đã giao</TabsTrigger>
-                        <TabsTrigger value="CANCELLED" className="flex-1 min-w-[80px]">Đã hủy</TabsTrigger>
+                        <TabsTrigger value="ALL" className="flex-1 min-w-[80px]">{t('profile.orders.tabs.all')}</TabsTrigger>
+                        <TabsTrigger value="PAID" className="flex-1 min-w-[80px]">{t('profile.orders.tabs.paid')}</TabsTrigger>
+                        <TabsTrigger value="SHIPPING" className="flex-1 min-w-[80px]">{t('profile.orders.tabs.shipping')}</TabsTrigger>
+                        <TabsTrigger value="DELIVERED" className="flex-1 min-w-[80px]">{t('profile.orders.tabs.delivered')}</TabsTrigger>
+                        <TabsTrigger value="CANCELLED" className="flex-1 min-w-[80px]">{t('profile.orders.tabs.cancelled')}</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="ALL" className="mt-0"><OrderList status="ALL" /></TabsContent>

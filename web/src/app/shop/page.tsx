@@ -17,8 +17,10 @@ import { Badge } from '@/components/ui/badge';
 import { MatrixText } from '@/components/ui/matrix-text';
 import { SpotlightCard } from '@/components/ui/spotlight-card';
 import { GridPattern } from '@/components/ui/grid-pattern';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function ShopPage() {
+    const { t } = useLanguage();
     // Advanced Search Hook
     const {
         products,
@@ -64,12 +66,12 @@ export default function ShopPage() {
         const isInCart = cartItems.some(item => item.id === product.id);
 
         if (isInCart) {
-            toast.warning('Product already in cart');
+            toast.warning(t('toast.alreadyInCart'));
             return;
         }
 
         addToCart(product);
-        toast.success('Added to cart!');
+        toast.success(t('toast.addedToCart'));
     };
 
     return (
@@ -92,17 +94,16 @@ export default function ShopPage() {
                 <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="text-center max-w-3xl mx-auto mb-10 md:mb-14">
                         <Badge variant="outline" className="mb-4 bg-background/50 backdrop-blur-sm px-3 py-1 border-primary/20 text-muted-foreground uppercase tracking-widest text-[10px]">
-                            <MatrixText text="Web3 Marketplace" speed={20} />
+                            <MatrixText text={t('home.hero.badge')} speed={20} />
                         </Badge>
                         <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 md:mb-8 text-foreground drop-shadow-sm">
-                            <span className="block mb-2">Discover</span>
+                            <span className="block mb-2">{t('home.hero.titleDiscover')}</span>
                             <span className="bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/50">
-                                Amazing Assets
+                                {t('home.hero.titleAssets')}
                             </span>
                         </h1>
                         <p className="text-lg md:text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto">
-                            Browse our curated collection of verified digital assets <br className="hidden md:block" />
-                            secured on the <span className="font-semibold text-foreground">Sui network</span>.
+                            {t('home.hero.description')}
                         </p>
                     </div>
 
@@ -130,15 +131,15 @@ export default function ShopPage() {
                         <div className="h-24 w-24 rounded-full bg-muted/10 flex items-center justify-center mb-6">
                             <Package className="w-10 h-10 opacity-30" />
                         </div>
-                        <h3 className="text-xl font-semibold mb-2 text-foreground">No Products Found</h3>
-                        <p className="text-muted-foreground">Try adjusting your search or filter criteria</p>
+                        <h3 className="text-xl font-semibold mb-2 text-foreground">{t('shop.noProducts')}</h3>
+                        <p className="text-muted-foreground">{t('shop.tryAdjusting')}</p>
                     </div>
                 ) : (
                     <>
                         {/* Results Meta */}
                         <div className="flex justify-between items-center mb-8 border-b border-border/50 pb-4">
                             <p className="text-sm font-medium text-muted-foreground">
-                                Showing <span className="text-foreground font-bold">{products.length}</span> results
+                                {t('shop.showingResults')} <span className="text-foreground font-bold">{products.length}</span> {t('shop.results')}
                             </p>
                         </div>
 
@@ -172,12 +173,12 @@ export default function ShopPage() {
                                             {/* Stock Badge - Minimal */}
                                             {product.stock === 0 && (
                                                 <div className="absolute inset-0 bg-background/80 backdrop-blur-[2px] flex items-center justify-center z-10">
-                                                    <Badge variant="destructive" className="font-bold uppercase tracking-wider rounded-none">Sold Out</Badge>
+                                                    <Badge variant="destructive" className="font-bold uppercase tracking-wider rounded-none">{t('product.outOfStock')}</Badge>
                                                 </div>
                                             )}
                                             {product.stock > 0 && product.stock < 5 && (
                                                 <Badge variant="secondary" className="absolute top-2 right-2 text-[10px] font-bold bg-background/80 backdrop-blur-sm border border-border/50 rounded-none z-10">
-                                                    Low Stock
+                                                    {t('product.lowStock')}
                                                 </Badge>
                                             )}
                                         </div>
@@ -195,7 +196,7 @@ export default function ShopPage() {
 
                                             <div className="pt-4 mt-auto flex items-end justify-between gap-3 border-t border-border/50">
                                                 <div className="flex flex-col">
-                                                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Price</span>
+                                                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">{t('product.price')}</span>
                                                     <span className="text-lg font-bold text-foreground font-mono">
                                                         {mistToSui(product.price).toFixed(2)} SUI
                                                     </span>
@@ -209,7 +210,7 @@ export default function ShopPage() {
                                                     className="h-9 px-4 font-bold uppercase tracking-wider text-[11px] rounded-none transition-all active:scale-95"
                                                 >
                                                     <ShoppingCart className="w-3.5 h-3.5 mr-2" />
-                                                    {isInCart ? 'Added' : 'Add'}
+                                                    {isInCart ? t('product.added') : t('product.addToCart')}
                                                 </Button>
                                             </div>
                                         </div>

@@ -8,9 +8,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import Link from 'next/link';
 import { MapPin, ShoppingBag } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function AddressesPage() {
     const account = useCurrentAccount();
+    const { t } = useLanguage();
 
     if (!account) {
         return (
@@ -20,14 +22,14 @@ export default function AddressesPage() {
                     <Card>
                         <CardContent className="flex flex-col items-center justify-center py-16 px-8">
                             <MapPin className="w-16 h-16 text-muted-foreground/50 mb-4" />
-                            <h2 className="text-2xl font-bold mb-2">Chưa kết nối ví</h2>
+                            <h2 className="text-2xl font-bold mb-2">{t('profile.addresses.connectWallet')}</h2>
                             <p className="text-muted-foreground text-center mb-6 max-w-md">
-                                Vui lòng kết nối ví của bạn để quản lý địa chỉ giao hàng
+                                {t('profile.addresses.connectWalletDesc')}
                             </p>
                             <Button asChild>
                                 <Link href="/shop">
                                     <ShoppingBag className="w-4 h-4 mr-2" />
-                                    Đi tới Shop
+                                    {t('profile.addresses.goToShop')}
                                 </Link>
                             </Button>
                         </CardContent>
@@ -46,10 +48,10 @@ export default function AddressesPage() {
                 <div className="mb-8">
                     <h1 className="text-3xl font-bold tracking-tight mb-2 flex items-center gap-3">
                         <MapPin className="w-8 h-8 text-primary" />
-                        Địa Chỉ Giao Hàng
+                        {t('profile.addresses.title')}
                     </h1>
                     <p className="text-muted-foreground">
-                        Quản lý địa chỉ giao hàng của bạn
+                        {t('profile.addresses.subtitle')}
                     </p>
                 </div>
 

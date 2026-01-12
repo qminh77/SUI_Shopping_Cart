@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Plus, MapPin, Loader2 } from 'lucide-react';
 import { Address, AddressInput } from '@/lib/sui-utils';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export function AddressList() {
     const {
@@ -36,6 +37,7 @@ export function AddressList() {
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingAddress, setEditingAddress] = useState<Address | undefined>();
     const [deletingAddressId, setDeletingAddressId] = useState<string | null>(null);
+    const { t } = useLanguage();
 
     const handleCreate = async (data: AddressInput) => {
         await createAddress(data);
@@ -80,15 +82,15 @@ export function AddressList() {
                 <div>
                     <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2 uppercase">
                         <MapPin className="w-6 h-6 text-primary" />
-                        Delivery Addresses
+                        {t('profile.addresses.title')}
                     </h2>
                     <p className="text-muted-foreground text-sm mt-1">
-                        Manage your shipping addresses
+                        {t('profile.addresses.subtitle')}
                     </p>
                 </div>
                 <Button onClick={() => setIsFormOpen(true)}>
                     <Plus className="w-4 h-4 md:mr-2" />
-                    <span className="hidden md:inline">Add Address</span>
+                    <span className="hidden md:inline">{t('profile.addresses.add')}</span>
                 </Button>
             </div>
 
@@ -96,16 +98,16 @@ export function AddressList() {
             {addresses.length === 0 ? (
                 <div className="text-center py-12 bg-muted/30 border border-border rounded-lg">
                     <MapPin className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
-                    <h3 className="text-lg font-bold mb-2 uppercase">No addresses yet</h3>
+                    <h3 className="text-lg font-bold mb-2 uppercase">{t('profile.addresses.noAddresses')}</h3>
                     <p className="text-muted-foreground mb-6">
-                        Add your first delivery address to get started
+                        {t('profile.addresses.noAddressesDesc')}
                     </p>
                     <Button
                         onClick={() => setIsFormOpen(true)}
                         variant="outline"
                     >
                         <Plus className="w-4 h-4 mr-2" />
-                        Add Address
+                        {t('profile.addresses.add')}
                     </Button>
                 </div>
             ) : (
@@ -129,7 +131,7 @@ export function AddressList() {
                 <DialogContent className="max-w-2xl bg-card border-border">
                     <DialogHeader>
                         <DialogTitle className="uppercase tracking-wider">
-                            {editingAddress ? 'Edit Address' : 'Add New Address'}
+                            {editingAddress ? t('profile.addresses.edit') : t('profile.addresses.add')}
                         </DialogTitle>
                     </DialogHeader>
                     <AddressForm
@@ -145,20 +147,20 @@ export function AddressList() {
             <AlertDialog open={!!deletingAddressId} onOpenChange={() => setDeletingAddressId(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle className="uppercase text-destructive">Delete Address?</AlertDialogTitle>
+                        <AlertDialogTitle className="uppercase text-destructive">{t('profile.addresses.deleteTitle')}</AlertDialogTitle>
                         <AlertDialogDescription>
-                            This action cannot be undone. This address will be permanently deleted.
+                            {t('profile.addresses.deleteDesc')}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel onClick={() => setDeletingAddressId(null)}>
-                            Cancel
+                            {t('common.cancel')}
                         </AlertDialogCancel>
                         <AlertDialogAction
                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                             onClick={handleDelete}
                         >
-                            Delete
+                            {t('common.delete')}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

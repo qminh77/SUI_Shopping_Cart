@@ -15,8 +15,10 @@ import {
 import { Package, LayoutGrid } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MatrixText } from '@/components/ui/matrix-text';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export function CategoryNav() {
+    const { t } = useLanguage();
     const { data: categories = [], isLoading } = useCategories();
 
     if (isLoading) {
@@ -49,7 +51,7 @@ export function CategoryNav() {
                             <NavigationMenuLink asChild className={cn(navigationMenuTriggerStyle(), "uppercase tracking-wider font-bold text-xs hover:text-foreground text-muted-foreground cursor-pointer")}>
                                 <Link href="/shop">
                                     <LayoutGrid className="h-4 w-4 mr-2" />
-                                    <MatrixText text="All Products" speed={20} />
+                                    <MatrixText text={t('shop.allProducts')} speed={20} />
                                 </Link>
                             </NavigationMenuLink>
                         </NavigationMenuItem>
@@ -58,7 +60,7 @@ export function CategoryNav() {
                         <NavigationMenuItem>
                             <NavigationMenuTrigger className="uppercase tracking-wider font-bold text-xs text-muted-foreground hover:text-foreground">
                                 <Package className="h-4 w-4 mr-2" />
-                                <MatrixText text="Categories" speed={20} />
+                                <MatrixText text={t('shop.categories')} speed={20} />
                             </NavigationMenuTrigger>
                             <NavigationMenuContent>
                                 <div className="grid gap-4 p-6 w-[800px] grid-cols-3 lg:grid-cols-4">

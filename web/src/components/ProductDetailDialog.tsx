@@ -22,6 +22,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { SellerInfoPopover } from './SellerInfoPopover';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface ProductDetailDialogProps {
     product: Product | null;
@@ -30,6 +31,7 @@ interface ProductDetailDialogProps {
 }
 
 export function ProductDetailDialog({ product, open, onOpenChange }: ProductDetailDialogProps) {
+    const { t } = useLanguage();
     const { addToCart, items } = useCart();
     const account = useCurrentAccount();
     const { mutate: signAndExecute } = useSignAndExecuteTransaction();
@@ -42,12 +44,12 @@ export function ProductDetailDialog({ product, open, onOpenChange }: ProductDeta
 
     const handleAddToCart = () => {
         addToCart(product);
-        toast.success('Added to cart!');
+        toast.success(t('toast.addedToCart'));
     };
 
     const handleBuyNow = async () => {
         if (!account) {
-            toast.error('Please connect your wallet');
+            toast.error(t('nav.connectWallet'));
             return;
         }
 
@@ -75,7 +77,7 @@ export function ProductDetailDialog({ product, open, onOpenChange }: ProductDeta
                 transaction: tx,
             }, {
                 onSuccess: (result) => {
-                    toast.success('Purchase successful!');
+                    toast.success(t('product.purchaseSuccess'));
                     // Note: Order creation API call should ideally happen here too for consistency with Cart,
                     // but for "Buy Now" simple flow, we might assume the Buyer will check chain event or we add it later.
                     // For now, let's keep it simple as On-chain is the source of truth for stock.
@@ -83,7 +85,7 @@ export function ProductDetailDialog({ product, open, onOpenChange }: ProductDeta
                 },
                 onError: (err) => {
                     console.error('Purchase failed', err);
-                    toast.error('Purchase failed: ' + err.message);
+                    toast.error(t('product.purchaseFailed') + ': ' + err.message);
                 }
             });
 
@@ -117,7 +119,7 @@ export function ProductDetailDialog({ product, open, onOpenChange }: ProductDeta
 
                         <div className="absolute top-8 left-8 z-10">
                             <Badge variant="secondary" className="bg-black/40 backdrop-blur-md border border-white/10 text-white hover:bg-black/60 rounded-none uppercase tracking-[0.2em] text-xs px-4 py-2 font-bold shadow-xl">
-                                {product.stock > 0 ? 'In Stock' : 'Out of Stock'}
+                                {product.stock > 0 ? t('product.inStock') : t('product.outOfStock')}
                             </Badge>
                         </div>
                     </div>
@@ -151,7 +153,7 @@ export function ProductDetailDialog({ product, open, onOpenChange }: ProductDeta
 
                                         {/* Quantity Selector */}
                                         <div className="space-y-2 pt-4">
-                                            <span className="text-xs uppercase tracking-wider text-neutral-500">Quantity</span>
+                                            <span className="text-xs uppercase tracking-wider text-neutral-500">{t('product.quantity')}</span>
                                             <div className="flex items-center gap-2">
                                                 <Button
                                                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
@@ -178,7 +180,7 @@ export function ProductDetailDialog({ product, open, onOpenChange }: ProductDeta
                                                 >
                                                     +
                                                 </Button>
-                                                <span className="text-xs text-neutral-500 ml-2">of {product.stock} available</span>
+                                                <span className="text-xs text-neutral-500 ml-2">{t('product.available')}: {product.stock}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -189,7 +191,7 @@ export function ProductDetailDialog({ product, open, onOpenChange }: ProductDeta
                                 {/* Description */}
                                 <div className="space-y-4" id="product-dialog-description">
                                     <h4 className="text-xs font-bold uppercase tracking-[0.15em] text-neutral-500 flex items-center gap-2">
-                                        Description
+                                        {t('product.description')}
                                     </h4>
                                     <p className="text-neutral-300 leading-relaxed text-sm font-light whitespace-pre-wrap">
                                         {product.description}
@@ -201,16 +203,16 @@ export function ProductDetailDialog({ product, open, onOpenChange }: ProductDeta
                                 {/* Meta Details Grid */}
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="bg-white/[0.02] border border-white/5 p-4 hover:border-white/10 transition-colors">
-                                        <span className="text-[10px] uppercase text-neutral-500 block mb-2 tracking-wider">Availability</span>
+                                        <span className="text-[10px] uppercase text-neutral-500 block mb-2 tracking-wider">{t('product.availability')}</span>
                                         <div className="flex items-center gap-2">
                                             <span className={cn("w-2 h-2 rounded-full", product.stock > 0 ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]" : "bg-red-500")}></span>
                                             <span className="text-sm font-bold text-white uppercase tracking-tight">
-                                                {product.stock > 0 ? 'In Stock' : 'Out of Stock'}
+                                                {product.stock > 0 ? t('product.inStock') : t('product.outOfStock')}
                                             </span>
                                         </div>
                                     </div>
                                     <div className="bg-white/[0.02] border border-white/5 p-4 hover:border-white/10 transition-colors">
-                                        <span className="text-[10px] uppercase text-neutral-500 block mb-2 tracking-wider">Date Listed</span>
+                                        <span className="text-[10px] uppercase text-neutral-500 block mb-2 tracking-wider">{t('product.dateListed')}</span>
                                         <div className="flex items-center gap-2 text-white">
                                             <Clock className="w-3 h-3 text-neutral-500" />
                                             <span className="text-sm font-mono">
@@ -231,7 +233,7 @@ export function ProductDetailDialog({ product, open, onOpenChange }: ProductDeta
                                     disabled={!account || isBuying || product.stock <= 0}
                                     className="w-full bg-blue-600 hover:bg-blue-500 text-white rounded-none uppercase font-bold tracking-widest h-12 cut-corner-bottom-right shadow-[0_0_20px_rgba(37,99,235,0.2)] hover:shadow-[0_0_30px_rgba(37,99,235,0.4)] transition-all duration-300"
                                 >
-                                    {isBuying ? 'Processing...' : !account ? 'Connect Wallet' : product.stock <= 0 ? 'Out of Stock' : 'Purchase Now'}
+                                    {isBuying ? t('checkout.processing') : !account ? t('nav.connectWallet') : product.stock <= 0 ? t('product.outOfStock') : t('product.purchaseNow')}
                                 </Button>
 
                                 {/* Secondary Actions */}
@@ -243,7 +245,7 @@ export function ProductDetailDialog({ product, open, onOpenChange }: ProductDeta
                                         className="w-full border-white/10 hover:bg-white/5 text-white rounded-none uppercase font-bold tracking-widest h-11 hover:text-blue-400 hover:border-blue-400/30 transition-all duration-300"
                                     >
                                         <ShoppingCart className="w-4 h-4 mr-2" />
-                                        {isInCart ? 'In Cart' : 'Add'}
+                                        {isInCart ? t('product.inCart') : t('product.addToCart')}
                                     </Button>
 
                                     <Button
@@ -253,7 +255,7 @@ export function ProductDetailDialog({ product, open, onOpenChange }: ProductDeta
                                     >
                                         <Link href={`/shops/${product.creator}`}>
                                             <Store className="w-4 h-4 mr-2" />
-                                            Shop
+                                            {t('nav.shop')}
                                         </Link>
                                     </Button>
                                 </div>

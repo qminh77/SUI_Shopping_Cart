@@ -27,19 +27,22 @@ import { CartDrawer } from '@/components/CartDrawer';
 import { useCurrentAccount, useDisconnectWallet } from '@mysten/dapp-kit';
 import { formatAddress } from '@/lib/sui-utils';
 import { useState } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { LanguageSelector } from '@/components/LanguageSelector';
 
 export function Navigation() {
     const pathname = usePathname();
     const account = useCurrentAccount();
     const { mutate: disconnect } = useDisconnectWallet();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const { t } = useLanguage();
 
     const isActive = (path: string) => pathname?.startsWith(path);
 
     const navLinks = [
-        { href: '/shop', label: 'Shop', show: true },
-        { href: '/profile/orders', label: 'My Orders', show: !!account },
-        { href: '/seller', label: 'Seller Hub', icon: Store, show: !!account },
+        { href: '/shop', label: t('nav.shop'), show: true },
+        { href: '/profile/orders', label: t('nav.myOrders'), show: !!account },
+        { href: '/seller', label: t('nav.sellerHub'), icon: Store, show: !!account },
     ];
 
     return (
@@ -80,6 +83,7 @@ export function Navigation() {
 
                 {/* Right Section */}
                 <div className="flex items-center space-x-4">
+                    <LanguageSelector />
                     {/* Cart */}
                     <CartDrawer />
 
@@ -92,12 +96,12 @@ export function Navigation() {
                         </SheetTrigger>
                         <SheetContent side="right" className="w-[280px] sm:w-[350px]">
                             <SheetHeader>
-                                <SheetTitle><MatrixText text="MENU" speed={50} /></SheetTitle>
+                                <SheetTitle><MatrixText text={t('nav.menu')} speed={50} /></SheetTitle>
                             </SheetHeader>
                             <div className="mt-6 flex flex-col space-y-3">
                                 {account && (
                                     <div className="pb-4 mb-4 border-b border-border">
-                                        <p className="text-sm font-medium mb-1 text-muted-foreground uppercase tracking-wider">Connected Wallet</p>
+                                        <p className="text-sm font-medium mb-1 text-muted-foreground uppercase tracking-wider">{t('nav.connectedWallet')}</p>
                                         <p className="text-xs text-foreground font-mono truncate">
                                             {formatAddress(account.address)}
                                         </p>
@@ -130,7 +134,7 @@ export function Navigation() {
                                             >
                                                 <Link href="/profile/addresses">
                                                     <User className="h-4 w-4 mr-2" />
-                                                    <MatrixText text="MY ADDRESSES" />
+                                                    <MatrixText text={t('nav.myAddresses')} />
                                                 </Link>
                                             </Button>
                                             <Button
@@ -141,7 +145,7 @@ export function Navigation() {
                                             >
                                                 <Link href="/receipts">
                                                     <ShoppingBag className="h-4 w-4 mr-2" />
-                                                    <MatrixText text="RECEIPTS" />
+                                                    <MatrixText text={t('nav.receipts')} />
                                                 </Link>
                                             </Button>
                                             <Button
@@ -152,7 +156,7 @@ export function Navigation() {
                                             >
                                                 <Link href="/admin">
                                                     <Shield className="h-4 w-4 mr-2" />
-                                                    <MatrixText text="ADMIN PANEL" />
+                                                    <MatrixText text={t('nav.adminPanel')} />
                                                 </Link>
                                             </Button>
                                             <Button
@@ -164,7 +168,7 @@ export function Navigation() {
                                                 }}
                                             >
                                                 <LogOut className="h-4 w-4 mr-2" />
-                                                <MatrixText text="LOG OUT" />
+                                                <MatrixText text={t('nav.logOut')} />
                                             </Button>
                                         </div>
                                     </>
@@ -194,7 +198,7 @@ export function Navigation() {
                             <DropdownMenuContent className="w-56 bg-card border-border" align="end" forceMount>
                                 <DropdownMenuLabel className="font-normal">
                                     <div className="flex flex-col space-y-1">
-                                        <p className="text-sm font-medium leading-none">My Account</p>
+                                        <p className="text-sm font-medium leading-none">{t('nav.myAccount')}</p>
                                         <p className="text-xs leading-none text-muted-foreground font-mono">
                                             {formatAddress(account.address)}
                                         </p>
@@ -204,33 +208,33 @@ export function Navigation() {
                                 <DropdownMenuItem asChild>
                                     <Link href="/profile/orders" className="cursor-pointer group">
                                         <User className="mr-2 h-4 w-4" />
-                                        <MatrixText text="My Orders" speed={15} />
+                                        <MatrixText text={t('nav.myOrders')} speed={15} />
                                     </Link>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem asChild>
                                     <Link href="/profile/addresses" className="cursor-pointer group">
                                         <User className="mr-2 h-4 w-4" />
-                                        <MatrixText text="My Addresses" speed={15} />
+                                        <MatrixText text={t('nav.myAddresses')} speed={15} />
                                     </Link>
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem asChild>
                                     <Link href="/seller" className="cursor-pointer group">
                                         <Store className="mr-2 h-4 w-4" />
-                                        <MatrixText text="Seller Dashboard" speed={15} />
+                                        <MatrixText text={t('nav.sellerDashboard')} speed={15} />
                                     </Link>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem asChild>
                                     <Link href="/receipts" className="cursor-pointer group">
                                         <ShoppingBag className="mr-2 h-4 w-4" />
-                                        <MatrixText text="Receipts" speed={15} />
+                                        <MatrixText text={t('nav.receipts')} speed={15} />
                                     </Link>
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem asChild>
                                     <Link href="/admin" className="cursor-pointer group">
                                         <Shield className="mr-2 h-4 w-4" />
-                                        <MatrixText text="Admin Panel" speed={15} />
+                                        <MatrixText text={t('nav.adminPanel')} speed={15} />
                                     </Link>
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
@@ -239,7 +243,7 @@ export function Navigation() {
                                     onClick={() => disconnect()}
                                 >
                                     <LogOut className="mr-2 h-4 w-4" />
-                                    <MatrixText text="Log Out" speed={15} />
+                                    <MatrixText text={t('nav.logOut')} speed={15} />
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>

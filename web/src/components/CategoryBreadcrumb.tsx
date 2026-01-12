@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useCategoryBreadcrumb } from '@/hooks/useCategories';
 import { ChevronRight, Home } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface CategoryBreadcrumbProps {
     categoryId: string | null;
@@ -10,6 +11,7 @@ interface CategoryBreadcrumbProps {
 }
 
 export function CategoryBreadcrumb({ categoryId, productCount }: CategoryBreadcrumbProps) {
+    const { t } = useLanguage();
     const { data: breadcrumb = [], isLoading } = useCategoryBreadcrumb(categoryId);
 
     if (!categoryId || isLoading) return null;
@@ -21,7 +23,7 @@ export function CategoryBreadcrumb({ categoryId, productCount }: CategoryBreadcr
                 className="flex items-center gap-1 hover:text-white transition-colors"
             >
                 <Home className="w-4 h-4" />
-                <span>Shop</span>
+                <span>{t('breadcrumb.shop')}</span>
             </Link>
 
             {breadcrumb.map((category, index) => {
@@ -36,7 +38,7 @@ export function CategoryBreadcrumb({ categoryId, productCount }: CategoryBreadcr
                                 {category.name}
                                 {productCount !== undefined && (
                                     <span className="text-blue-400 text-xs">
-                                        ({productCount} {productCount === 1 ? 'product' : 'products'})
+                                        ({productCount} {productCount === 1 ? t('breadcrumb.product') : t('breadcrumb.products')})
                                     </span>
                                 )}
                             </span>

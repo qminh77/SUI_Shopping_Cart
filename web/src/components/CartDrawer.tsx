@@ -20,8 +20,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { ScrollArea } from '@/components/ui/scroll-area';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export function CartDrawer() {
+    const { t } = useLanguage();
     const {
         items,
         removeFromCart,
@@ -191,9 +193,9 @@ export function CartDrawer() {
                 <SheetHeader className="px-6 py-4 border-b bg-background/80 backdrop-blur-md sticky top-0 z-10">
                     <SheetTitle className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                            <span className="text-xl font-bold tracking-tight">Shopping Cart</span>
+                            <span className="text-xl font-bold tracking-tight">{t('cart.title')}</span>
                             <Badge variant="secondary" className="rounded-full px-3 font-normal">
-                                {getTotalItems()} items
+                                {getTotalItems()} {t('cart.items')}
                             </Badge>
                         </div>
                         {items.length > 0 && (
@@ -204,7 +206,7 @@ export function CartDrawer() {
                                 className="text-muted-foreground hover:text-destructive text-xs h-8 px-2"
                             >
                                 <Trash2 className="w-3 h-3 mr-1.5" />
-                                Clear
+                                {t('cart.remove')}
                             </Button>
                         )}
                     </SheetTitle>
@@ -220,7 +222,7 @@ export function CartDrawer() {
                                 </div>
                             </div>
                             <div className="space-y-2 max-w-xs mx-auto">
-                                <h3 className="font-semibold text-xl">Your cart is empty</h3>
+                                <h3 className="font-semibold text-xl">{t('cart.empty')}</h3>
                                 <p className="text-sm text-muted-foreground">
                                     Looks like you haven't added anything to your cart yet.
                                 </p>
@@ -229,7 +231,7 @@ export function CartDrawer() {
                                 onClick={() => setOpen(false)}
                                 className="min-w-[140px]"
                             >
-                                Start Shopping
+                                {t('cart.startShopping')}
                             </Button>
                         </div>
                     ) : (
@@ -237,12 +239,12 @@ export function CartDrawer() {
                             {/* Address Section */}
                             <div className="space-y-3">
                                 <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                                    <MapPin className="w-3 h-3" /> Shipping Address
+                                    <MapPin className="w-3 h-3" /> {t('checkout.shippingAddress')}
                                 </h3>
 
                                 {!account ? (
                                     <div className="p-4 rounded-xl border-dashed border bg-muted/30 text-center text-sm text-muted-foreground hover:bg-muted/50 transition-colors">
-                                        Connect wallet to set shipping address
+                                        {t('nav.connectWallet')}
                                     </div>
                                 ) : isLoadingAddresses ? (
                                     <div className="flex justify-center p-6 rounded-xl border bg-card/50">
@@ -257,7 +259,7 @@ export function CartDrawer() {
                                         <Link href="/profile/addresses" onClick={() => setOpen(false)}>
                                             <Button variant="outline" size="sm" className="w-full">
                                                 <PlusCircle className="w-3 h-3 mr-2" />
-                                                Add New Address
+                                                {t('profile.addNewAddress')}
                                             </Button>
                                         </Link>
                                     </div>
@@ -273,7 +275,7 @@ export function CartDrawer() {
                                                     <Separator orientation="vertical" className="h-3" />
                                                     <span className="text-xs text-muted-foreground">{selectedAddress.phone}</span>
                                                     {selectedAddress.is_default && (
-                                                        <Badge variant="secondary" className="text-[10px] h-4 px-1 ml-auto">Default</Badge>
+                                                        <Badge variant="secondary" className="text-[10px] h-4 px-1 ml-auto">{t('profile.default')}</Badge>
                                                     )}
                                                 </div>
                                                 <p className="text-sm text-muted-foreground leading-relaxed pr-10">
@@ -296,7 +298,7 @@ export function CartDrawer() {
                                                 </DialogTrigger>
                                                 <DialogContent className="max-w-md">
                                                     <DialogHeader>
-                                                        <DialogTitle>Select Shipping Address</DialogTitle>
+                                                        <DialogTitle>{t('checkout.selectAddress')}</DialogTitle>
                                                     </DialogHeader>
                                                     <ScrollArea className="h-[400px] -mr-4 pr-4">
                                                         <div className="space-y-3 pt-2">
@@ -326,7 +328,7 @@ export function CartDrawer() {
                                                                                 <span className="font-medium text-sm">{addr.full_name}</span>
                                                                                 <span className="text-xs text-muted-foreground">{addr.phone}</span>
                                                                                 {addr.is_default && (
-                                                                                    <Badge variant="secondary" className="text-[10px]">Default</Badge>
+                                                                                    <Badge variant="secondary" className="text-[10px]">{t('profile.default')}</Badge>
                                                                                 )}
                                                                             </div>
                                                                             <p className="text-xs text-muted-foreground leading-relaxed">
@@ -345,7 +347,7 @@ export function CartDrawer() {
                                                         }}>
                                                             <Button className="w-full" variant="outline">
                                                                 <PlusCircle className="w-4 h-4 mr-2" />
-                                                                Add New Address
+                                                                {t('profile.addNewAddress')}
                                                             </Button>
                                                         </Link>
                                                     </div>
@@ -365,7 +367,7 @@ export function CartDrawer() {
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between">
                                     <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                                        <Package className="w-3 h-3" /> Items ({items.length})
+                                        <Package className="w-3 h-3" /> {t('cart.items')} ({items.length})
                                     </h3>
                                     {items.length > 0 && (
                                         <Button
@@ -458,11 +460,11 @@ export function CartDrawer() {
                         <div className="space-y-4">
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between text-muted-foreground text-sm">
-                                    <span>Subtotal ({selectedCount} items)</span>
+                                    <span>{t('cart.subtotal')} ({selectedCount} {t('cart.items')})</span>
                                     <span>{mistToSui(selectedTotal)} SUI</span>
                                 </div>
                                 <div className="flex items-center justify-between">
-                                    <span className="text-lg font-bold">Total</span>
+                                    <span className="text-lg font-bold">{t('cart.total')}</span>
                                     <span className="text-2xl font-bold text-primary">{mistToSui(selectedTotal)} SUI</span>
                                 </div>
                             </div>
@@ -487,17 +489,17 @@ export function CartDrawer() {
                                 ) : isProcessing ? (
                                     <>
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Processing...
+                                        {t('checkout.processing')}
                                     </>
                                 ) : !account ? (
-                                    'Connect Wallet to Checkout'
+                                    t('nav.connectWallet')
                                 ) : selectedItemsList.length === 0 ? (
                                     'Select Items to Checkout'
                                 ) : !selectedAddress ? (
-                                    'Select Shipping Address'
+                                    t('checkout.selectAddress')
                                 ) : (
                                     <span className="flex items-center">
-                                        Checkout Now <ArrowRight className="ml-2 h-4 w-4" />
+                                        {t('cart.checkout')} <ArrowRight className="ml-2 h-4 w-4" />
                                     </span>
                                 )}
                             </Button>

@@ -1,0 +1,402 @@
+{
+    "common": {
+        "save": "Lưu",
+        "cancel": "Hủy",
+        "loading": "Đang tải...",
+        "search": "Tìm kiếm",
+        "back": "Quay lại",
+        "next": "Tiếp tục",
+        "confirm": "Xác nhận",
+        "delete": "Xóa",
+        "edit": "Sửa",
+        "view": "Xem",
+        "close": "Đóng",
+        "error": "Lỗi",
+        "success": "Thành công"
+    },
+    "nav": {
+        "shop": "Cửa hàng",
+        "sellerHub": "Kênh người bán",
+        "myOrders": "Đơn hàng của tôi",
+        "myAddresses": "Địa chỉ của tôi",
+        "receipts": "Biên lai",
+        "adminPanel": "Quản trị viên",
+        "menu": "MENU",
+        "connectWallet": "Kết nối ví",
+        "connectedWallet": "Ví đã kết nối",
+        "logOut": "Đăng xuất",
+        "myAccount": "Tài khoản",
+        "sellerDashboard": "Bảng điều khiển người bán"
+    },
+    "footer": {
+        "description": "Sàn thương mại điện tử phi tập trung (Decentralized Marketplace) trên SUI Blockchain. Mua bán vật phẩm số có thể xác thực và thanh toán tức thì.",
+        "shop": "Cửa hàng",
+        "allProducts": "Tất cả sản phẩm",
+        "categories": "Danh mục",
+        "becomeSeller": "Trở thành người bán",
+        "account": "Tài khoản",
+        "connect": "Kết nối",
+        "rightsReserved": "© 2026 SUI Shop. Bảo lưu mọi quyền.",
+        "privacyPolicy": "Chính sách quyền riêng tư",
+        "termsOfService": "Điều khoản dịch vụ"
+    },
+    "home": {
+        "title": "Chào mừng đến với SUI Shop",
+        "hero": {
+            "badge": "Sàn Web3",
+            "titleDiscover": "Khám phá",
+            "titleAssets": "Tài sản tuyệt vời",
+            "description": "Duyệt qua bộ sưu tập tài sản số đã được xác minh và bảo mật trên mạng lưới Sui."
+        }
+    },
+    "terms": {
+        "title": "Điều khoản dịch vụ",
+        "lastUpdated": "Cập nhật lần cuối: 10/01/2026",
+        "sections": {
+            "acceptance": {
+                "title": "1. Chấp nhận các điều khoản",
+                "content": "Bằng cách truy cập và sử dụng chợ này, bạn chấp nhận và đồng ý tuân thủ các điều khoản và quy định của thỏa thuận này."
+            },
+            "useOfService": {
+                "title": "2. Sử dụng dịch vụ",
+                "content": "Bạn đồng ý chỉ sử dụng dịch vụ này cho các mục đích hợp pháp và tuân thủ các Điều khoản dịch vụ này."
+            },
+            "seller": {
+                "title": "3. Trách nhiệm của người bán",
+                "content": "Nếu bạn đăng ký làm người bán, bạn đồng ý:",
+                "list": [
+                    "Cung cấp thông tin cửa hàng chính xác và đầy đủ",
+                    "Chỉ liệt kê các sản phẩm hợp pháp để bán",
+                    "Thực hiện mọi giao dịch bán hàng và giao sản phẩm đúng như mô tả",
+                    "Tuân thủ mọi luật lệ và quy định hiện hành"
+                ]
+            },
+            "buyer": {
+                "title": "4. Trách nhiệm của người mua",
+                "content": "Là người mua, bạn đồng ý:",
+                "list": [
+                    "Thực hiện mua hàng với thiện chí",
+                    "Thanh toán cho các mặt hàng bạn mua",
+                    "Cung cấp thông tin giao hàng chính xác"
+                ]
+            },
+            "blockchain": {
+                "title": "5. Giao dịch Blockchain",
+                "content": "Tất cả các giao dịch được thực hiện trên blockchain SUI và không thể đảo ngược. Khi giao dịch đã được xác nhận, nó không thể hoàn tác."
+            },
+            "liability": {
+                "title": "6. Giới hạn trách nhiệm",
+                "content": "Nền tảng này tạo điều kiện cho các giao dịch ngang hàng (P2P). Chúng tôi không chịu trách nhiệm về tranh chấp giữa người mua và người bán, chất lượng sản phẩm hoặc vấn đề giao hàng."
+            },
+            "modifications": {
+                "title": "7. Sửa đổi điều khoản",
+                "content": "Chúng tôi bảo lưu quyền sửa đổi các điều khoản này bất cứ lúc nào. Việc tiếp tục sử dụng dịch vụ đồng nghĩa với việc chấp nhận các điều khoản đã sửa đổi."
+            },
+            "contact": {
+                "title": "8. Liên hệ",
+                "content": "Nếu có thắc mắc về các Điều khoản dịch vụ này, vui lòng liên hệ với đội ngũ hỗ trợ của chúng tôi."
+            }
+        }
+    },
+    "shop": {
+        "filters": "Bộ lọc",
+        "priceRange": "Khoảng giá",
+        "categories": "Danh mục",
+        "minPrice": "Min",
+        "maxPrice": "Max",
+        "apply": "Áp dụng",
+        "clearAll": "Xóa tất cả",
+        "searchPlaceholder": "Tìm kiếm sản phẩm...",
+        "sortBy": "Sắp xếp theo",
+        "newest": "Mới nhất",
+        "oldest": "Cũ nhất",
+        "priceLowHigh": "Giá: Thấp đến Cao",
+        "priceHighLow": "Giá: Cao đến Thấp",
+        "noProducts": "Không tìm thấy sản phẩm",
+        "tryAdjusting": "Thử điều chỉnh tìm kiếm hoặc bộ lọc của bạn",
+        "showingResults": "Hiển thị",
+        "results": "kết quả",
+        "activeFilters": "Bộ lọc đang dùng",
+        "creator": "Địa chỉ người tạo (tùy chọn)",
+        "creatorDesc": "Lọc theo địa chỉ người tạo cụ thể",
+        "search": "Tìm kiếm",
+        "allProducts": "Tất cả sản phẩm"
+    },
+    "product": {
+        "addToCart": "Thêm vào giỏ",
+        "buyNow": "Mua ngay",
+        "outOfStock": "Hết hàng",
+        "inStock": "Còn hàng",
+        "description": "Mô tả",
+        "seller": "Người bán",
+        "price": "Giá",
+        "quantity": "Số lượng",
+        "reviews": "Đánh giá",
+        "added": "Đã thêm",
+        "addedToCart": "Đã thêm vào giỏ hàng",
+        "viewCart": "Xem giỏ hàng",
+        "lowStock": "Sắp hết",
+        "availability": "Tình trạng",
+        "dateListed": "Ngày đăng",
+        "purchaseNow": "Mua ngay",
+        "inCart": "Đã trong giỏ",
+        "available": "có sẵn",
+        "purchaseSuccess": "Giao dịch thành công!",
+        "purchaseFailed": "Giao dịch thất bại"
+    },
+    "toast": {
+        "addedToCart": "Đã thêm vào giỏ hàng!",
+        "alreadyInCart": "Sản phẩm đã có trong giỏ hàng"
+    },
+    "cart": {
+        "title": "Giỏ hàng",
+        "empty": "Giỏ hàng của bạn đang trống",
+        "startShopping": "Bắt đầu mua sắm",
+        "subtotal": "Tạm tính",
+        "checkout": "Thanh toán",
+        "remove": "Xóa",
+        "continueShopping": "Tiếp tục mua sắm",
+        "items": "sản phẩm",
+        "total": "Tổng cộng"
+    },
+    "checkout": {
+        "title": "Thanh toán",
+        "shippingAddress": "Địa chỉ giao hàng",
+        "selectAddress": "Chọn địa chỉ",
+        "paymentMethod": "Phương thức thanh toán",
+        "placeOrder": "Đặt hàng",
+        "orderSummary": "Tóm tắt đơn hàng",
+        "shipping": "Vận chuyển",
+        "free": "Miễn phí",
+        "processing": "Đang xử lý...",
+        "successMessage": "Đặt hàng thành công!"
+    },
+    "profile": {
+        "orders": {
+            "title": "Đơn Mua Của Tôi",
+            "subtitle": "Quản lý và theo dõi quá trình vận chuyển",
+            "searchPlaceholder": "Tìm kiếm theo Tên sản phẩm hoặc Mã đơn hàng...",
+            "tabs": {
+                "all": "Tất cả",
+                "paid": "Đã thanh toán",
+                "shipping": "Đang giao",
+                "delivered": "Đã giao",
+                "cancelled": "Đã hủy"
+            },
+            "status": {
+                "paid": "Đã thanh toán",
+                "shipping": "Đang giao",
+                "delivered": "Đã giao",
+                "cancelled": "Đã hủy"
+            },
+            "noOrders": "Không có đơn hàng nào",
+            "noOrdersDesc": "Bạn chưa có đơn hàng nào trong trạng thái này.",
+            "shopNow": "Khám phá sản phẩm",
+            "shop": "Shop",
+            "orderId": "Mã đơn hàng",
+            "date": "Ngày đặt",
+            "total": "Tổng thanh toán",
+            "connectWallet": "Vui lòng kết nối ví",
+            "connectWalletDesc": "Bạn cần kết nối ví SUI của mình để xem lịch sử đơn hàng.",
+            "connectGuide": "Nhấn nút Connect Wallet ở góc trên bên phải"
+        },
+        "addresses": {
+            "title": "Địa Chỉ Giao Hàng",
+            "subtitle": "Quản lý địa chỉ giao hàng của bạn",
+            "add": "Thêm địa chỉ",
+            "edit": "Sửa địa chỉ",
+            "delete": "Xóa địa chỉ",
+            "noAddresses": "Chưa có địa chỉ nào",
+            "noAddressesDesc": "Thêm địa chỉ giao hàng đầu tiên của bạn để bắt đầu",
+            "deleteTitle": "Xóa địa chỉ?",
+            "deleteDesc": "Hành động này không thể hoàn tác. Địa chỉ này sẽ bị xóa vĩnh viễn.",
+            "default": "Mặc định",
+            "setAsDefault": "Đặt làm mặc định",
+            "form": {
+                "fullName": "Họ và tên",
+                "phone": "Số điện thoại",
+                "province": "Tỉnh/Thành phố",
+                "district": "Quận/Huyện",
+                "ward": "Phường/Xã",
+                "street": "Địa chỉ cụ thể",
+                "label": "Nhãn (Tùy chọn)",
+                "setDefault": "Đặt làm địa chỉ mặc định",
+                "selectProvince": "Chọn Tỉnh/Thành phố",
+                "selectDistrict": "Chọn Quận/Huyện",
+                "selectWard": "Chọn Phường/Xã",
+                "required": "Bắt buộc",
+                "saving": "Đang lưu...",
+                "update": "Cập nhật",
+                "create": "Tạo địa chỉ",
+                "dataSource": "Nguồn dữ liệu API",
+                "officialApi": "API Chính thức",
+                "adminDivision": "Đơn vị hành chính",
+                "v1": "Trước sáp nhập (07/2025)",
+                "v2": "Sau sáp nhập (07/2025)",
+                "v2Hint": "Dùng V2 cho cập nhật mới nhất 2025",
+                "autoSaveHint": "* Các đơn vị hành chính đã chọn sẽ được tự động lưu vào sổ địa chỉ.",
+                "fullNamePlaceholder": "Nguyễn Văn A",
+                "phonePlaceholder": "0912 345 678",
+                "streetPlaceholder": "Số 123, Đường Lê Lợi",
+                "labelPlaceholder": "Nhà riêng, Văn phòng..."
+            },
+            "connectWallet": "Chưa kết nối ví",
+            "connectWalletDesc": "Vui lòng kết nối ví của bạn để quản lý địa chỉ giao hàng",
+            "goToShop": "Đi tới Shop"
+        },
+        "orderId": "Mã đơn",
+        "date": "Ngày đặt",
+        "status": "Trạng thái",
+        "total": "Tổng tiền",
+        "actions": "Thao tác"
+    },
+    "seller": {
+        "dashboard": {
+            "title": "Bảng Điều Khiển Người Bán",
+            "subtitle": "Quản lý sản phẩm và đơn hàng",
+            "active": "Đang hoạt động",
+            "pending": "Chờ duyệt",
+            "inactive": "Ngừng hoạt động",
+            "syncRequired": "Bắt buộc đồng bộ Blockchain",
+            "syncDesc": "Shop của bạn phải được tạo trên SUI Blockchain trước khi có thể bán sản phẩm.",
+            "cantCreate": "Bạn không thể tạo sản phẩm cho đến khi hoàn thành đồng bộ.",
+            "syncButton": "Đồng bộ lên Blockchain ngay",
+            "syncing": "Đang đồng bộ..."
+        },
+        "stats": {
+            "shopName": "Tên Shop",
+            "products": "Sản phẩm",
+            "totalProducts": "Tổng sản phẩm",
+            "revenue": "Doanh thu",
+            "totalRevenue": "Tổng doanh thu"
+        },
+        "products": {
+            "add": "Thêm Sản Phẩm",
+            "addDesc": "Thêm sản phẩm mới vào kho",
+            "edit": "Chỉnh Sửa Sản Phẩm",
+            "delete": "Xóa Sản Phẩm",
+            "deleteTitle": "Bạn có chắc chắn muốn xóa?",
+            "deleteDesc": "Hành động này không thể hoàn tác. Sản phẩm sẽ bị xóa khỏi cửa hàng của bạn.",
+            "form": {
+                "name": "Tên sản phẩm",
+                "price": "Giá (SUI)",
+                "stock": "Số lượng",
+                "image": "URL hình ảnh",
+                "description": "Mô tả",
+                "category": "Danh mục",
+                "create": "Tạo Sản Phẩm",
+                "update": "Lưu Thay Đổi",
+                "creating": "Đang tạo...",
+                "saving": "Đang lưu...",
+                "syncLock": "Đồng bộ blockchain để tạo sản phẩm"
+            },
+            "list": {
+                "title": "Kho Hàng",
+                "empty": "Chưa có sản phẩm nào"
+            }
+        },
+        "register": {
+            "title": "Đăng Ký Cửa Hàng",
+            "subtitle": "Điền thông tin bên dưới để bắt đầu bán hàng",
+            "basicInfo": "Thông tin cơ bản",
+            "basicInfoDesc": "Thông tin bắt buộc về cửa hàng của bạn",
+            "shopName": "Tên Shop",
+            "description": "Mô tả",
+            "businessType": "Loại hình kinh doanh",
+            "personal": "Cá nhân",
+            "business": "Doanh nghiệp",
+            "establishedYear": "Năm thành lập",
+            "contactInfo": "Thông tin liên hệ",
+            "contactInfoDesc": "Cách khách hàng liên hệ với bạn",
+            "email": "Email liên hệ",
+            "phone": "Số điện thoại",
+            "city": "Thành phố/Tỉnh",
+            "address": "Địa chỉ chi tiết",
+            "legalInfo": "Thông tin pháp lý",
+            "legalInfoDesc": "Mã số thuế và đăng ký kinh doanh",
+            "taxCode": "Mã số thuế",
+            "branding": "Thương hiệu & Mạng xã hội",
+            "brandingDesc": "Tùy chọn - Giúp khách hàng tìm thấy bạn trực tuyến",
+            "website": "Địa chỉ Website",
+            "policies": "Chính sách cửa hàng",
+            "policiesDesc": "Tùy chọn - Thiết lập kỳ vọng rõ ràng với khách hàng",
+            "returnPolicy": "Chính sách đổi trả",
+            "submit": "Gửi Đăng Ký"
+        },
+        "pending": {
+            "title": "Đơn đăng ký đang chờ duyệt",
+            "desc": "Đơn đăng ký shop của bạn đang được quản trị viên xem xét. Vui lòng kiên nhẫn chờ đợi trong khi chúng tôi xác minh thông tin của bạn.",
+            "infoTitle": "Thông tin Shop đã đăng ký",
+            "infoDesc": "Thông tin bạn đã gửi để đăng ký",
+            "adminNote": "Ghi chú từ quản trị viên",
+            "process": "Quy trình phê duyệt",
+            "time": "Thời gian xét duyệt trung bình: 1-3 ngày làm việc",
+            "verify": "Quản trị viên sẽ xác minh thông tin shop của bạn",
+            "notify": "Bạn sẽ nhận được thông báo khi shop được phê duyệt"
+        }
+    },
+    "categories": {
+        "main": "Danh mục chính",
+        "sub": "Danh mục con",
+        "select": "Chọn danh mục...",
+        "selectSub": "Chọn chi tiết...",
+        "search": "Tìm danh mục...",
+        "notFound": "Không tìm thấy danh mục."
+    },
+    "sellerPopover": {
+        "title": "Thông tin người bán",
+        "loading": "Đang tải thông tin shop...",
+        "verified": "Chủ Shop đã xác minh",
+        "visit": "Xem Shop",
+        "individual": "Người bán cá nhân (chưa có shop)",
+        "address": "Địa chỉ ví",
+        "explorer": "Xem trên Sui Explorer",
+        "copied": "Đã sao chép địa chỉ",
+        "copyFail": "Sao chép thất bại"
+    },
+    "search": {
+        "placeholder": "Tìm kiếm sản phẩm...",
+        "clear": "Xóa tìm kiếm"
+    },
+    "breadcrumb": {
+        "shop": "Cửa hàng",
+        "product": "sản phẩm",
+        "products": "sản phẩm"
+    },
+    "privacy": {
+        "title": "Chính sách quyền riêng tư",
+        "lastUpdated": "Cập nhật lần cuối: 10/01/2026",
+        "sections": {
+            "collection": {
+                "title": "1. Thông tin chúng tôi thu thập",
+                "content": "Chúng tôi thu thập thông tin mà bạn cung cấp trực tiếp cho chúng tôi, bao gồm:",
+                "list": [
+                    "Địa chỉ ví khi bạn kết nối với nền tảng của chúng tôi",
+                    "Dữ liệu giao dịch trên blockchain SUI",
+                    "Thông tin cửa hàng khi bạn đăng ký làm người bán"
+                ]
+            },
+            "usage": {
+                "title": "2. Cách chúng tôi sử dụng thông tin của bạn",
+                "content": "Chúng tôi sử dụng thông tin thu thập được để:",
+                "list": [
+                    "Cung cấp, duy trì và cải thiện dịch vụ của chúng tôi",
+                    "Xử lý giao dịch và gửi các thông tin liên quan",
+                    "Gửi cho bạn các thông báo kỹ thuật và tin nhắn hỗ trợ"
+                ]
+            },
+            "security": {
+                "title": "3. Bảo mật dữ liệu",
+                "content": "Chúng tôi thực hiện các biện pháp bảo mật thích hợp để bảo vệ thông tin cá nhân của bạn. Tuy nhiên, không có phương thức truyền tải nào qua Internet là an toàn 100%."
+            },
+            "blockchain": {
+                "title": "4. Dữ liệu Blockchain",
+                "content": "Các giao dịch trên blockchain SUI là công khai và vĩnh viễn. Địa chỉ ví và lịch sử giao dịch của bạn được hiển thị công khai trên blockchain."
+            },
+            "contact": {
+                "title": "5. Liên hệ",
+                "content": "Nếu bạn có bất kỳ câu hỏi nào về Chính sách quyền riêng tư này, vui lòng liên hệ với chúng tôi qua các kênh hỗ trợ."
+            }
+        }
+    }
+}

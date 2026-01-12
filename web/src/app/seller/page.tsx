@@ -12,6 +12,7 @@ import { mistToSui, PACKAGE_ID, getUserShop, suiToMist } from '@/lib/sui-utils';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
 import { Package, ShoppingBag, Loader2, Store, TrendingUp, DollarSign, AlertCircle } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -40,6 +41,7 @@ export default function SellerPage() {
     const client = useSuiClient();
     const queryClient = useQueryClient();
     const { mutateAsync: signAndExecute } = useSignAndExecuteTransaction();
+    const { t } = useLanguage();
 
     const { shop: userShop, isLoading: isLoadingShop, syncChainShop } = useShop();
 
@@ -92,11 +94,11 @@ export default function SellerPage() {
                 description: userShop.shop_description
             });
             queryClient.invalidateQueries({ queryKey: ['checkChainShop'] });
-            toast.success('Shop đã đồng bộ lên blockchain thành công!');
+            toast.success(t('seller.dashboard.syncSuccess'));
             console.log('[SellerPage] Sync completed successfully');
         } catch (error) {
             console.error('[SellerPage] Sync shop error:', error);
-            toast.error('Đồng bộ thất bại. Vui lòng thử lại.');
+            toast.error(t('seller.dashboard.syncError'));
         } finally {
             setIsSyncing(false);
         }
@@ -141,7 +143,7 @@ export default function SellerPage() {
         const freshOnChainShop = await getUserShop(client, userShop.owner_wallet);
 
         if (!freshOnChainShop) {
-            toast.error('❌ Shop chưa đồng bộ lên blockchain. Vui lòng đồng bộ trước khi tạo sản phẩm.', {
+            toast.error(t('seller.dashboard.syncRequiredMsg'), {
                 duration: 6000
             });
             console.error('[ProductCreate] Blocked: No on-chain shop found for wallet:', userShop.owner_wallet);
@@ -233,13 +235,13 @@ export default function SellerPage() {
                 }
             }
 
-            toast.success('Product created successfully!');
+            toast.success(t('seller.products.form.createSuccess'));
             setProductFormData({ name: '', description: '', imageUrl: '', price: '', stock: '100', categoryId: null });
             queryClient.invalidateQueries({ queryKey: ['my-retail-products'] });
             queryClient.invalidateQueries({ queryKey: ['products', 'with-category'] });
         } catch (error) {
             console.error('Create product error:', error);
-            toast.error('Failed to create product');
+            toast.error(t('seller.products.form.createError'));
         } finally {
             setIsCreating(false);
         }
@@ -276,13 +278,15 @@ export default function SellerPage() {
 
             if (!res.ok) throw new Error('Failed to delete from database');
 
-            toast.success('Đã xóa sản phẩm thành công');
+            if (!res.ok) throw new Error('Failed to delete from database');
+
+            toast.success(t('seller.products.deleteSuccess'));
             setDeletingProductId(null);
             queryClient.invalidateQueries({ queryKey: ['my-retail-products'] });
 
         } catch (error) {
             console.error('Delete product error:', error);
-            toast.error('Có lỗi xảy ra khi xóa sản phẩm');
+            toast.error(t('seller.products.deleteError'));
         } finally {
             setIsDeleting(false);
         }
@@ -296,9 +300,9 @@ export default function SellerPage() {
                     <Card className="max-w-md w-full">
                         <CardContent className="flex flex-col items-center justify-center py-16">
                             <Store className="w-16 h-16 text-primary mb-4" />
-                            <h3 className="text-2xl font-bold mb-2">Seller Portal</h3>
+                            <h3 className="text-2xl font-bold mb-2">{t('seller.dashboard.title')}</h3>
                             <p className="text-muted-foreground text-center mb-6">
-                                Kết nối ví để quản lý shop của bạn
+                                {t('profile.addresses.connectWalletDesc')}
                             </p>
                             <WalletConnectButton />
                         </CardContent>
@@ -332,14 +336,13 @@ export default function SellerPage() {
                                 </div>
                                 <div className="flex-1">
                                     <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
-                                        Đơn đăng ký đang chờ duyệt
+                                        {t('seller.pending.title')}
                                         <Badge variant="outline" className="bg-yellow-500/20 text-yellow-700 dark:text-yellow-400 border-yellow-500/50">
-                                            PENDING
+                                            {t('seller.dashboard.pending')}
                                         </Badge>
                                     </h2>
                                     <p className="text-muted-foreground">
-                                        Đơn đăng ký shop của bạn đang được quản trị viên xem xét.
-                                        Vui lòng kiên nhẫn chờ đợi trong khi chúng tôi xác minh thông tin của bạn.
+                                        {t('seller.pending.desc')}
                                     </p>
                                 </div>
                             </div>
@@ -449,12 +452,11 @@ export default function SellerPage() {
                     <Card className="bg-muted/50">
                         <CardContent className="pt-6">
                             <div className="space-y-3">
-                                <h3 className="font-semibold">⏱️ Quy trình phê duyệt</h3>
+                                <h3 className="font-semibold">⏱️ {t('seller.pending.process')}</h3>
                                 <ul className="space-y-2 text-sm text-muted-foreground">
-                                    <li>• Thời gian xét duyệt trung bình: 1-3 ngày làm việc</li>
-                                    <li>• Quản trị viên sẽ xác minh thông tin shop của bạn</li>
-                                    <li>• Bạn sẽ nhận được thông báo khi shop được phê duyệt</li>
-                                    <li>• Nếu có vấn đề, quản trị viên sẽ để lại ghi chú ở trên</li>
+                                    <li>• {t('seller.pending.time')}</li>
+                                    <li>• {t('seller.pending.verify')}</li>
+                                    <li>• {t('seller.pending.notify')}</li>
                                 </ul>
                             </div>
                         </CardContent>
@@ -487,12 +489,12 @@ export default function SellerPage() {
                     <div>
                         <h1 className="text-3xl font-bold tracking-tight mb-2 flex items-center gap-3">
                             <Store className="w-8 h-8 text-primary" />
-                            Seller Dashboard
+                            {t('seller.dashboard.title')}
                         </h1>
-                        <p className="text-muted-foreground">Quản lý sản phẩm và đơn hàng</p>
+                        <p className="text-muted-foreground">{t('seller.dashboard.subtitle')}</p>
                     </div>
                     <Badge variant={isMissingOnChain ? "destructive" : "default"} className="text-sm">
-                        {isMissingOnChain ? '❌ Chưa thể bán hàng' : '✅ Đang hoạt động'}
+                        {isMissingOnChain ? `❌ ${t('seller.dashboard.syncRequired')}` : `✅ ${t('seller.dashboard.active')}`}
                     </Badge>
                 </div>
 
@@ -506,13 +508,13 @@ export default function SellerPage() {
                                 </div>
                                 <div className="flex-1">
                                     <h3 className="font-bold text-lg mb-1 text-destructive">
-                                        ⚠️ Bắt buộc đồng bộ Blockchain
+                                        ⚠️ {t('seller.dashboard.syncRequired')}
                                     </h3>
                                     <p className="text-sm mb-2">
-                                        Shop của bạn phải được tạo trên SUI Blockchain trước khi có thể bán sản phẩm.
+                                        {t('seller.dashboard.syncDesc')}
                                     </p>
                                     <p className="text-sm font-semibold mb-4">
-                                        🚫 Bạn không thể tạo sản phẩm cho đến khi hoàn thành đồng bộ.
+                                        🚫 {t('seller.dashboard.cantCreate')}
                                     </p>
                                     <Button
                                         onClick={handleSyncShop}
@@ -521,7 +523,7 @@ export default function SellerPage() {
                                         className="bg-destructive hover:bg-destructive/90 text-white shadow-lg"
                                     >
                                         {isSyncing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                        {isSyncing ? 'Đang đồng bộ...' : '🚀 Đồng bộ lên Blockchain ngay'}
+                                        {isSyncing ? t('seller.dashboard.syncing') : `🚀 ${t('seller.dashboard.syncButton')}`}
                                     </Button>
                                 </div>
                             </div>
@@ -534,7 +536,7 @@ export default function SellerPage() {
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between pb-2">
                             <CardTitle className="text-sm font-medium text-muted-foreground">
-                                Tên Shop
+                                {t('seller.stats.shopName')}
                             </CardTitle>
                             <Store className="w-4 h-4 text-muted-foreground" />
                         </CardHeader>
@@ -546,20 +548,20 @@ export default function SellerPage() {
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between pb-2">
                             <CardTitle className="text-sm font-medium text-muted-foreground">
-                                Sản phẩm
+                                {t('seller.stats.products')}
                             </CardTitle>
                             <Package className="w-4 h-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{myProducts?.length || 0}</div>
-                            <p className="text-xs text-muted-foreground mt-1">Tổng sản phẩm</p>
+                            <p className="text-xs text-muted-foreground mt-1">{t('seller.stats.totalProducts')}</p>
                         </CardContent>
                     </Card>
 
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between pb-2">
                             <CardTitle className="text-sm font-medium text-muted-foreground">
-                                Doanh thu
+                                {t('seller.stats.revenue')}
                             </CardTitle>
                             <TrendingUp className="w-4 h-4 text-muted-foreground" />
                         </CardHeader>
@@ -567,7 +569,7 @@ export default function SellerPage() {
                             <div className="text-2xl font-bold text-primary">
                                 {mistToSui(totalEarnings).toFixed(2)} SUI
                             </div>
-                            <p className="text-xs text-muted-foreground mt-1">Tổng doanh thu</p>
+                            <p className="text-xs text-muted-foreground mt-1">{t('seller.stats.totalRevenue')}</p>
                         </CardContent>
                     </Card>
                 </div>
@@ -576,12 +578,12 @@ export default function SellerPage() {
                     {/* Add Product Form */}
                     <Card className="lg:col-span-1">
                         <CardHeader>
-                            <CardTitle>Thêm Sản Phẩm</CardTitle>
-                            <CardDescription>Thêm sản phẩm mới vào kho</CardDescription>
+                            <CardTitle>{t('seller.products.add')}</CardTitle>
+                            <CardDescription>{t('seller.products.addDesc')}</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="name">Tên sản phẩm</Label>
+                                <Label htmlFor="name">{t('seller.products.form.name')}</Label>
                                 <Input
                                     id="name"
                                     value={productFormData.name}
@@ -592,7 +594,7 @@ export default function SellerPage() {
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="price">Giá (SUI)</Label>
+                                <Label htmlFor="price">{t('seller.products.form.price')}</Label>
                                 <Input
                                     id="price"
                                     type="number"
@@ -605,7 +607,7 @@ export default function SellerPage() {
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="stock">Số lượng</Label>
+                                <Label htmlFor="stock">{t('seller.products.form.stock')}</Label>
                                 <Input
                                     id="stock"
                                     type="number"
@@ -616,7 +618,7 @@ export default function SellerPage() {
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="imageUrl">URL hình ảnh</Label>
+                                <Label htmlFor="imageUrl">{t('seller.products.form.image')}</Label>
                                 <Input
                                     id="imageUrl"
                                     value={productFormData.imageUrl}
@@ -627,7 +629,7 @@ export default function SellerPage() {
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="description">Mô tả</Label>
+                                <Label htmlFor="description">{t('seller.products.form.description')}</Label>
                                 <Textarea
                                     id="description"
                                     value={productFormData.description}
@@ -652,14 +654,14 @@ export default function SellerPage() {
                                 disabled={isCreating || !productFormData.name || !productFormData.price || isMissingOnChain}
                             >
                                 {isMissingOnChain ? (
-                                    '🔒 Đồng bộ blockchain để tạo sản phẩm'
+                                    `🔒 ${t('seller.products.form.syncLock')}`
                                 ) : isCreating ? (
                                     <>
                                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                        Đang tạo...
+                                        {t('seller.products.form.creating')}
                                     </>
                                 ) : (
-                                    'Tạo Sản Phẩm'
+                                    t('seller.products.form.create')
                                 )}
                             </Button>
                         </CardContent>
@@ -667,7 +669,7 @@ export default function SellerPage() {
 
                     {/* Inventory List */}
                     <div className="lg:col-span-2 space-y-4">
-                        <h3 className="text-xl font-semibold">Kho Hàng</h3>
+                        <h3 className="text-xl font-semibold">{t('seller.products.list.title')}</h3>
 
                         {isLoadingProducts ? (
                             <div className="flex justify-center py-12">
@@ -677,7 +679,7 @@ export default function SellerPage() {
                             <Card>
                                 <CardContent className="flex flex-col items-center justify-center py-16">
                                     <Package className="w-16 h-16 text-muted-foreground/50 mb-4" />
-                                    <p className="text-muted-foreground">Chưa có sản phẩm nào</p>
+                                    <p className="text-muted-foreground">{t('seller.products.list.empty')}</p>
                                 </CardContent>
                             </Card>
                         ) : (
@@ -723,7 +725,7 @@ export default function SellerPage() {
                                                     <div className="flex justify-between items-start mb-2">
                                                         <h4 className="font-semibold text-lg truncate">{product.name}</h4>
                                                         <Badge variant="outline">
-                                                            Kho: {product.stock}
+                                                            {t('seller.products.form.stock')}: {product.stock}
                                                         </Badge>
                                                     </div>
                                                     <div className="flex items-center gap-2 mb-2">
@@ -763,13 +765,13 @@ export default function SellerPage() {
             <AlertDialog open={!!deletingProductId} onOpenChange={(open) => !open && setDeletingProductId(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
+                        <AlertDialogTitle>{t('seller.products.deleteTitle')}</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Hành động này không thể hoàn tác. Sản phẩm sẽ bị xóa khỏi cửa hàng của bạn.
+                            {t('seller.products.deleteDesc')}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Hủy</AlertDialogCancel>
+                        <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={handleDeleteProduct}
                             className="bg-red-500 hover:bg-red-600 focus:ring-red-500"
@@ -777,10 +779,10 @@ export default function SellerPage() {
                             {isDeleting ? (
                                 <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Đang xóa...
+                                    {t('common.delete')}...
                                 </>
                             ) : (
-                                'Xóa Sản Phẩm'
+                                t('seller.products.delete')
                             )}
                         </AlertDialogAction>
                     </AlertDialogFooter>

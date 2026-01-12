@@ -25,7 +25,10 @@ interface AddressFormProps {
     isSubmitting?: boolean;
 }
 
+import { useLanguage } from '@/contexts/LanguageContext';
+
 export function AddressForm({ address, onSubmit, onCancel, isSubmitting = false }: AddressFormProps) {
+    const { t } = useLanguage();
     const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<AddressInput>({
         defaultValues: address ? {
             full_name: address.full_name,
@@ -147,17 +150,17 @@ export function AddressForm({ address, onSubmit, onCancel, isSubmitting = false 
             <div className="flex flex-col sm:flex-row gap-4 p-4 rounded-lg border border-primary/20 bg-primary/5">
                 <div className="flex-1">
                     <Label className="mb-2 block text-xs font-semibold uppercase text-muted-foreground">
-                        Data Source API
+                        {t('profile.addresses.form.dataSource')}
                     </Label>
                     <div className="flex items-center gap-2">
-                        <span className={`text-xs ${source === 'api' ? 'font-bold text-primary' : ''}`}>Official API</span>
+                        <span className={`text-xs ${source === 'api' ? 'font-bold text-primary' : ''}`}>{t('profile.addresses.form.officialApi')}</span>
                         {/* Hidden toggle if needed, or simplified as just version for now since user prioritized V1/V2 */}
                     </div>
                 </div>
 
                 <div className="flex-1">
                     <Label className="mb-2 block text-xs font-semibold uppercase text-muted-foreground">
-                        Administrative Division
+                        {t('profile.addresses.form.adminDivision')}
                     </Label>
                     <Tabs
                         defaultValue={version}
@@ -172,15 +175,15 @@ export function AddressForm({ address, onSubmit, onCancel, isSubmitting = false 
                     >
                         <TabsList className="w-full grid grid-cols-2 h-8">
                             <TabsTrigger value="v1" className="text-xs">
-                                Trước sáp nhập tỉnh thành 07/2025
+                                {t('profile.addresses.form.v1')}
                             </TabsTrigger>
                             <TabsTrigger value="v2" className="text-xs">
-                                Sau sáp nhập tỉnh thành 07/2025
+                                {t('profile.addresses.form.v2')}
                             </TabsTrigger>
                         </TabsList>
                     </Tabs>
                     <p className="text-[10px] text-muted-foreground mt-1 text-right">
-                        Use V2 for latest 2025 updates
+                        {t('profile.addresses.form.v2Hint')}
                     </p>
                 </div>
             </div>
@@ -188,21 +191,21 @@ export function AddressForm({ address, onSubmit, onCancel, isSubmitting = false 
             {/* Full Name & Phone */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <Label htmlFor="full_name">Full Name <span className="text-red-400">*</span></Label>
+                    <Label htmlFor="full_name">{t('profile.addresses.form.fullName')} <span className="text-red-400">*</span></Label>
                     <Input
                         id="full_name"
-                        {...register('full_name', { required: 'Required', minLength: 2 })}
-                        placeholder="Nguyen Van A"
+                        {...register('full_name', { required: t('profile.addresses.form.required'), minLength: 2 })}
+                        placeholder={t('profile.addresses.form.fullNamePlaceholder')}
                         className="mt-1.5"
                     />
                     {errors.full_name && <p className="text-destructive text-xs mt-1">{errors.full_name.message}</p>}
                 </div>
                 <div>
-                    <Label htmlFor="phone">Phone <span className="text-red-400">*</span></Label>
+                    <Label htmlFor="phone">{t('profile.addresses.form.phone')} <span className="text-red-400">*</span></Label>
                     <Input
                         id="phone"
-                        {...register('phone', { required: 'Required', pattern: /^[0-9\s\-\+\(\)]{10,}$/ })}
-                        placeholder="0912 345 678"
+                        {...register('phone', { required: t('profile.addresses.form.required'), pattern: /^[0-9\s\-\+\(\)]{10,}$/ })}
+                        placeholder={t('profile.addresses.form.phonePlaceholder')}
                         className="mt-1.5"
                     />
                     {errors.phone && <p className="text-destructive text-xs mt-1">{errors.phone.message}</p>}
@@ -211,7 +214,7 @@ export function AddressForm({ address, onSubmit, onCancel, isSubmitting = false 
 
             {/* Address Selection Area */}
             <div className="space-y-4 pt-2">
-                <Label>Address Details <span className="text-red-400">*</span></Label>
+                <Label>{t('profile.addresses.form.province')} / {t('profile.addresses.form.district')} / {t('profile.addresses.form.ward')} <span className="text-red-400">*</span></Label>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {/* Province / City */}
@@ -222,7 +225,7 @@ export function AddressForm({ address, onSubmit, onCancel, isSubmitting = false 
                             disabled={provinces.length === 0}
                         >
                             <SelectTrigger className="w-full mt-1.5">
-                                <SelectValue placeholder="Select Province/City" />
+                                <SelectValue placeholder={t('profile.addresses.form.selectProvince')} />
                             </SelectTrigger>
                             <SelectContent>
                                 {provinces.map((p) => (
@@ -232,7 +235,7 @@ export function AddressForm({ address, onSubmit, onCancel, isSubmitting = false 
                                 ))}
                             </SelectContent>
                         </Select>
-                        <input type="hidden" {...register('city', { required: 'Province is required' })} />
+                        <input type="hidden" {...register('city', { required: t('profile.addresses.form.required') })} />
                         {errors.city && <p className="text-destructive text-xs mt-1">{errors.city.message}</p>}
                     </div>
 
@@ -244,7 +247,7 @@ export function AddressForm({ address, onSubmit, onCancel, isSubmitting = false 
                             disabled={!selectedProvinceCode}
                         >
                             <SelectTrigger className="w-full mt-1.5">
-                                <SelectValue placeholder="Select District" />
+                                <SelectValue placeholder={t('profile.addresses.form.selectDistrict')} />
                             </SelectTrigger>
                             <SelectContent>
                                 {districts.map((d) => (
@@ -254,7 +257,7 @@ export function AddressForm({ address, onSubmit, onCancel, isSubmitting = false 
                                 ))}
                             </SelectContent>
                         </Select>
-                        <input type="hidden" {...register('state_province', { required: 'District is required' })} />
+                        <input type="hidden" {...register('state_province', { required: t('profile.addresses.form.required') })} />
                     </div>
 
                     {/* Ward (mapped to address_line2) */}
@@ -265,7 +268,7 @@ export function AddressForm({ address, onSubmit, onCancel, isSubmitting = false 
                             disabled={!selectedDistrictCode}
                         >
                             <SelectTrigger className="w-full mt-1.5">
-                                <SelectValue placeholder="Select Ward" />
+                                <SelectValue placeholder={t('profile.addresses.form.selectWard')} />
                             </SelectTrigger>
                             <SelectContent>
                                 {wards.map((w) => (
@@ -275,18 +278,18 @@ export function AddressForm({ address, onSubmit, onCancel, isSubmitting = false 
                                 ))}
                             </SelectContent>
                         </Select>
-                        <input type="hidden" {...register('address_line2', { required: 'Ward is required' })} />
+                        <input type="hidden" {...register('address_line2', { required: t('profile.addresses.form.required') })} />
                     </div>
                 </div>
             </div>
 
             {/* Specific Address Line 1 */}
             <div>
-                <Label htmlFor="address_line1">Street Address <span className="text-red-400">*</span></Label>
+                <Label htmlFor="address_line1">{t('profile.addresses.form.street')} <span className="text-red-400">*</span></Label>
                 <Input
                     id="address_line1"
-                    {...register('address_line1', { required: 'Street address is required', minLength: 5 })}
-                    placeholder="No. 123, Le Loi Street"
+                    {...register('address_line1', { required: t('profile.addresses.form.required'), minLength: 5 })}
+                    placeholder={t('profile.addresses.form.streetPlaceholder')}
                     className="mt-1.5"
                 />
                 {errors.address_line1 && <p className="text-destructive text-xs mt-1">{errors.address_line1.message}</p>}
@@ -295,11 +298,11 @@ export function AddressForm({ address, onSubmit, onCancel, isSubmitting = false 
             {/* Extra Info */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <Label htmlFor="label">Label (Optional)</Label>
+                    <Label htmlFor="label">{t('profile.addresses.form.label')}</Label>
                     <Input
                         id="label"
                         {...register('label')}
-                        placeholder="Home, Office..."
+                        placeholder={t('profile.addresses.form.labelPlaceholder')}
                         className="mt-1.5"
                     />
                 </div>
@@ -311,7 +314,7 @@ export function AddressForm({ address, onSubmit, onCancel, isSubmitting = false 
                             onCheckedChange={(checked) => setIsDefault(!!checked)}
                         />
                         <Label htmlFor="is_default" className="cursor-pointer font-normal">
-                            Set as default address
+                            {t('profile.addresses.form.setDefault')}
                         </Label>
                     </div>
                 </div>
@@ -319,7 +322,7 @@ export function AddressForm({ address, onSubmit, onCancel, isSubmitting = false 
 
             {/* Hint for matching names matches */}
             <p className="text-[10px] text-muted-foreground border-t pt-2 mt-2">
-                * Selected administrative units are auto-saved to your address book.
+                {t('profile.addresses.form.autoSaveHint')}
             </p>
 
             {/* Buttons */}
@@ -332,10 +335,10 @@ export function AddressForm({ address, onSubmit, onCancel, isSubmitting = false 
                     {isSubmitting ? (
                         <>
                             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            Saving...
+                            {t('profile.addresses.form.saving')}
                         </>
                     ) : (
-                        <>{address ? 'Update' : 'Create'} Address</>
+                        <>{address ? t('profile.addresses.form.update') : t('profile.addresses.form.create')}</>
                     )}
                 </Button>
                 <Button
@@ -345,7 +348,7 @@ export function AddressForm({ address, onSubmit, onCancel, isSubmitting = false 
                     disabled={isSubmitting}
                     className="flex-1"
                 >
-                    Cancel
+                    {t('common.cancel')}
                 </Button>
             </div>
         </form>

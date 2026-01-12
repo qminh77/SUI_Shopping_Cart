@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { MapPin, Phone, User, Edit2, Trash2, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface AddressCardProps {
     address: Address;
@@ -26,6 +27,7 @@ export function AddressCard({
     isSettingDefault = false,
     showActions = true
 }: AddressCardProps) {
+    const { t } = useLanguage();
     return (
         <Card className={cn(
             "hover:shadow-md transition-all",
@@ -42,7 +44,7 @@ export function AddressCard({
                         {address.is_default && (
                             <Badge className="text-xs flex items-center gap-1">
                                 <Star className="w-3 h-3 fill-current" />
-                                Mặc định
+                                {t('profile.addresses.default')}
                             </Badge>
                         )}
                     </div>
@@ -109,7 +111,7 @@ export function AddressCard({
                         className="w-full mt-4"
                     >
                         <Star className="w-3 h-3 mr-2" />
-                        Đặt làm mặc định
+                        {t('profile.addresses.setAsDefault')}
                     </Button>
                 )}
             </CardContent>

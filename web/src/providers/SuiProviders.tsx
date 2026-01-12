@@ -3,6 +3,7 @@
 import { SuiClientProvider, WalletProvider } from '@mysten/dapp-kit';
 import { getFullnodeUrl } from '@mysten/sui/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { LanguageProvider } from '@/contexts/LanguageContext';
 import '@mysten/dapp-kit/dist/index.css';
 
 const queryClient = new QueryClient();
@@ -17,7 +18,9 @@ export function SuiProviders({ children }: { children: React.ReactNode }) {
         <QueryClientProvider client={queryClient}>
             <SuiClientProvider networks={networks} defaultNetwork="testnet">
                 <WalletProvider autoConnect>
-                    {children}
+                    <LanguageProvider>
+                        {children}
+                    </LanguageProvider>
                 </WalletProvider>
             </SuiClientProvider>
         </QueryClientProvider>
