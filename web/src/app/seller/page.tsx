@@ -55,7 +55,7 @@ export default function SellerPage() {
         enabled: !!userShop?.owner_wallet,
     });
 
-    const isMissingOnChain = userShop?.status === 'ACTIVE' && !onChainShop && !isCheckingChain;
+    const isMissingOnChain = userShop?.status === 'ACTIVE' && (!onChainShop || !userShop?.on_chain_shop_id) && !isCheckingChain;
 
     const [isSyncing, setIsSyncing] = useState(false);
 
