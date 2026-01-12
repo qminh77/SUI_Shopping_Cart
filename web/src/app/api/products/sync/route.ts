@@ -86,10 +86,13 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        console.log(`[Product Sync] Successfully synced product ${productId} with stock: ${product.stock}`);
+
         return NextResponse.json({
             success: true,
             message: 'Product synced successfully',
-            product: data
+            product: data,
+            blockchain_stock: product.stock, // ✨ NEW: Include stock from blockchain for debugging
         });
 
     } catch (error) {

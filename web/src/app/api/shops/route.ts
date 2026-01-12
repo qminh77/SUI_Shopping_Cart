@@ -29,6 +29,13 @@ export async function POST(req: NextRequest) {
         const body = await req.json()
         console.log('Received shop creation request:', JSON.stringify(body, null, 2))
 
+        // ✨ NEW: Log on_chain_shop_id for debugging
+        if (body.on_chain_shop_id) {
+            console.log('[API /shops POST] on_chain_shop_id provided:', body.on_chain_shop_id)
+        } else {
+            console.warn('[API /shops POST] on_chain_shop_id is missing in request')
+        }
+
         // Validate input
         const validatedData = shopSchema.parse(body)
 
@@ -38,6 +45,10 @@ export async function POST(req: NextRequest) {
         }
 
         const shop = await createShop(validatedData)
+
+        // ✨ NEW: Log result to verify on_chain_shop_id was saved
+        console.log('[API /shops POST] Shop created with on_chain_shop_id:', shop.on_chain_shop_id || 'NOT SET')
+
         return NextResponse.json(shop, { status: 201 })
     } catch (error) {
         if (error instanceof ZodError) {

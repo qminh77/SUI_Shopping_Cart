@@ -91,10 +91,30 @@ export async function updateShop(wallet: string, data: UpdateShopInput) {
         }
     }
 
+    // ✨ NEW: Protect on_chain_shop_id from being cleared
+    // Only allow updating on_chain_shop_id if:
+    // 1. Current value is null/empty AND new value is provided, OR
+    // 2. New value is explicitly provided and not empty
+    const updateData: any = { ...data }
+
+    if ('on_chain_shop_id' in updateData) {
+        // If trying to clear the field (set to null/empty)
+        if (!updateData.on_chain_shop_id && currentShop.on_chain_shop_id) {
+            console.warn('[updateShop] Preventing on_chain_shop_id from being cleared')
+            delete updateData.on_chain_shop_id // Remove from update to preserve existing value
+        }
+        // If setting a new value, validate it's a proper hex string
+        else if (updateData.on_chain_shop_id) {
+            if (!updateData.on_chain_shop_id.startsWith('0x') || updateData.on_chain_shop_id.length !== 66) {
+                throw new Error('Invalid on_chain_shop_id format. Must be a 66-character hex string starting with 0x')
+            }
+        }
+    }
+
     const { data: updated, error } = await supabase
         .from('shops')
         .update({
-            ...data,
+            ...updateData,
             updated_at: new Date().toISOString()
         })
         .eq('owner_wallet', wallet)
@@ -162,6 +182,22 @@ export async function updateShopStatus(
     currentStatus?: string
 ) {
     const supabase = await createSupabaseServerClient()
+
+    // ✨ NEW: If approving a shop, verify it has on_chain_shop_id
+    if (newStatus === 'ACTIVE' && currentStatus === 'PENDING') {
+        const { data: shop } = await supabase
+            .from('shops')
+            .select('on_chain_shop_id, owner_wallet')
+            .eq('id', shopId)
+            .single()
+
+        if (!shop?.on_chain_shop_id) {
+            console.warn(`[updateShopStatus] Shop ${shopId} is being approved but has no on_chain_shop_id`)
+            console.warn(`[updateShopStatus] Seller will need to use "Sync Shop to Blockchain" button`)
+            // We allow approval to proceed, but log warning
+            // The seller can manually sync from their dashboard
+        }
+    }
 
     const { error } = await supabase
         .from('shops')

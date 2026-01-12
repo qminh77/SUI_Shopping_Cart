@@ -112,8 +112,13 @@ export function useCheckout() {
                 toast.error('Purchase successful, but order history might be incomplete.');
             }
 
-            // Sync product stock from blockchain to database
+            // ✨ Sync product stock from blockchain to database with delay
             // This ensures the UI displays updated stock after purchase
+            // Add a delay to allow blockchain state to properly settle
+            console.log('[useCheckout] Waiting 2 seconds for blockchain state to settle before syncing...');
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            console.log('[useCheckout] Starting product stock sync...');
             const syncPromises = params.items.map(async (item) => {
                 try {
                     const syncResponse = await fetch('/api/products/sync', {

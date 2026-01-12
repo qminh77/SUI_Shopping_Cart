@@ -8,16 +8,6 @@ import { ShieldCheck, Zap, Globe, Wallet, Box, Layers } from 'lucide-react';
 
 gsap.registerPlugin(ScrollTrigger);
 
-'use client';
-
-import React, { useRef } from 'react';
-import { useGSAP } from '@gsap/react';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { ShieldCheck, Zap, Globe, Wallet, Box, Layers } from 'lucide-react';
-
-gsap.registerPlugin(ScrollTrigger);
-
 const features = [
     {
         icon: <Zap className="h-8 w-8 text-yellow-400" />,
