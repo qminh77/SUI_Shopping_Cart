@@ -20,6 +20,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Image from 'next/image';
+import { CategorySelector } from '@/components/CategorySelector';
 
 export default function SellerPage() {
     const account = useCurrentAccount();
@@ -56,6 +57,7 @@ export default function SellerPage() {
         imageUrl: '',
         price: '',
         stock: '100',
+        categoryId: null as string | null,
     });
 
     const [isCreating, setIsCreating] = useState(false);
@@ -198,7 +200,7 @@ export default function SellerPage() {
                         },
                         body: JSON.stringify({
                             productId,
-                            categoryId: null // Can add category selection later
+                            categoryId: productFormData.categoryId
                         }),
                     });
 
@@ -214,7 +216,7 @@ export default function SellerPage() {
             }
 
             toast.success('Product created successfully!');
-            setProductFormData({ name: '', description: '', imageUrl: '', price: '', stock: '100' });
+            setProductFormData({ name: '', description: '', imageUrl: '', price: '', stock: '100', categoryId: null });
             queryClient.invalidateQueries({ queryKey: ['my-retail-products'] });
             queryClient.invalidateQueries({ queryKey: ['products', 'with-category'] });
         } catch (error) {
@@ -575,6 +577,14 @@ export default function SellerPage() {
                                 />
                             </div>
 
+                            <div className="space-y-2">
+                                <CategorySelector
+                                    value={productFormData.categoryId}
+                                    onChange={(value) => setProductFormData({ ...productFormData, categoryId: value })}
+                                    disabled={isMissingOnChain}
+                                />
+                            </div>
+
                             <Button
                                 className="w-full"
                                 onClick={handleCreateProduct}
@@ -635,8 +645,15 @@ export default function SellerPage() {
                                                             Kho: {product.stock}
                                                         </Badge>
                                                     </div>
-                                                    <div className="text-primary font-bold text-lg mb-2">
-                                                        {mistToSui(product.price).toFixed(2)} SUI
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        <div className="text-primary font-bold text-lg">
+                                                            {mistToSui(product.price).toFixed(2)} SUI
+                                                        </div>
+                                                        {product.category && (
+                                                            <Badge variant="secondary" className="flex items-center gap-1 text-xs">
+                                                                {product.category.icon} {product.category.name}
+                                                            </Badge>
+                                                        )}
                                                     </div>
                                                     <p className="text-muted-foreground text-sm line-clamp-2">
                                                         {product.description}

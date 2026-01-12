@@ -25,7 +25,14 @@ export async function GET(request: NextRequest) {
         // Query products by seller_wallet (not shop_id, which is now the on-chain shop object ID)
         const { data: products, error: productsError } = await supabase
             .from('products')
-            .select('*')
+            .select(`
+                *,
+                categories (
+                    id,
+                    name,
+                    icon
+                )
+            `)
             .eq('seller_wallet', wallet)
             .order('created_at', { ascending: false });
 
@@ -50,7 +57,12 @@ export async function GET(request: NextRequest) {
             stock: p.stock,
             shopId: p.shop_id,
             status: 'RETAIL', // Assuming retail for now as per previous logic
-            createdAt: p.created_at
+            createdAt: p.created_at,
+            category: p.categories ? {
+                id: p.categories.id,
+                name: p.categories.name,
+                icon: p.categories.icon
+            } : null
         }));
 
         return NextResponse.json(formattedProducts);
