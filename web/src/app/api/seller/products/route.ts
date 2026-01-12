@@ -75,3 +75,95 @@ export async function GET(request: NextRequest) {
         );
     }
 }
+
+/**
+ * PUT /api/seller/products
+ * Updates product metadata in Supabase
+ */
+export async function PUT(request: NextRequest) {
+    try {
+        const body = await request.json();
+        const { id, name, description, price, stock, imageUrl, categoryId } = body;
+
+        if (!id) {
+            return NextResponse.json(
+                { error: 'Product ID is required' },
+                { status: 400 }
+            );
+        }
+
+        const supabase = await createSupabaseServerClient();
+
+        // Update product
+        const { error } = await supabase
+            .from('products')
+            .update({
+                name,
+                description,
+                price,
+                stock,
+                image_url: imageUrl,
+                category_id: categoryId,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', id);
+
+        if (error) {
+            console.error('Error updating product:', error);
+            return NextResponse.json(
+                { error: 'Failed to update product' },
+                { status: 500 }
+            );
+        }
+
+        return NextResponse.json({ success: true });
+    } catch (error) {
+        console.error('Update product API error:', error);
+        return NextResponse.json(
+            { error: 'Internal server error' },
+            { status: 500 }
+        );
+    }
+}
+
+/**
+ * DELETE /api/seller/products
+ * 删除 product from Supabase (or soft delete)
+ */
+export async function DELETE(request: NextRequest) {
+    try {
+        const { searchParams } = new URL(request.url);
+        const id = searchParams.get('id');
+
+        if (!id) {
+            return NextResponse.json(
+                { error: 'Product ID is required' },
+                { status: 400 }
+            );
+        }
+
+        const supabase = await createSupabaseServerClient();
+
+        // Delete product
+        const { error } = await supabase
+            .from('products')
+            .delete()
+            .eq('id', id);
+
+        if (error) {
+            console.error('Error deleting product:', error);
+            return NextResponse.json(
+                { error: 'Failed to delete product' },
+                { status: 500 }
+            );
+        }
+
+        return NextResponse.json({ success: true });
+    } catch (error) {
+        console.error('Delete product API error:', error);
+        return NextResponse.json(
+            { error: 'Internal server error' },
+            { status: 500 }
+        );
+    }
+}

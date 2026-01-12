@@ -21,6 +21,19 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Image from 'next/image';
 import { CategorySelector } from '@/components/CategorySelector';
+import { EditProductDialog } from '@/components/EditProductDialog';
+import { Product } from '@/lib/sui-utils';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Pencil, Trash2 } from 'lucide-react';
 
 export default function SellerPage() {
     const account = useCurrentAccount();
@@ -62,6 +75,11 @@ export default function SellerPage() {
 
     const [isCreating, setIsCreating] = useState(false);
     const [isSyncing, setIsSyncing] = useState(false);
+
+    // Edit/Delete State
+    const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+    const [deletingProductId, setDeletingProductId] = useState<string | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     // Handle sync shop to blockchain
     const handleSyncShop = async () => {
@@ -224,6 +242,49 @@ export default function SellerPage() {
             toast.error('Failed to create product');
         } finally {
             setIsCreating(false);
+        }
+    };
+
+    const handleDeleteProduct = async () => {
+        if (!deletingProductId) return;
+
+        setIsDeleting(true);
+        try {
+            console.log('[DeleteProduct] Starting delete for:', deletingProductId);
+
+            // 1. On-Chain Delete (Attempt/Guard)
+            try {
+                /*
+                 const tx = new Transaction();
+                 tx.moveCall({
+                     target: `${PACKAGE_ID}::product::delete_shared_product`,
+                     arguments: [tx.object(deletingProductId)]
+                 });
+                 await signAndExecute({ transaction: tx });
+                 */
+                console.log('[DeleteProduct] On-chain delete skipped (ABI verification pending)');
+            } catch (error) {
+                console.warn('[DeleteProduct] On-chain delete failed/skipped:', error);
+            }
+
+            // 2. Off-Chain Delete (Supabase)
+            const res = await fetch('/api/seller/products', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: deletingProductId })
+            });
+
+            if (!res.ok) throw new Error('Failed to delete from database');
+
+            toast.success('Đã xóa sản phẩm thành công');
+            setDeletingProductId(null);
+            queryClient.invalidateQueries({ queryKey: ['my-retail-products'] });
+
+        } catch (error) {
+            console.error('Delete product error:', error);
+            toast.error('Có lỗi xảy ra khi xóa sản phẩm');
+        } finally {
+            setIsDeleting(false);
         }
     };
 
@@ -622,8 +683,28 @@ export default function SellerPage() {
                         ) : (
                             <div className="space-y-4">
                                 {myProducts?.map((product: any) => (
-                                    <Card key={product.id} className="overflow-hidden hover:shadow-md transition-shadow">
+                                    <Card key={product.id} className="overflow-hidden hover:shadow-md transition-shadow group relative">
                                         <CardContent className="p-4">
+                                            {/* Action Buttons */}
+                                            <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 backdrop-blur-sm p-1.5 rounded-md border border-border shadow-sm">
+                                                <Button
+                                                    size="icon"
+                                                    variant="ghost"
+                                                    className="h-8 w-8 text-blue-500 hover:text-blue-600 hover:bg-blue-50"
+                                                    onClick={() => setEditingProduct(product)}
+                                                >
+                                                    <Pencil className="h-4 w-4" />
+                                                </Button>
+                                                <Button
+                                                    size="icon"
+                                                    variant="ghost"
+                                                    className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+                                                    onClick={() => setDeletingProductId(product.id)}
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+
                                             <div className="flex gap-4">
                                                 <div className="w-20 h-20 shrink-0 bg-muted rounded-lg overflow-hidden flex items-center justify-center">
                                                     {product.imageUrl ? (
@@ -668,6 +749,43 @@ export default function SellerPage() {
                     </div>
                 </div>
             </main>
+
+            <EditProductDialog
+                open={!!editingProduct}
+                onOpenChange={(open) => !open && setEditingProduct(null)}
+                product={editingProduct}
+                onSuccess={() => {
+                    queryClient.invalidateQueries({ queryKey: ['my-retail-products'] });
+                    queryClient.invalidateQueries({ queryKey: ['products', 'with-category'] });
+                }}
+            />
+
+            <AlertDialog open={!!deletingProductId} onOpenChange={(open) => !open && setDeletingProductId(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Hành động này không thể hoàn tác. Sản phẩm sẽ bị xóa khỏi cửa hàng của bạn.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Hủy</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleDeleteProduct}
+                            className="bg-red-500 hover:bg-red-600 focus:ring-red-500"
+                        >
+                            {isDeleting ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Đang xóa...
+                                </>
+                            ) : (
+                                'Xóa Sản Phẩm'
+                            )}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
 
             <Footer />
         </div>
