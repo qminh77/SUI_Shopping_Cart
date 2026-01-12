@@ -5,6 +5,7 @@ import { Transaction } from '@mysten/sui/transactions';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { PACKAGE_ID, Product } from '@/lib/sui-utils';
 import { toast } from 'sonner';
+import { useCart } from '@/contexts/CartContext';
 
 interface CheckoutItem extends Product {
     quantity: number;
@@ -15,6 +16,7 @@ export function useCheckout() {
     const account = useCurrentAccount();
     const { mutateAsync: signAndExecute } = useSignAndExecuteTransaction();
     const queryClient = useQueryClient();
+    const { removeSelectedItems } = useCart();
 
     const checkout = useMutation({
         mutationFn: async (params: {
@@ -176,15 +178,19 @@ export function useCheckout() {
         onSuccess: (data) => {
             // ✨ PHASE 3: Conditional success based on stage completion
             if (data.blockchainSuccess && data.dbSuccess) {
-                // Full success - invalidate caches
+                // Full success - invalidate caches and clear cart
                 queryClient.invalidateQueries({ queryKey: ['retailProducts'] });
                 queryClient.invalidateQueries({ queryKey: ['my-retail-products'] });
+
+                // ✅ FIX C3: Auto-clear selected items from cart after successful checkout
+                removeSelectedItems();
 
                 toast.success('Purchase successful! Your order has been placed.', {
                     duration: 5000
                 });
             } else if (data.blockchainSuccess && !data.dbSuccess) {
                 // Partial success - blockchain OK but DB failed
+                // Don't clear cart yet in case user needs to retry
                 toast.warning(
                     `⚠️ Purchase completed on blockchain but order history sync failed.\n\n` +
                     `Transaction: ${data.digest.slice(0, 10)}...\n` +

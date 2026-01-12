@@ -88,9 +88,24 @@ export function CartDrawer() {
 
             console.log('[CartDrawer] Validating stock for', selectedItemsList.length, 'items');
 
-            const freshProducts = await queryClient.fetchQuery<Product[]>({
-                queryKey: ['products', 'with-category', 50],
-            });
+            // ✅ FIX H2: Add try-catch for stock validation query
+            let freshProducts: Product[] = [];
+            try {
+                freshProducts = await queryClient.fetchQuery<Product[]>({
+                    queryKey: ['products', 'with-category', 50],
+                }) || [];
+
+                if (freshProducts.length === 0) {
+                    console.warn('[CartDrawer] No products found for validation - skipping stock check');
+                    // Proceed without validation if no products available
+                }
+            } catch (queryError) {
+                console.error('[CartDrawer] Failed to fetch products for validation:', queryError);
+                toast.warning('Unable to verify stock. Proceeding with checkout...', {
+                    duration: 3000
+                });
+                // Proceed without validation rather than blocking checkout
+            }
 
             const validation = validateCartStock(selectedItemsList, freshProducts);
 
@@ -133,16 +148,19 @@ export function CartDrawer() {
                 city: `${selectedAddress.city}, ${selectedAddress.country}`
             };
 
+
             const checkoutResult = await checkout({
                 items: selectedItemsList,
                 shippingAddress: shippingStart
             });
 
+            // ✅ Cart is now auto-cleared by useCheckout hook
+            // Only handle UI state here
             if (checkoutResult.blockchainSuccess && checkoutResult.dbSuccess) {
-                removeSelectedItems();
-                setOpen(false);
+                setOpen(false); // Close drawer on successful checkout
             } else if (checkoutResult.blockchainSuccess && !checkoutResult.dbSuccess) {
-                console.warn('[CartDrawer] Keeping cart items - DB save failed');
+                console.warn('[CartDrawer] Keeping drawer open - DB save failed');
+                // Keep drawer open so user can see the warning
             } else {
                 console.error('[CartDrawer] Checkout failed completely');
             }
