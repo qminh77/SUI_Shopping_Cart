@@ -4,9 +4,9 @@ import { useState } from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
 import { CategoryNav } from '@/components/CategoryNav';
-import { SearchBar } from '@/components/SearchBar';
+import { SearchFilterBar, FilterState } from '@/components/SearchFilterBar';
 import { ProductDetailDialog } from '@/components/ProductDetailDialog';
-import { useProductsWithCategory } from '@/hooks/useSearch';
+import { useSearch } from '@/hooks/useSearch';
 import { useCart } from '@/contexts/CartContext';
 import { mistToSui, Product } from '@/lib/sui-utils';
 import { ShoppingCart, Package } from 'lucide-react';
@@ -19,19 +19,40 @@ import { SpotlightCard } from '@/components/ui/spotlight-card';
 import { GridPattern } from '@/components/ui/grid-pattern';
 
 export default function ShopPage() {
-    const { data: products = [], isLoading } = useProductsWithCategory(100);
+    // Advanced Search Hook
+    const {
+        products,
+        isLoading,
+        params,
+        updateFilters,
+        clearFilters
+    } = useSearch({
+        limit: 100,
+        sortBy: 'newest'
+    });
+
     const { addToCart, items: cartItems } = useCart();
 
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
-    const [searchQuery, setSearchQuery] = useState('');
 
-    const filteredProducts = searchQuery
-        ? products.filter(p =>
-            p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            p.description.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-        : products;
+    // Map useSearch params to FilterState for the component
+    const filters: FilterState = {
+        searchQuery: params.query || '',
+        priceMin: params.minPrice?.toString() || '',
+        priceMax: params.maxPrice?.toString() || '',
+        creatorAddress: '', // Add this to hook params if needed, currently not in hook
+        sortBy: (params.sortBy === 'newest' ? 'name-asc' : params.sortBy) as any // simplistic mapping, might need refinement
+    };
+
+    const handleFiltersChange = (newFilters: FilterState) => {
+        updateFilters({
+            query: newFilters.searchQuery,
+            minPrice: newFilters.priceMin ? Number(newFilters.priceMin) : undefined,
+            maxPrice: newFilters.priceMax ? Number(newFilters.priceMax) : undefined,
+            sortBy: newFilters.sortBy as any
+        });
+    };
 
     const handleProductClick = (product: Product) => {
         setSelectedProduct(product);
@@ -85,12 +106,12 @@ export default function ShopPage() {
                         </p>
                     </div>
 
-                    <div className="max-w-xl mx-auto relative group">
+                    <div className="max-w-2xl mx-auto relative group">
                         <div className="absolute -inset-1 bg-gradient-to-r from-foreground/10 via-foreground/5 to-foreground/10 rounded-lg blur opacity-50 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
-                        <SearchBar
-                            onSearch={setSearchQuery}
-                            placeholder="Search products, collections..."
-                            className="bg-background/80 backdrop-blur-md shadow-lg border-border relative h-12"
+                        <SearchFilterBar
+                            filters={filters}
+                            onFiltersChange={handleFiltersChange}
+                            onClearFilters={clearFilters}
                         />
                     </div>
                 </div>
@@ -104,7 +125,7 @@ export default function ShopPage() {
                             <div key={i} className="aspect-[4/5] bg-muted/10 animate-pulse rounded-sm border border-border/50" />
                         ))}
                     </div>
-                ) : filteredProducts.length === 0 ? (
+                ) : products.length === 0 ? (
                     <div className="flex flex-col items-center justify-center min-h-[40vh] text-muted-foreground py-12">
                         <div className="h-24 w-24 rounded-full bg-muted/10 flex items-center justify-center mb-6">
                             <Package className="w-10 h-10 opacity-30" />
@@ -117,13 +138,13 @@ export default function ShopPage() {
                         {/* Results Meta */}
                         <div className="flex justify-between items-center mb-8 border-b border-border/50 pb-4">
                             <p className="text-sm font-medium text-muted-foreground">
-                                Showing <span className="text-foreground font-bold">{filteredProducts.length}</span> results
+                                Showing <span className="text-foreground font-bold">{products.length}</span> results
                             </p>
                         </div>
 
                         {/* Products Grid - Consistent Alignment */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                            {filteredProducts.map((product) => {
+                            {products.map((product) => {
                                 const isInCart = cartItems.some(item => item.id === product.id);
 
                                 return (

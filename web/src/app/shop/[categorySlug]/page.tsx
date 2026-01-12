@@ -1,15 +1,14 @@
 'use client';
 
-import { use } from 'react';
+import { use, useEffect, useState } from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
 import { CategoryNav } from '@/components/CategoryNav';
 import { CategoryBreadcrumb } from '@/components/CategoryBreadcrumb';
-import { SearchBar } from '@/components/SearchBar';
-import { FilterSidebar } from '@/components/FilterSidebar';
+import { SearchFilterBar, FilterState } from '@/components/SearchFilterBar';
 import { ProductDetailDialog } from '@/components/ProductDetailDialog';
 import { useCategoryBySlug } from '@/hooks/useCategories';
-import { useProductsByCategory } from '@/hooks/useSearch';
+import { useSearch } from '@/hooks/useSearch';
 import { useCart } from '@/contexts/CartContext';
 import { mistToSui, Product } from '@/lib/sui-utils';
 import { ShoppingCart, Package, Loader2 } from 'lucide-react';
@@ -17,7 +16,6 @@ import Image from 'next/image';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useState } from 'react';
 import Link from 'next/link';
 
 interface CategoryPageProps {
@@ -29,23 +27,60 @@ interface CategoryPageProps {
 export default function CategoryPage({ params }: CategoryPageProps) {
     const { categorySlug } = use(params);
     const { data: category, isLoading: categoryLoading } = useCategoryBySlug(categorySlug);
-    const { data: products = [], isLoading: productsLoading } = useProductsByCategory(
-        category?.id || null,
-        true // Include subcategories
-    );
+
+    // Advanced Search Hook - Initialize with categoryId when available
+    // We use a key to force re-initialization when category changes or loads
+    const {
+        products,
+        isLoading: productsLoading,
+        params: searchParams,
+        updateFilters,
+        clearFilters,
+        updateCategory
+    } = useSearch({
+        limit: 100,
+        sortBy: 'newest',
+        categoryId: category?.id
+    });
+
+    // Ensure category filter is updated when category data loads
+    useEffect(() => {
+        if (category?.id && searchParams.categoryId !== category.id) {
+            updateCategory(category.id);
+        }
+    }, [category?.id, updateCategory, searchParams.categoryId]);
+
     const { addToCart, items: cartItems } = useCart();
 
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
-    const [searchQuery, setSearchQuery] = useState('');
 
-    // Filter products by search query
-    const filteredProducts = searchQuery
-        ? products.filter(p =>
-            p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            p.description.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-        : products;
+    // Map useSearch params to FilterState
+    const filters: FilterState = {
+        searchQuery: searchParams.query || '',
+        priceMin: searchParams.minPrice?.toString() || '',
+        priceMax: searchParams.maxPrice?.toString() || '',
+        creatorAddress: '',
+        sortBy: (searchParams.sortBy === 'newest' ? 'name-asc' : searchParams.sortBy) as any
+    };
+
+    const handleFiltersChange = (newFilters: FilterState) => {
+        updateFilters({
+            query: newFilters.searchQuery,
+            minPrice: newFilters.priceMin ? Number(newFilters.priceMin) : undefined,
+            maxPrice: newFilters.priceMax ? Number(newFilters.priceMax) : undefined,
+            sortBy: newFilters.sortBy as any
+        });
+    };
+
+    // Custom clear filters that PRESERVES the category
+    const handleClearFilters = () => {
+        clearFilters();
+        // Immediately re-apply category if it exists
+        if (category?.id) {
+            updateCategory(category.id);
+        }
+    };
 
     const handleProductClick = (product: Product) => {
         setSelectedProduct(product);
@@ -109,7 +144,7 @@ export default function CategoryPage({ params }: CategoryPageProps) {
                     {/* Breadcrumb */}
                     <CategoryBreadcrumb
                         categoryId={category.id}
-                        productCount={filteredProducts.length}
+                        productCount={products.length}
                     />
 
                     {/* Category Info */}
@@ -128,10 +163,11 @@ export default function CategoryPage({ params }: CategoryPageProps) {
                     </div>
 
                     {/* Search Bar */}
-                    <div className="max-w-2xl">
-                        <SearchBar
-                            onSearch={setSearchQuery}
-                            placeholder={`Search in ${category.name}...`}
+                    <div className="max-w-2xl mt-8">
+                        <SearchFilterBar
+                            filters={filters}
+                            onFiltersChange={handleFiltersChange}
+                            onClearFilters={handleClearFilters}
                         />
                     </div>
                 </div>
@@ -145,15 +181,15 @@ export default function CategoryPage({ params }: CategoryPageProps) {
                             <div key={i} className="w-full h-[400px] bg-card border border-border animate-pulse rounded-lg" />
                         ))}
                     </div>
-                ) : filteredProducts.length === 0 ? (
+                ) : products.length === 0 ? (
                     <div className="flex flex-col items-center justify-center min-h-[40vh] text-muted-foreground">
                         <Package className="w-16 h-16 mb-4 opacity-30" />
                         <h3 className="text-xl font-semibold mb-2">
                             No Products Found
                         </h3>
                         <p className="text-sm text-muted-foreground mb-6">
-                            {searchQuery
-                                ? `No products match "${searchQuery}" in this category`
+                            {filters.searchQuery
+                                ? `No products match "${filters.searchQuery}" in this category`
                                 : `No products available in ${category.name}`
                             }
                         </p>
@@ -168,13 +204,13 @@ export default function CategoryPage({ params }: CategoryPageProps) {
                         {/* Results Meta */}
                         <div className="flex justify-between items-center mb-6">
                             <p className="text-sm text-muted-foreground">
-                                Showing <span className="font-semibold text-foreground">{filteredProducts.length}</span> products
+                                Showing <span className="font-semibold text-foreground">{products.length}</span> products
                             </p>
                         </div>
 
                         {/* Products Grid */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                            {filteredProducts.map((product) => {
+                            {products.map((product) => {
                                 const isInCart = cartItems.some(item => item.id === product.id);
 
                                 return (
