@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
+import { useLanguage } from '@/contexts/LanguageContext';
 import {
     Select,
     SelectContent,
@@ -30,6 +31,7 @@ export function FilterSidebar({
     onClearFilters,
     className
 }: FilterSidebarProps) {
+    const { t } = useLanguage();
     const { data: categoryTree = [] } = useCategoryTree();
     const [expandedSections, setExpandedSections] = useState({
         categories: true,
@@ -76,7 +78,7 @@ export function FilterSidebar({
             <div className="p-4 border-b border-white/10 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <SlidersHorizontal className="w-4 h-4 text-blue-400" />
-                    <h3 className="font-semibold text-white">Filters</h3>
+                    <h3 className="font-semibold text-white">{t('shop.filters.title')}</h3>
                 </div>
                 {hasActiveFilters && (
                     <Button
@@ -85,7 +87,7 @@ export function FilterSidebar({
                         onClick={onClearFilters}
                         className="text-xs text-blue-400 hover:text-blue-300 h-auto p-1"
                     >
-                        Clear All
+                        {t('shop.filters.clearAll')}
                     </Button>
                 )}
             </div>
@@ -98,7 +100,7 @@ export function FilterSidebar({
                         onClick={() => toggleSection('categories')}
                         className="w-full flex items-center justify-between mb-3 text-white hover:text-blue-400 transition-colors"
                     >
-                        <span className="font-medium text-sm">Categories</span>
+                        <span className="font-medium text-sm">{t('shop.filters.categories')}</span>
                         {expandedSections.categories ? (
                             <ChevronUp className="w-4 h-4" />
                         ) : (
@@ -170,7 +172,7 @@ export function FilterSidebar({
                         onClick={() => toggleSection('price')}
                         className="w-full flex items-center justify-between mb-3 text-white hover:text-blue-400 transition-colors"
                     >
-                        <span className="font-medium text-sm">Price Range</span>
+                        <span className="font-medium text-sm">{t('shop.filters.priceRange')}</span>
                         {expandedSections.price ? (
                             <ChevronUp className="w-4 h-4" />
                         ) : (
@@ -206,7 +208,7 @@ export function FilterSidebar({
                         onClick={() => toggleSection('sort')}
                         className="w-full flex items-center justify-between mb-3 text-white hover:text-blue-400 transition-colors"
                     >
-                        <span className="font-medium text-sm">Sort By</span>
+                        <span className="font-medium text-sm">{t('shop.filters.sortBy')}</span>
                         {expandedSections.sort ? (
                             <ChevronUp className="w-4 h-4" />
                         ) : (
@@ -223,10 +225,10 @@ export function FilterSidebar({
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent className="bg-black/95 backdrop-blur-md border-white/20">
-                                <SelectItem value="newest">Newest First</SelectItem>
-                                <SelectItem value="price_asc">Price: Low to High</SelectItem>
-                                <SelectItem value="price_desc">Price: High to Low</SelectItem>
-                                <SelectItem value="name">Name: A to Z</SelectItem>
+                                <SelectItem value="newest">{t('shop.sort.newest')}</SelectItem>
+                                <SelectItem value="price_asc">{t('shop.sort.priceAsc')}</SelectItem>
+                                <SelectItem value="price_desc">{t('shop.sort.priceDesc')}</SelectItem>
+                                <SelectItem value="name">{t('shop.sort.name')}</SelectItem>
                             </SelectContent>
                         </Select>
                     )}
@@ -238,7 +240,7 @@ export function FilterSidebar({
                         onClick={() => toggleSection('availability')}
                         className="w-full flex items-center justify-between mb-3 text-white hover:text-blue-400 transition-colors"
                     >
-                        <span className="font-medium text-sm">Availability</span>
+                        <span className="font-medium text-sm">{t('shop.filters.availability')}</span>
                         {expandedSections.availability ? (
                             <ChevronUp className="w-4 h-4" />
                         ) : (
@@ -258,7 +260,7 @@ export function FilterSidebar({
                                 htmlFor="in-stock"
                                 className="text-sm text-white/70 hover:text-white cursor-pointer"
                             >
-                                In Stock Only
+                                {t('shop.filters.inStockOnly')}
                             </Label>
                         </div>
                     )}

@@ -2,8 +2,9 @@
 
 import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { LayoutDashboard, Store, LogOut, ShieldCheck } from 'lucide-react'
+import { LayoutDashboard, Store, LogOut, ShieldCheck, Home } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useLanguage } from '@/contexts/LanguageContext'
 import { WalletConnectButton } from '@/components/WalletConnectButton'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -13,6 +14,7 @@ export default function AdminLayout({
 }: {
     children: React.ReactNode
 }) {
+    const { t } = useLanguage()
     const router = useRouter()
     const pathname = usePathname()
 
@@ -32,7 +34,7 @@ export default function AdminLayout({
     }
 
     const navItems = [
-        { href: '/admin/shops', label: 'Shops Management', icon: Store },
+        { href: '/admin/shops', label: t('admin.layout.shops'), icon: Store },
     ]
 
     return (
@@ -92,7 +94,7 @@ export default function AdminLayout({
                     <div>
                         <h1 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
                             <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse shadow-[0_0_10px_#3b82f6]"></span>
-                            {pathname === '/admin/shops' ? 'SHOP DIRECTORY' : 'DASHBOARD'}
+                            {pathname.includes('/admin/shops') ? t('admin.layout.directory') : t('admin.layout.dashboard')}
                         </h1>
                     </div>
                     <WalletConnectButton />

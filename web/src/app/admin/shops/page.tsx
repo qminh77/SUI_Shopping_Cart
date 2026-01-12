@@ -6,6 +6,7 @@ import { useEffect, useState, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
+import { useLanguage } from '@/contexts/LanguageContext'
 import {
     Table,
     TableBody,
@@ -46,6 +47,7 @@ const getStatusVariant = (status: string) => {
 }
 
 const AdminShopsContent = () => {
+    const { t } = useLanguage()
     const router = useRouter()
     const searchParams = useSearchParams()
     const page = parseInt(searchParams.get('page') || '1')
@@ -89,8 +91,8 @@ const AdminShopsContent = () => {
                             <Store className="h-5 w-5 text-primary" />
                         </div>
                         <div>
-                            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Shop Management</h1>
-                            <p className="text-sm text-muted-foreground">Manage seller applications</p>
+                            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t('admin.shops.title')}</h1>
+                            <p className="text-sm text-muted-foreground">{t('admin.shops.subtitle')}</p>
                         </div>
                     </div>
                 </div>
@@ -98,14 +100,14 @@ const AdminShopsContent = () => {
                 {/* Filters */}
                 <Card>
                     <CardHeader className="pb-4">
-                        <CardTitle className="text-lg">Filters</CardTitle>
+                        <CardTitle className="text-lg">{t('admin.shops.filters')}</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="flex flex-col sm:flex-row gap-3">
                             <div className="relative flex-1">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                 <Input
-                                    placeholder="Search shops..."
+                                    placeholder={t('admin.shops.searchPlaceholder')}
                                     className="pl-10"
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
@@ -114,13 +116,13 @@ const AdminShopsContent = () => {
                             <Select value={filterStatus} onValueChange={setFilterStatus}>
                                 <SelectTrigger className="w-full sm:w-[180px]">
                                     <Filter className="h-4 w-4 mr-2" />
-                                    <SelectValue placeholder="Status" />
+                                    <SelectValue placeholder={t('admin.shops.status')} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all">All Status</SelectItem>
-                                    <SelectItem value="PENDING">Pending</SelectItem>
-                                    <SelectItem value="ACTIVE">Active</SelectItem>
-                                    <SelectItem value="SUSPENDED">Suspended</SelectItem>
+                                    <SelectItem value="all">{t('admin.shops.allStatus')}</SelectItem>
+                                    <SelectItem value="PENDING">{t('admin.shops.pending')}</SelectItem>
+                                    <SelectItem value="ACTIVE">{t('admin.shops.active')}</SelectItem>
+                                    <SelectItem value="SUSPENDED">{t('admin.shops.suspended')}</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -145,19 +147,19 @@ const AdminShopsContent = () => {
                                     <Table>
                                         <TableHeader>
                                             <TableRow>
-                                                <TableHead>Shop Name</TableHead>
-                                                <TableHead>Owner Wallet</TableHead>
-                                                <TableHead>Est. Year</TableHead>
-                                                <TableHead>Status</TableHead>
-                                                <TableHead>Registered</TableHead>
-                                                <TableHead className="text-right">Actions</TableHead>
+                                                <TableHead>{t('admin.shops.table.name')}</TableHead>
+                                                <TableHead>{t('admin.shops.table.wallet')}</TableHead>
+                                                <TableHead>{t('admin.shops.table.estYear')}</TableHead>
+                                                <TableHead>{t('admin.shops.table.status')}</TableHead>
+                                                <TableHead>{t('admin.shops.table.registered')}</TableHead>
+                                                <TableHead className="text-right">{t('admin.shops.table.actions')}</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
                                             {data?.data.length === 0 ? (
                                                 <TableRow>
                                                     <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
-                                                        No shops found
+                                                        {t('admin.shops.noShops')}
                                                     </TableCell>
                                                 </TableRow>
                                             ) : (
@@ -180,7 +182,7 @@ const AdminShopsContent = () => {
                                                             <Button variant="ghost" size="sm" asChild>
                                                                 <Link href={`/admin/shops/${shop.id}`}>
                                                                     <Eye className="h-4 w-4 mr-2" />
-                                                                    View
+                                                                    {t('admin.shops.table.view')}
                                                                 </Link>
                                                             </Button>
                                                         </TableCell>
@@ -195,7 +197,7 @@ const AdminShopsContent = () => {
                                 <div className="md:hidden divide-y">
                                     {data?.data.length === 0 ? (
                                         <div className="p-8 text-center text-muted-foreground">
-                                            No shops found
+                                            {t('admin.shops.noShops')}
                                         </div>
                                     ) : (
                                         data?.data.map((shop) => (
@@ -216,7 +218,7 @@ const AdminShopsContent = () => {
                                                     <Button variant="outline" size="sm" asChild>
                                                         <Link href={`/admin/shops/${shop.id}`}>
                                                             <Eye className="h-3 w-3 mr-1.5" />
-                                                            View
+                                                            {t('admin.shops.table.view')}
                                                         </Link>
                                                     </Button>
                                                 </div>
@@ -231,8 +233,8 @@ const AdminShopsContent = () => {
 
                 {/* Footer */}
                 <div className="flex justify-between items-center text-xs text-muted-foreground pt-4 border-t">
-                    <span>Total: {data?.count || 0} shops</span>
-                    <span>Page {page}</span>
+                    <span>{t('admin.shops.total', { count: data?.count || 0 })}</span>
+                    <span>{t('admin.shops.page', { page })}</span>
                 </div>
             </div>
         </div>

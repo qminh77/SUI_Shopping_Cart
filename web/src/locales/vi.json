@@ -99,28 +99,21 @@
         }
     },
     "shop": {
-        "filters": "Bộ lọc",
-        "priceRange": "Khoảng giá",
-        "categories": "Danh mục",
-        "minPrice": "Min",
-        "maxPrice": "Max",
-        "apply": "Áp dụng",
-        "clearAll": "Xóa tất cả",
-        "searchPlaceholder": "Tìm kiếm sản phẩm...",
-        "sortBy": "Sắp xếp theo",
-        "newest": "Mới nhất",
-        "oldest": "Cũ nhất",
-        "priceLowHigh": "Giá: Thấp đến Cao",
-        "priceHighLow": "Giá: Cao đến Thấp",
-        "noProducts": "Không tìm thấy sản phẩm",
-        "tryAdjusting": "Thử điều chỉnh tìm kiếm hoặc bộ lọc của bạn",
-        "showingResults": "Hiển thị",
-        "results": "kết quả",
-        "activeFilters": "Bộ lọc đang dùng",
-        "creator": "Địa chỉ người tạo (tùy chọn)",
-        "creatorDesc": "Lọc theo địa chỉ người tạo cụ thể",
-        "search": "Tìm kiếm",
-        "allProducts": "Tất cả sản phẩm"
+        "filters": {
+            "title": "Bộ lọc",
+            "clearAll": "Xóa tất cả",
+            "categories": "Danh mục",
+            "priceRange": "Khoảng giá",
+            "sortBy": "Sắp xếp theo",
+            "availability": "Tình trạng hàng",
+            "inStockOnly": "Chỉ hiện còn hàng"
+        },
+        "sort": {
+            "newest": "Mới nhất",
+            "priceAsc": "Giá: Thấp đến Cao",
+            "priceDesc": "Giá: Cao đến Thấp",
+            "name": "Tên: A đến Z"
+        }
     },
     "product": {
         "addToCart": "Thêm vào giỏ",
@@ -396,6 +389,54 @@
             "contact": {
                 "title": "5. Liên hệ",
                 "content": "Nếu bạn có bất kỳ câu hỏi nào về Chính sách quyền riêng tư này, vui lòng liên hệ với chúng tôi qua các kênh hỗ trợ."
+            }
+        }
+    },
+    "admin": {
+        "layout": {
+            "title": "Trang quản trị",
+            "dashboard": "BẢNG ĐIỀU KHIỂN",
+            "directory": "DANH SÁCH SHOP",
+            "shops": "Quản lý cửa hàng",
+            "backToHome": "Về trang chủ"
+        },
+        "shops": {
+            "title": "Quản Lý Cửa Hàng",
+            "subtitle": "Quản lý đơn đăng ký người bán",
+            "filters": "Bộ lọc",
+            "searchPlaceholder": "Tìm kiếm cửa hàng...",
+            "status": "Trạng thái",
+            "allStatus": "Tất cả trạng thái",
+            "pending": "Chờ duyệt",
+            "active": "Hoạt động",
+            "suspended": "Đã đình chỉ",
+            "noShops": "Không tìm thấy cửa hàng nào",
+            "table": {
+                "name": "Tên Shop",
+                "wallet": "Ví chủ sở hữu",
+                "estYear": "Năm TL",
+                "status": "Trạng thái",
+                "registered": "Ngày đăng ký",
+                "actions": "Thao tác",
+                "view": "Xem"
+            },
+            "total": "Tổng: {count} cửa hàng",
+            "page": "Trang {page}"
+        },
+        "login": {
+            "title": "Cổng Quản Trị",
+            "subtitle": "Truy cập hạn chế - Yêu cầu xác thực",
+            "connectWallet": "Kết nối ví Web3 để xác thực",
+            "connectedWallet": "Ví đã kết nối",
+            "active": "Đang hoạt động",
+            "button": "Đăng nhập Quản trị viên",
+            "authenticating": "Đang xác thực...",
+            "secure": "Bảo mật",
+            "system": "Hệ thống",
+            "messages": {
+                "connectFirst": "Vui lòng kết nối ví trước",
+                "success": "Đăng nhập thành công",
+                "fail": "Đăng nhập thất bại"
             }
         }
     }

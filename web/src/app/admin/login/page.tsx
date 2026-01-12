@@ -9,9 +9,11 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ShieldCheck, Loader2 } from 'lucide-react'
+import { useLanguage } from '@/contexts/LanguageContext'
 import Image from 'next/image'
 
 function LoginForm() {
+    const { t } = useLanguage()
     const account = useCurrentAccount()
     const { mutateAsync: signPersonalMessage } = useSignPersonalMessage()
     const router = useRouter()
@@ -24,7 +26,7 @@ function LoginForm() {
 
     const handleLogin = async () => {
         if (!account) {
-            toast.error('Please connect your wallet first')
+            toast.error(t('admin.login.messages.connectFirst'))
             return
         }
 
@@ -58,11 +60,11 @@ function LoginForm() {
                 throw new Error(data.error || 'Login failed')
             }
 
-            toast.success('Admin login successful')
+            toast.success(t('admin.login.messages.success'))
             window.location.href = '/admin/shops'
         } catch (error: any) {
             console.error('Login error:', error)
-            toast.error(error.message || 'Failed to login')
+            toast.error(error.message || t('admin.login.messages.fail'))
         } finally {
             setLoading(false)
         }
@@ -93,10 +95,10 @@ function LoginForm() {
                     </div>
                     <div className="space-y-1">
                         <CardTitle className="text-2xl font-bold uppercase tracking-wider">
-                            Admin Portal
+                            {t('admin.login.title')}
                         </CardTitle>
                         <CardDescription>
-                            Restricted access - Authentication required
+                            {t('admin.login.subtitle')}
                         </CardDescription>
                     </div>
                 </CardHeader>
@@ -105,7 +107,7 @@ function LoginForm() {
                     {!account ? (
                         <div className="flex flex-col items-center gap-6 py-4">
                             <p className="text-sm text-muted-foreground text-center">
-                                Connect your Web3 wallet to authenticate
+                                {t('admin.login.connectWallet')}
                             </p>
                             <WalletConnectButton />
                         </div>
@@ -113,14 +115,14 @@ function LoginForm() {
                         <div className="space-y-6">
                             <div className="space-y-2">
                                 <p className="text-xs text-muted-foreground uppercase tracking-wider">
-                                    Connected Wallet
+                                    {t('admin.login.connectedWallet')}
                                 </p>
                                 <div className="p-4 bg-muted/50 border border-border flex items-center justify-between">
                                     <code className="text-sm text-foreground truncate pr-4 font-mono">
                                         {account.address}
                                     </code>
                                     <Badge variant="outline" className="shrink-0 bg-background">
-                                        Active
+                                        {t('admin.login.active')}
                                     </Badge>
                                 </div>
                             </div>
@@ -134,12 +136,12 @@ function LoginForm() {
                                 {loading ? (
                                     <>
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Authenticating...
+                                        {t('admin.login.authenticating')}
                                     </>
                                 ) : (
                                     <>
                                         <ShieldCheck className="mr-2 h-4 w-4" />
-                                        Sign In as Admin
+                                        {t('admin.login.button')}
                                     </>
                                 )}
                             </Button>
@@ -147,10 +149,10 @@ function LoginForm() {
                     )}
 
                     <div className="pt-4 border-t border-border flex justify-between text-xs text-muted-foreground font-mono">
-                        <span>System v2.0.4</span>
+                        <span>{t('admin.login.system')} v2.0.4</span>
                         <span className="flex items-center gap-1.5">
                             <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                            Secure
+                            {t('admin.login.secure')}
                         </span>
                     </div>
                 </CardContent>

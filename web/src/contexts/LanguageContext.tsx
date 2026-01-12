@@ -10,7 +10,7 @@ type Translations = typeof en;
 interface LanguageContextType {
     language: Language;
     setLanguage: (lang: Language) => void;
-    t: (key: string) => string;
+    t: (key: string, params?: Record<string, string | number>) => string;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -43,12 +43,19 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
         localStorage.setItem('language', lang);
     };
 
-    const t = (key: string): string => {
-        const value = getNestedValue(translations[language], key);
+    const t = (key: string, params?: Record<string, string | number>): string => {
+        let value = getNestedValue(translations[language], key);
         if (!value) {
             console.warn(`Translation key not found: ${key}`);
             return key;
         }
+
+        if (params) {
+            Object.entries(params).forEach(([key, paramValue]) => {
+                value = value.replace(new RegExp(`{${key}}`, 'g'), String(paramValue));
+            });
+        }
+
         return value;
     };
 

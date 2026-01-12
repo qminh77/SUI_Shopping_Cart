@@ -99,28 +99,21 @@
         }
     },
     "shop": {
-        "filters": "Filters",
-        "priceRange": "Price Range",
-        "categories": "Categories",
-        "minPrice": "Min",
-        "maxPrice": "Max",
-        "apply": "Apply",
-        "clearAll": "Clear All",
-        "searchPlaceholder": "Search products...",
-        "sortBy": "Sort by",
-        "newest": "Newest",
-        "oldest": "Oldest",
-        "priceLowHigh": "Price: Low to High",
-        "priceHighLow": "Price: High to Low",
-        "noProducts": "No products found",
-        "tryAdjusting": "Try adjusting your search or filters",
-        "showingResults": "Showing",
-        "results": "results",
-        "activeFilters": "Active filters",
-        "creator": "Creator Address (optional)",
-        "creatorDesc": "Filter by specific creator address",
-        "search": "Search",
-        "allProducts": "All Products"
+        "filters": {
+            "title": "Filters",
+            "clearAll": "Clear All",
+            "categories": "Categories",
+            "priceRange": "Price Range",
+            "sortBy": "Sort By",
+            "availability": "Availability",
+            "inStockOnly": "In Stock Only"
+        },
+        "sort": {
+            "newest": "Newest First",
+            "priceAsc": "Price: Low to High",
+            "priceDesc": "Price: High to Low",
+            "name": "Name: A to Z"
+        }
     },
     "product": {
         "addToCart": "Add to Cart",
@@ -362,42 +355,89 @@
         "shop": "Shop",
         "product": "product",
         "products": "products"
-    }
-},
-"privacy": {
-    "title": "Privacy Policy",
-    "lastUpdated": "Last updated: January 10, 2026",
-    "sections": {
-        "collection": {
-            "title": "1. Information We Collect",
-            "content": "We collect information that you provide directly to us, including:",
-            "list": [
-                "Wallet addresses when you connect to our platform",
-                "Transaction data on the SUI blockchain",
-                "Shop information when you register as a seller"
-            ]
+    },
+    "privacy": {
+        "title": "Privacy Policy",
+        "lastUpdated": "Last updated: January 10, 2026",
+        "sections": {
+            "collection": {
+                "title": "1. Information We Collect",
+                "content": "We collect information that you provide directly to us, including:",
+                "list": [
+                    "Wallet addresses when you connect to our platform",
+                    "Transaction data on the SUI blockchain",
+                    "Shop information when you register as a seller"
+                ]
+            },
+            "usage": {
+                "title": "2. How We Use Your Information",
+                "content": "We use the information we collect to:",
+                "list": [
+                    "Provide, maintain, and improve our services",
+                    "Process transactions and send related information",
+                    "Send you technical notices and support messages"
+                ]
+            },
+            "security": {
+                "title": "3. Data Security",
+                "content": "We implement appropriate security measures to protect your personal information. However, no method of transmission over the Internet is 100% secure."
+            },
+            "blockchain": {
+                "title": "4. Blockchain Data",
+                "content": "Transactions on the SUI blockchain are public and permanent. Your wallet address and transaction history are publicly visible on the blockchain."
+            },
+            "contact": {
+                "title": "5. Contact Us",
+                "content": "If you have any questions about this Privacy Policy, please contact us through our support channels."
+            }
+        }
+    },
+    "admin": {
+        "layout": {
+            "title": "Admin Panel",
+            "dashboard": "DASHBOARD",
+            "directory": "SHOP DIRECTORY",
+            "shops": "Shops Management",
+            "backToHome": "Back to Home"
         },
-        "usage": {
-            "title": "2. How We Use Your Information",
-            "content": "We use the information we collect to:",
-            "list": [
-                "Provide, maintain, and improve our services",
-                "Process transactions and send related information",
-                "Send you technical notices and support messages"
-            ]
+        "shops": {
+            "title": "Shop Management",
+            "subtitle": "Manage seller applications",
+            "filters": "Filters",
+            "searchPlaceholder": "Search shops...",
+            "status": "Status",
+            "allStatus": "All Status",
+            "pending": "Pending",
+            "active": "Active",
+            "suspended": "Suspended",
+            "noShops": "No shops found",
+            "table": {
+                "name": "Shop Name",
+                "wallet": "Owner Wallet",
+                "estYear": "Est. Year",
+                "status": "Status",
+                "registered": "Registered",
+                "actions": "Actions",
+                "view": "View"
+            },
+            "total": "Total: {count} shops",
+            "page": "Page {page}"
         },
-        "security": {
-            "title": "3. Data Security",
-            "content": "We implement appropriate security measures to protect your personal information. However, no method of transmission over the Internet is 100% secure."
-        },
-        "blockchain": {
-            "title": "4. Blockchain Data",
-            "content": "Transactions on the SUI blockchain are public and permanent. Your wallet address and transaction history are publicly visible on the blockchain."
-        },
-        "contact": {
-            "title": "5. Contact Us",
-            "content": "If you have any questions about this Privacy Policy, please contact us through our support channels."
+        "login": {
+            "title": "Admin Portal",
+            "subtitle": "Restricted access - Authentication required",
+            "connectWallet": "Connect your Web3 wallet to authenticate",
+            "connectedWallet": "Connected Wallet",
+            "active": "Active",
+            "button": "Sign In as Admin",
+            "authenticating": "Authenticating...",
+            "secure": "Secure",
+            "system": "System",
+            "messages": {
+                "connectFirst": "Please connect your wallet first",
+                "success": "Admin login successful",
+                "fail": "Failed to login"
+            }
         }
     }
-}
 }
