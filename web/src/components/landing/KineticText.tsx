@@ -13,9 +13,9 @@ export default function KineticText() {
         () => {
             // Parallax Effect on Mouse Move
             const handleMouseMove = (e: MouseEvent) => {
-                const { clientX, clientY, innerWidth, innerHeight } = e;
-                const x = (clientX / innerWidth - 0.5) * 40; // value between -20 and 20
-                const y = (clientY / innerHeight - 0.5) * 40;
+                const { clientX, clientY } = e;
+                const x = (clientX / window.innerWidth - 0.5) * 40; // value between -20 and 20
+                const y = (clientY / window.innerHeight - 0.5) * 40;
 
                 gsap.to(textTitleRef.current, {
                     x: x,
