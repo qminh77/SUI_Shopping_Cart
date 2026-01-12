@@ -249,14 +249,22 @@ export function ProductDetailDialog({ product, open, onOpenChange }: ProductDeta
                                     </Button>
 
                                     <Button
-                                        asChild
+                                        asChild={!!product.creator}
+                                        disabled={!product.creator}
                                         variant="outline"
                                         className="w-full border-white/10 hover:bg-white/5 text-white rounded-none uppercase font-bold tracking-widest h-11 hover:text-green-400 hover:border-green-400/30 transition-all duration-300"
                                     >
-                                        <Link href={`/shops/${product.creator}`}>
-                                            <Store className="w-4 h-4 mr-2" />
-                                            {t('nav.shop')}
-                                        </Link>
+                                        {product.creator ? (
+                                            <Link href={`/shops/${product.creator}`}>
+                                                <Store className="w-4 h-4 mr-2" />
+                                                {t('nav.shop')}
+                                            </Link>
+                                        ) : (
+                                            <span className="flex items-center justify-center">
+                                                <Store className="w-4 h-4 mr-2" />
+                                                {t('nav.shop')}
+                                            </span>
+                                        )}
                                     </Button>
                                 </div>
                             </div>

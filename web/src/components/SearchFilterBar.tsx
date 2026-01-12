@@ -11,7 +11,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Card, CardContent } from '@/components/ui/card';
 import { Search, X, SlidersHorizontal } from 'lucide-react';
 import {
     Collapsible,
@@ -46,48 +45,57 @@ export function SearchFilterBar({ filters, onFiltersChange, onClearFilters }: Se
         filters.sortBy !== 'name-asc';
 
     return (
-        <Card>
-            <CardContent className="p-4 space-y-4">
-                {/* Search Bar */}
-                <div className="flex gap-2">
-                    <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            placeholder={t('shop.searchPlaceholder')}
-                            value={filters.searchQuery}
-                            onChange={(e) =>
-                                onFiltersChange({ ...filters, searchQuery: e.target.value })
-                            }
-                            className="pl-9"
-                        />
-                    </div>
-                    <Collapsible open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-                        <CollapsibleTrigger asChild>
-                            <Button variant="outline" size="icon">
-                                <SlidersHorizontal className="h-4 w-4" />
-                            </Button>
-                        </CollapsibleTrigger>
-                    </Collapsible>
-                    {hasActiveFilters && (
-                        <Button variant="ghost" size="icon" onClick={onClearFilters}>
-                            <X className="h-4 w-4" />
-                        </Button>
-                    )}
-                </div>
+        <div className="w-full max-w-4xl mx-auto space-y-4">
+            {/* Search Bar - Minimalist Line Style */}
+            <div className="relative flex items-center gap-4 group">
+                <Search className="h-5 w-5 text-muted-foreground group-focus-within:text-foreground transition-colors" />
+                <Input
+                    placeholder={t('shop.searchPlaceholder')}
+                    value={filters.searchQuery}
+                    onChange={(e) =>
+                        onFiltersChange({ ...filters, searchQuery: e.target.value })
+                    }
+                    className="flex-1 h-12 bg-transparent border-0 border-b border-border rounded-none px-0 text-lg focus-visible:ring-0 focus-visible:border-foreground placeholder:text-muted-foreground/50 transition-all font-light"
+                />
 
-                {/* Advanced Filters */}
                 <Collapsible open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-                    <CollapsibleContent className="space-y-4 pt-2">
+                    <CollapsibleTrigger asChild>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className={`h-10 w-10 hover:bg-transparent hover:text-foreground transition-colors ${isFilterOpen ? 'text-foreground' : 'text-muted-foreground'}`}
+                        >
+                            <SlidersHorizontal className="h-5 w-5" />
+                        </Button>
+                    </CollapsibleTrigger>
+                </Collapsible>
+
+                {hasActiveFilters && (
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={onClearFilters}
+                        className="h-10 w-10 text-muted-foreground hover:text-foreground hover:bg-transparent"
+                    >
+                        <X className="h-5 w-5" />
+                    </Button>
+                )}
+            </div>
+
+            {/* Advanced Filters */}
+            <Collapsible open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+                <CollapsibleContent className="pt-6 pb-2 animate-accordion-down">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                         {/* Sort */}
-                        <div className="space-y-2">
-                            <Label htmlFor="sort">{t('shop.sortBy')}</Label>
+                        <div className="space-y-3">
+                            <Label htmlFor="sort" className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">{t('shop.sortBy')}</Label>
                             <Select
                                 value={filters.sortBy}
                                 onValueChange={(value: any) =>
                                     onFiltersChange({ ...filters, sortBy: value })
                                 }
                             >
-                                <SelectTrigger id="sort">
+                                <SelectTrigger id="sort" className="w-full h-10 border-0 border-b border-border rounded-none px-0 focus:ring-0 text-sm bg-transparent">
                                     <SelectValue placeholder={t('shop.sortBy') + "..."} />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -100,9 +108,10 @@ export function SearchFilterBar({ filters, onFiltersChange, onClearFilters }: Se
                         </div>
 
                         {/* Price Range */}
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="priceMin">{t('shop.minPrice')} (SUI)</Label>
+                        <div className="space-y-3">
+                            <Label htmlFor="priceMin" className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">{t('shop.minPrice')}</Label>
+                            <div className="flex items-center">
+                                <span className="text-sm mr-2 text-muted-foreground">SUI</span>
                                 <Input
                                     id="priceMin"
                                     type="number"
@@ -113,10 +122,15 @@ export function SearchFilterBar({ filters, onFiltersChange, onClearFilters }: Se
                                     onChange={(e) =>
                                         onFiltersChange({ ...filters, priceMin: e.target.value })
                                     }
+                                    className="h-10 border-0 border-b border-border rounded-none px-0 focus-visible:ring-0 focus-visible:border-foreground bg-transparent"
                                 />
                             </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="priceMax">{t('shop.maxPrice')} (SUI)</Label>
+                        </div>
+
+                        <div className="space-y-3">
+                            <Label htmlFor="priceMax" className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">{t('shop.maxPrice')}</Label>
+                            <div className="flex items-center">
+                                <span className="text-sm mr-2 text-muted-foreground">SUI</span>
                                 <Input
                                     id="priceMax"
                                     type="number"
@@ -127,55 +141,51 @@ export function SearchFilterBar({ filters, onFiltersChange, onClearFilters }: Se
                                     onChange={(e) =>
                                         onFiltersChange({ ...filters, priceMax: e.target.value })
                                     }
+                                    className="h-10 border-0 border-b border-border rounded-none px-0 focus-visible:ring-0 focus-visible:border-foreground bg-transparent"
                                 />
                             </div>
                         </div>
 
                         {/* Creator Filter */}
-                        <div className="space-y-2">
-                            <Label htmlFor="creator">{t('shop.creator')}</Label>
+                        <div className="space-y-3">
+                            <Label htmlFor="creator" className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">{t('shop.creator')}</Label>
                             <Input
                                 id="creator"
-                                placeholder="0x..."
+                                placeholder={t('shop.creatorDesc')}
                                 value={filters.creatorAddress}
                                 onChange={(e) =>
                                     onFiltersChange({ ...filters, creatorAddress: e.target.value })
                                 }
+                                className="h-10 border-0 border-b border-border rounded-none px-0 focus-visible:ring-0 focus-visible:border-foreground bg-transparent"
                             />
-                            <p className="text-xs text-muted-foreground">
-                                {t('shop.creatorDesc')}
-                            </p>
                         </div>
-                    </CollapsibleContent>
-                </Collapsible>
-
-                {/* Active Filters Summary */}
-                {hasActiveFilters && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground pt-2 border-t">
-                        <span className="font-medium">{t('shop.activeFilters')}:</span>
-                        {filters.searchQuery && (
-                            <span className="bg-muted px-2 py-1 rounded">
-                                {t('shop.search')}: "{filters.searchQuery}"
-                            </span>
-                        )}
-                        {filters.priceMin && (
-                            <span className="bg-muted px-2 py-1 rounded">
-                                {t('shop.minPrice')}: {filters.priceMin} SUI
-                            </span>
-                        )}
-                        {filters.priceMax && (
-                            <span className="bg-muted px-2 py-1 rounded">
-                                {t('shop.maxPrice')}: {filters.priceMax} SUI
-                            </span>
-                        )}
-                        {filters.creatorAddress && (
-                            <span className="bg-muted px-2 py-1 rounded">
-                                {t('shop.categories')}: {filters.creatorAddress.slice(0, 8)}...
-                            </span>
-                        )}
                     </div>
-                )}
-            </CardContent>
-        </Card>
+                </CollapsibleContent>
+            </Collapsible>
+
+            {/* Active Filters Summary */}
+            {hasActiveFilters && (
+                <div className="flex flex-wrap items-center gap-2 pt-2">
+                    {filters.searchQuery && (
+                        <div className="text-xs bg-foreground text-background px-3 py-1 rounded-full flex items-center gap-2">
+                            {filters.searchQuery}
+                            <X className="w-3 h-3 cursor-pointer" onClick={() => onFiltersChange({ ...filters, searchQuery: '' })} />
+                        </div>
+                    )}
+                    {(filters.priceMin || filters.priceMax) && (
+                        <div className="text-xs border border-border px-3 py-1 rounded-full flex items-center gap-2">
+                            {filters.priceMin || '0'} - {filters.priceMax || '∞'} SUI
+                            <X className="w-3 h-3 cursor-pointer" onClick={() => onFiltersChange({ ...filters, priceMin: '', priceMax: '' })} />
+                        </div>
+                    )}
+                    {filters.creatorAddress && (
+                        <div className="text-xs border border-border px-3 py-1 rounded-full flex items-center gap-2">
+                            Creator: {filters.creatorAddress.slice(0, 6)}...
+                            <X className="w-3 h-3 cursor-pointer" onClick={() => onFiltersChange({ ...filters, creatorAddress: '' })} />
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
     );
 }

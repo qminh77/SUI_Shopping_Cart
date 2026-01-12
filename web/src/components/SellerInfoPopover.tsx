@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ShieldCheck, Copy, ExternalLink, Store, Check } from 'lucide-react';
+import { ShieldCheck, Copy, ExternalLink, Store, Check, Package } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -128,15 +128,31 @@ export function SellerInfoPopover({ sellerAddress, className }: SellerInfoPopove
                             </Button>
                         </div>
                     ) : (
-                        <div className="bg-white/5 border border-white/5 p-4">
-                            <div className="flex items-center gap-2 text-neutral-500 text-xs">
+                        /* Individual Seller Case - Clean UI */
+                        <div className="bg-white/5 border border-white/5 p-4 space-y-3">
+                            <div className="flex items-center gap-2 text-neutral-400">
                                 <Store className="w-4 h-4" />
-                                <span>{t('sellerPopover.individual')}</span>
+                                <span className="text-xs uppercase font-bold tracking-wider">
+                                    {t('sellerPopover.individual')}
+                                </span>
                             </div>
+                            <p className="text-xs text-neutral-500 leading-relaxed">
+                                This seller has not created a shop profile yet.
+                            </p>
+                            {/* Visit Shop Button - Still show it as it links to their products page */}
+                            <Button
+                                asChild
+                                variant="outline"
+                                size="sm"
+                                className="w-full border-white/10 hover:bg-white/5 text-neutral-400 hover:text-white rounded-none uppercase font-bold tracking-wider transition-all"
+                            >
+                                <Link href={`/shops/${sellerAddress}`}>
+                                    <Package className="w-3.5 h-3.5 mr-2" />
+                                    {t('sellerPopover.viewProducts')}
+                                </Link>
+                            </Button>
                         </div>
-                    )}
-
-                    {/* Wallet Address */}
+                    )}{/* Wallet Address */}
                     <div className="space-y-2">
                         <span className="text-[10px] uppercase text-neutral-500 tracking-wider">
                             {t('sellerPopover.address')}

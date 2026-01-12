@@ -197,8 +197,17 @@ export default function OrderHistoryPage() {
                                 <Separator className="my-5" />
 
                                 <div className="flex flex-col sm:flex-row justify-between sm:items-end gap-4">
-                                    <div className="text-xs text-muted-foreground">
-                                        {t('profile.orders.date')}: {new Date(order.created_at).toLocaleString(typeof window !== 'undefined' ? window.navigator.language : 'en-US')}
+                                    <div className="space-y-1">
+                                        <div className="text-xs text-muted-foreground">
+                                            {t('profile.orders.date')}: {new Date(order.created_at).toLocaleString(typeof window !== 'undefined' ? window.navigator.language : 'en-US')}
+                                        </div>
+                                        {(order.tracking_code || order.shipping_carrier) && (
+                                            <div className="flex items-center gap-2 text-sm mt-2 p-2 bg-blue-50 text-blue-800 rounded-md border border-blue-100">
+                                                <Truck className="w-4 h-4" />
+                                                <span className="font-semibold">{order.shipping_carrier || 'Vận chuyển'}:</span>
+                                                <span className="font-mono">{order.tracking_code}</span>
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="flex items-center justify-between sm:justify-end gap-3 flex-1">
                                         <span className="text-base font-medium">{t('profile.orders.total')}:</span>

@@ -99,7 +99,13 @@ export async function getSellerOrders(wallet: string) {
     return data
 }
 
-export async function updateOrderStatus(orderId: string, newStatus: OrderStatus, sellerWallet: string) {
+export async function updateOrderStatus(
+    orderId: string,
+    newStatus: OrderStatus,
+    sellerWallet: string,
+    trackingCode?: string,
+    carrier?: string
+) {
     const supabase = await createSupabaseServerClient()
 
     // Verify seller owns this order
@@ -113,9 +119,17 @@ export async function updateOrderStatus(orderId: string, newStatus: OrderStatus,
         throw new Error('Unauthorized or Order not found')
     }
 
+    const updateData: any = {
+        status: newStatus,
+        updated_at: new Date().toISOString()
+    };
+
+    if (trackingCode) updateData.tracking_code = trackingCode;
+    if (carrier) updateData.shipping_carrier = carrier;
+
     const { error } = await supabase
         .from('orders')
-        .update({ status: newStatus, updated_at: new Date().toISOString() })
+        .update(updateData)
         .eq('id', orderId)
 
     if (error) throw error

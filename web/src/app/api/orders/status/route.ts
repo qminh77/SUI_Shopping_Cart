@@ -4,7 +4,7 @@ import { updateOrderStatus } from '@/services/order.service';
 export async function PUT(req: NextRequest) {
     try {
         const body = await req.json();
-        const { orderId, status, sellerWallet } = body;
+        const { orderId, status, sellerWallet, trackingCode, carrier } = body;
 
         if (!orderId || !status || !sellerWallet) {
             return NextResponse.json(
@@ -24,7 +24,7 @@ export async function PUT(req: NextRequest) {
 
         let success;
         try {
-            success = await updateOrderStatus(orderId, status, sellerWallet);
+            success = await updateOrderStatus(orderId, status, sellerWallet, trackingCode, carrier);
         } catch (dbError: any) {
             console.error('[API /orders/status PUT] Database error:', dbError);
 
