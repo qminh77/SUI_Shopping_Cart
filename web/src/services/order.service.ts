@@ -136,3 +136,36 @@ export async function updateOrderStatus(
 
     return true
 }
+
+export async function getOrderById(id: string) {
+    const supabase = await createSupabaseServerClient()
+
+    // 1. Fetch Order with Items
+    const { data: order, error } = await supabase
+        .from('orders')
+        .select(`
+            *,
+            items:order_items(*)
+        `)
+        .eq('id', id)
+        .single()
+
+    if (error) throw error
+    if (!order) return null
+
+    // 2. Fetch Shop Details using seller_wallet
+    // We try to find a shop owned by this seller
+    const { data: shop } = await supabase
+        .from('shops')
+        .select('id, shop_name, logo_url, contact_phone, address_city, owner_wallet')
+        .eq('owner_wallet', order.seller_wallet)
+        .maybeSingle()
+
+    return {
+        ...order,
+        shop: shop || {
+            shop_name: 'Unknown Shop',
+            owner_wallet: order.seller_wallet
+        }
+    }
+}

@@ -152,7 +152,11 @@ export default function OrderHistoryPage() {
                                         <Separator orientation="vertical" className="h-8" />
                                         <div className="flex flex-col">
                                             <span className="text-xs font-semibold uppercase text-muted-foreground">{t('profile.orders.orderId')}</span>
-                                            <span className="font-mono text-sm">#{order.id.slice(0, 8)}</span>
+                                            <span className="font-mono text-sm hover:underline">
+                                                <Link href={`/profile/orders/${order.id}`}>
+                                                    #{order.id.slice(0, 8)}
+                                                </Link>
+                                            </span>
                                         </div>
                                     </div>
                                     <Badge variant={statusConfig.variant} className="w-fit gap-1.5 pl-1.5 pr-2.5 py-1">
@@ -219,10 +223,14 @@ export default function OrderHistoryPage() {
                             </CardContent>
 
                             {/* Actions / Footer (Optional) */}
-                            {/* <CardFooter className="bg-muted/5 py-3 px-6 flex justify-end gap-2 border-t">
-                                <Button variant="outline" size="sm">Xem chi tiết</Button>
-                                <Button size="sm">Mua lại</Button>
-                            </CardFooter> */}
+                            <CardFooter className="bg-muted/5 py-3 px-6 flex justify-end gap-2 border-t">
+                                <Button variant="outline" size="sm" asChild>
+                                    <Link href={`/profile/orders/${order.id}`}>
+                                        Xem chi tiết
+                                    </Link>
+                                </Button>
+                                {/* <Button size="sm">Mua lại</Button> */}
+                            </CardFooter>
                         </Card>
                     );
                 })}
