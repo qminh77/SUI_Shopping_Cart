@@ -137,7 +137,7 @@ export function SellerInfoPopover({ sellerAddress, className }: SellerInfoPopove
                                 </span>
                             </div>
                             <p className="text-xs text-neutral-500 leading-relaxed">
-                                This seller has not created a shop profile yet.
+                                {t('sellerPopover.noShopYet')}
                             </p>
                             {/* Visit Shop Button - Still show it as it links to their products page */}
                             <Button

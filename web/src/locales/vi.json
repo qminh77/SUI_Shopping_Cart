@@ -380,6 +380,8 @@
         "verified": "Chủ Shop đã xác minh",
         "visit": "Xem Shop",
         "individual": "Người bán cá nhân (chưa có shop)",
+        "viewProducts": "Xem Sản Phẩm",
+        "noShopYet": "Người bán này chưa tạo hồ sơ cửa hàng.",
         "address": "Địa chỉ ví",
         "explorer": "Xem trên Sui Explorer",
         "copied": "Đã sao chép địa chỉ",

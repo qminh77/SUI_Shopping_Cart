@@ -380,6 +380,8 @@
         "verified": "Verified Shop Owner",
         "visit": "Visit Shop",
         "individual": "Individual seller (no shop)",
+        "viewProducts": "View Products",
+        "noShopYet": "This seller has not created a shop profile yet.",
         "address": "Wallet Address",
         "explorer": "View on Sui Explorer",
         "copied": "Address copied to clipboard",
